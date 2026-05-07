@@ -1,13 +1,6 @@
-import axios, { AxiosHeaders, AxiosInstance } from "axios";
+import axios, { AxiosInstance } from "axios";
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api";
-
-function formatBearer(raw: string | null): string | undefined {
-  if (!raw?.trim()) return undefined;
-  const t = raw.trim();
-  if (/^Bearer\s+/i.test(t)) return t;
-  return `Bearer ${t}`;
-}
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 function shouldAttachAuthorization(url: string): boolean {
   if (!url) return true;
@@ -41,14 +34,7 @@ instance.interceptors.request.use(
     if (!shouldAttachAuthorization(url)) {
       return config;
     }
-    const { accessToken, refreshToken } = useUserStore.getState();
-    const raw = tokenRawForRequestUrl(url, accessToken, refreshToken);
-    const auth = formatBearer(raw);
-    if (auth) {
-      const headers = AxiosHeaders.from(config.headers ?? {});
-      headers.set("Authorization", auth, true);
-      config.headers = headers;
-    }
+
     return config;
   },
   (error) => Promise.reject(error)
@@ -62,8 +48,6 @@ instance.interceptors.response.use(
       if (url.includes("/auth/check-logged-in")) {
         return Promise.reject(error);
       }
-
-      resetUserSession();
     }
 
     if (error.response?.status === 403) {

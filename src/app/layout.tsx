@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 
 import { Geist, Geist_Mono } from "next/font/google";
 
-import { Sidebar } from "@/components/sidebar";
-
-import shellStyles from "./adminShell.module.scss";
+import AppShell from "./AppShell";
 import "./globals.scss";
 
 const geistSans = Geist({
@@ -33,10 +31,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <div className={shellStyles.shell}>
-          <Sidebar />
-          <main className={shellStyles.mainContent}>{children}</main>
-        </div>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

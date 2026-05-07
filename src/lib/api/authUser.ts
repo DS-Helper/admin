@@ -32,20 +32,6 @@ export function getKakaoOAuthRedirectUri(): string {
   );
 }
 
-export function getGoogleOAuthRedirectUri(): string {
-  return resolveOAuthRedirectUri(
-    process.env.NEXT_PUBLIC_GOOGLE_OAUTH_REDIRECT_URI,
-    GOOGLE_OAUTH_REDIRECT_PATH
-  );
-}
-
-export function getNaverOAuthRedirectUri(): string {
-  return resolveOAuthRedirectUri(
-    process.env.NEXT_PUBLIC_NAVER_OAUTH_REDIRECT_URI,
-    NAVER_OAUTH_REDIRECT_PATH
-  );
-}
-
 export function getKakaoOAuthCallbackPathname(): string {
   const fromEnv = process.env.NEXT_PUBLIC_KAKAO_OAUTH_REDIRECT_URI;
   if (fromEnv) {
@@ -87,26 +73,6 @@ export const getLogin = async (code: string) => {
   }
 };
 
-export const naverLoginUrl = async () => {
-  try {
-    const res = await instance.get("/oauth/naver/login-url");
-    return res;
-  } catch (e) {
-    console.error(e);
-    return null;
-  }
-};
-
-export const googleLoginUrl = async () => {
-  try {
-    const res = await instance.get("/oauth/google/login-url");
-    return res;
-  } catch (e) {
-    console.error(e);
-    return null;
-  }
-};
-
 export function pickOAuthLoginUrl(data: unknown): string | null {
   if (data == null) return null;
   if (typeof data === "string") {
@@ -122,17 +88,6 @@ export function pickOAuthLoginUrl(data: unknown): string | null {
   return null;
 }
 
-function normalizeOAuthAuthorizeUrl(url: string): string {
-  const u = url.trim();
-  if (u.startsWith("http://") || u.startsWith("https://")) return u;
-  if (u.startsWith("/")) {
-    const base = process.env.NEXT_PUBLIC_API_URL;
-    const normalized = base?.replace(/\/$/, "") ?? "";
-    return normalized ? `${normalized}${u}` : u;
-  }
-  return u;
-}
-
 /** 백엔드가 내려준 authorize URL의 redirect_uri를 프론트 콜백으로 맞춥니다. */
 export function replaceOAuthAuthorizeRedirectUri(
   authorizeUrl: string,
@@ -146,48 +101,6 @@ export function replaceOAuthAuthorizeRedirectUri(
     return authorizeUrl;
   }
 }
-
-export async function getGoogleOAuthStartUrl(): Promise<string> {
-  const res = await googleLoginUrl();
-  const raw = pickOAuthLoginUrl(res?.data);
-  if (!raw) throw new Error("구글 로그인 URL을 받아오지 못했습니다.");
-  const absolute = normalizeOAuthAuthorizeUrl(raw);
-  return replaceOAuthAuthorizeRedirectUri(
-    absolute,
-    getGoogleOAuthRedirectUri()
-  );
-}
-
-export async function getNaverOAuthStartUrl(): Promise<string> {
-  const res = await naverLoginUrl();
-  const raw = pickOAuthLoginUrl(res?.data);
-  if (!raw) throw new Error("네이버 로그인 URL을 받아오지 못했습니다.");
-  const absolute = normalizeOAuthAuthorizeUrl(raw);
-  return replaceOAuthAuthorizeRedirectUri(
-    absolute,
-    getNaverOAuthRedirectUri()
-  );
-}
-
-export const naverLogin = async (body: { code: string; state: string }) => {
-  try {
-    const res = await instance.post("/oauth/naver/login", body);
-    return res;
-  } catch (e) {
-    console.error(e);
-    return null;
-  }
-};
-
-export const googleLogin = async (body: { code: string }) => {
-  try {
-    const res = await instance.post("/oauth/google/login", body);
-    return res;
-  } catch (e) {
-    console.error(e);
-    return null;
-  }
-};
 
 export const getCheckAuth = async () => {
   try {

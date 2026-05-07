@@ -10,90 +10,70 @@
 .loginCard {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  width: min(520px, 100%);
-  padding: 32px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background-color: #ffffff;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  gap: 2rem;
 }
 
 .loginTitle {
   margin: 0;
-  font-size: 30px;
-  font-weight: 700;
+  font-size: var(--title-L-size);
+  font-weight: var(--title-L-weight);
   line-height: 1.2;
-  color: #0f172a;
+  color: var(--color-semantic-text-primary);
+  text-align: center;
 }
 
 .loginDescription {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--body-M-size);
+  font-weight: var(--body-M-weight);
   line-height: 1.5;
-  color: #334155;
+  color: var(--color-semantic-text-secondary);
 }
 
 .loginActions {
-  margin-top: 20px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
 .kakaoButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 1rem;
   width: 100%;
-  padding: 12px 16px;
+  padding: 1rem 3rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 5rem;
   background-color: #fee500;
-  color: #000000;
-  font-size: 15px;
-  font-weight: 600;
+  color: var(--color-semantic-text-primary);
+  font-size: var(--body-M-size);
+  font-weight: var(--body-M-weight);
   cursor: pointer;
   transition:
     background-color 0.15s ease,
     transform 0.05s ease,
-    box-shadow 0.15s ease;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.16);
-}
-
-.kakaoButton:hover:not(:disabled) {
-  background-color: #f2d800;
-}
-
-.kakaoButton:active:not(:disabled) {
-  transform: translateY(1px);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
-}
-
-.kakaoButton:disabled {
-  opacity: 0.7;
-  cursor: default;
 }
 
 .kakaoIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  font-size: 18px;
+  width: 2rem;
+  height: 2rem;
+  font-size: 2rem;
 }
 
 .kakaoLabel {
-  flex: 1;
   text-align: center;
+  font-size: var(--body-M-size);
+  font-weight: var(--body-M-weight);
 }
 
 .loginHelperText {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--body-S-size);
+  font-weight: var(--body-S-weight);
   line-height: 1.4;
-  color: #64748b;
+  color: var(--color-semantic-text-secondary);
 }
 

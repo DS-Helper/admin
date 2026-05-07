@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { SiKakaotalk } from "react-icons/si";
+import { RiKakaoTalkFill } from "react-icons/ri";
 
 import styles from "./page.module.scss";
 import {
@@ -66,10 +66,7 @@ export default function LoginPage() {
   return (
     <main className={styles.loginPage}>
       <section className={styles.loginCard}>
-        <h1 className={styles.loginTitle}>디에스헬퍼 관리자 로그인</h1>
-        <p className={styles.loginDescription}>
-          카카오 계정으로 관리자 페이지에 로그인하세요.
-        </p>
+        <h1 className={styles.loginTitle}>관리자 로그인</h1>
         <div className={styles.loginActions}>
           <button
             type="button"
@@ -78,13 +75,10 @@ export default function LoginPage() {
             disabled={isAuthenticating}
           >
             <span className={styles.kakaoIcon} aria-hidden="true">
-              <SiKakaotalk />
+              <RiKakaoTalkFill />
             </span>
             <span className={styles.kakaoLabel}>카카오 로그인하기</span>
           </button>
-          <p className={styles.loginHelperText}>
-            로그인 완료 후 자동으로 관리자 페이지로 이동합니다.
-          </p>
         </div>
       </section>
     </main>
