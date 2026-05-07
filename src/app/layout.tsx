@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Factory Admin",
-  description: "관리자 전용 Admin 페이지",
+  title: "디에스헬퍼 관리자 페이지",
+  description: "디에스헬퍼 관리자 페이지입니다.",
 };
 
 export default function RootLayout({
