@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from "axios";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+const MANUAL_ADMIN_TOKEN = "토큰";
 
 function shouldAttachAuthorization(url: string): boolean {
   if (!url) return true;
@@ -13,16 +14,6 @@ function shouldAttachAuthorization(url: string): boolean {
   return !skip.some((p) => url.includes(p));
 }
 
-function tokenRawForRequestUrl(
-  url: string,
-  accessToken: string | null,
-  refreshToken: string | null
-): string | null {
-  if (url.includes("/auth/check-logged-in/organization")) return accessToken;
-  if (url.includes("/auth/check-logged-in")) return null;
-  return accessToken;
-}
-
 export const instance: AxiosInstance = axios.create({
   baseURL: apiBaseUrl,
   withCredentials: true,
@@ -33,6 +24,14 @@ instance.interceptors.request.use(
     const url = config.url || "";
     if (!shouldAttachAuthorization(url)) {
       return config;
+    }
+
+    const token = MANUAL_ADMIN_TOKEN.trim();
+    if (!token) return config;
+
+    config.headers = config.headers ?? {};
+    if (!config.headers.Authorization) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;

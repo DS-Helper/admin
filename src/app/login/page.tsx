@@ -7,7 +7,6 @@ import { RiKakaoTalkFill } from "react-icons/ri";
 import styles from "./page.module.scss";
 import {
   buildKakaoAuthorizeUrl,
-  getCheckAuth,
   getLogin,
 } from "@/lib/api/authUser";
 
@@ -18,17 +17,6 @@ export default function LoginPage() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   useEffect(() => {
-    const run = async () => {
-      const res = await getCheckAuth();
-      if (res) {
-        router.replace("/");
-      }
-    };
-
-    void run();
-  }, [router]);
-
-  useEffect(() => {
     const code = searchParams.get("code");
     if (!code || isAuthenticating) return;
 
@@ -36,14 +24,7 @@ export default function LoginPage() {
       try {
         setIsAuthenticating(true);
         await getLogin(code);
-        const check = await getCheckAuth();
-
-        if (check) {
-          router.replace("/");
-        } else {
-          alert("로그인에 실패하셨습니다.");
-          router.replace("/login");
-        }
+        router.replace("/");
       } finally {
         setIsAuthenticating(false);
       }
