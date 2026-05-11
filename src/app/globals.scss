@@ -1,3 +1,5 @@
+@use "../styles/typography" as typography;
+
 :root {
   --color-primitive-white: #ffffff;
   --color-primitive-primary-600: #119347;
@@ -53,33 +55,7 @@
   --color-semantic-icon-tertiary: var(--color-primitive-gray-400);
   --color-semantic-icon-disabled: var(--color-primitive-gray-300);
 
-  /* font style */
-  --Display-size: 4.6rem;
-  --Display-weight: 700;
-  --title-XL-size: 3.2rem;
-  --title-XL-weight: 500;
-  --title-L-size: 2.4rem;
-  --title-L-weight: 600;
-  --title-M-size: 2rem;
-  --title-M-weight: 600;
-  --title-S-size: 1.6rem;
-  --title-S-weight: 600;
-  --title-XS-size: 1.4rem;
-  --title-XS-weight: 700;
-  --body-L-size: 1.8rem;
-  --body-L-weight: 600;
-  --body-M-size: 1.6rem;
-  --body-M-weight: 400;
-  --body-S-size: 1.4rem;
-  --body-S-weight: 400;
-  --caption-size: 1.4rem;
-  --caption-weight: 400;
-  --label-M-size: 1.5rem;
-  --label-M-weight: 500;
-  --label-S-size: 1.3rem;
-  --label-S-weight: 600;
-  --value-M-size: 1.5rem;
-  --value-M-weight: 400;
+  @include typography.define-css-variables;
 }
 
 @media (prefers-color-scheme: dark) {

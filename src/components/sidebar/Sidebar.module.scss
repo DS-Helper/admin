@@ -167,16 +167,26 @@
   flex-shrink: 0;
 }
 
-.menuIconImage {
+/* SVG는 #AEAEAE 단색 → 마스크로 채우면 활성 시 브랜드 토큰과 동일 색 적용 가능 */
+.menuIconGlyph {
   display: block;
   width: 100%;
   height: 100%;
-  max-width: 2.6rem;
-  max-height: 2.6rem;
-  object-fit: contain;
+  background-color: var(--color-primitive-gray-400);
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  transition: background-color 0.15s ease;
 }
 
-.menuLink:not(.menuLinkActive) .menuIconImage {
+.menuLinkActive .menuIconGlyph {
+  background-color: var(--color-semantic-text-brand);
+}
+
+.menuLink:not(.menuLinkActive) .menuIconGlyph {
   opacity: 0.88;
 }
 

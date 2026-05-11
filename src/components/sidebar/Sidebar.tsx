@@ -32,12 +32,12 @@ function isNavActive(
 function makeNavImage(src: string) {
   return function NavIconImage({ active }: IconProps) {
     return (
-      <Image
-        src={src}
-        alt=""
-        width={26}
-        height={26}
-        className={styles.menuIconImage}
+      <span
+        className={styles.menuIconGlyph}
+        style={{
+          WebkitMaskImage: `url("${src}")`,
+          maskImage: `url("${src}")`,
+        }}
         data-nav-active={active ? "true" : "false"}
         aria-hidden
       />
@@ -46,10 +46,10 @@ function makeNavImage(src: string) {
 }
 
 const navItems: NavEntry[] = [
-  { href: "/", label: "대시보드", Icon: IconDashboard, matchExact: true },
+  { href: "/", label: "대시보드", Icon: makeNavImage("/icons/dashboardIcon.svg"), matchExact: true },
   { href: "/help", label: "도움 요청", Icon: makeNavImage("/icons/leafIcon.svg") },
   {
-    href: "/customer-inquiries",
+    href: "/customer",
     label: "고객 문의",
     Icon: makeNavImage("/icons/inquiryIcon.svg"),
   },
@@ -70,14 +70,21 @@ export function Sidebar() {
   const openMobile = useCallback(() => setMobileOpen(true), []);
 
   useEffect(() => {
-    closeMobile();
-  }, [pathname, closeMobile]);
+    const id = window.setTimeout(() => {
+      setMobileOpen(false);
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [pathname]);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 611px)");
     const apply = () => {
       setIsNarrowViewport(mq.matches);
-      if (!mq.matches) closeMobile();
+      if (!mq.matches) {
+        window.setTimeout(() => {
+          setMobileOpen(false);
+        }, 0);
+      }
     };
     apply();
     mq.addEventListener("change", apply);
@@ -197,16 +204,3 @@ export function Sidebar() {
   );
 }
 
-function IconDashboard({ active }: IconProps) {
-  const stroke = active ? "var(--color-semantic-text-brand)" : "var(--color-semantic-text-secondary)";
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M4 17V11M10 17V7M16 17V13M22 17V10"
-        stroke={stroke}
-        strokeWidth="1.75"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}

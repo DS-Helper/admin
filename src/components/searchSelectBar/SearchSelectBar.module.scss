@@ -61,12 +61,12 @@
   min-width: 0;
 }
 
-.selectRowPair {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: 1rem;
-  min-width: 0;
+/* 셀렉트 3개: 검색 제외 데스크톱에서 동일 너비 */
+.selectGroupTriple {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  justify-content: stretch;
 }
 
 .selectFieldWrap {
@@ -75,16 +75,46 @@
   min-width: 0;
 }
 
+.selectFieldWrapOpen {
+  z-index: 40;
+}
+
 .selectField {
   appearance: none;
   width: 100%;
   height: 4rem;
-  padding: 0.95rem 0 0.95rem 1.2rem;
+  padding: 0.95rem 3.2rem 0.95rem 1.2rem;
   border: 1px solid var(--color-semantic-border-default);
   border-radius: 1rem;
   background-color: var(--color-semantic-bg-page);
   font-size: 1.5rem;
   color: var(--color-semantic-text-primary);
+}
+
+.selectTrigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  line-height: 1.35;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-semantic-border-focus);
+    outline-offset: 0.2rem;
+  }
+}
+
+.selectTriggerLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .selectFieldPlaceholder {
@@ -99,6 +129,61 @@
   font-size: 1.7rem;
   color: var(--color-primitive-gray-400);
   pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+.arrowIconOpen {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.optionWrap {
+  position: absolute;
+  top: calc(100% + 0.8rem);
+  left: 0;
+  right: 0;
+  z-index: 41;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.8rem;
+  background-color: var(--color-semantic-bg-page);
+  box-shadow: 0 0 0.4rem 0 rgb(0 0 0 / 0.24);
+}
+
+.option {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.8rem 1.2rem;
+  border: none;
+  border-radius: 0.6rem;
+  background: transparent;
+  font-family: inherit;
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--color-semantic-text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    background-color: var(--color-semantic-bg-neutral-soft);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-semantic-border-focus);
+    outline-offset: 0.1rem;
+  }
+}
+
+.optionSelected {
+  color: var(--color-semantic-text-brand);
+  background-color: transparent;
+
+  &:hover {
+    background-color: var(--color-semantic-bg-neutral-soft);
+  }
 }
 
 .searchButton {
@@ -138,18 +223,19 @@
     gap: 0.8rem;
   }
 
-  .selectRowPair {
-    flex-direction: row;
+  .selectGroupTriple {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
     width: 100%;
+  }
+
+  .selectGroupTriple > .selectFieldWrap:first-child {
+    grid-column: 1 / -1;
   }
 
   .selectFieldWrap {
     width: 100%;
-  }
-
-  .selectRowPair .selectFieldWrap {
-    flex: 1;
-    min-width: 0;
   }
 
   .actionsGroup {

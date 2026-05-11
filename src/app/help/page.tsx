@@ -8,6 +8,26 @@ import { useHelpListQuery } from "@/lib/query/useHelpListQuery";
 import { useHelpRequestStore } from "@/lib/store/helpRequestStore";
 import styles from "./page.module.scss";
 
+/** `2026-04-19` → `4월 19일` (타임존 없이 문자열만 파싱) */
+function formatVisitDateHeading(isoDate: string): string {
+  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(isoDate.trim());
+  if (!m) return isoDate;
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return isoDate;
+  return `${month}월 ${day}일`;
+}
+
+/** `2026-04-19` → `2026.04.19` */
+function formatVisitDateDisplay(isoDate: string): string {
+  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(isoDate.trim());
+  if (!m) return isoDate;
+  const y = m[1];
+  const mo = m[2].padStart(2, "0");
+  const d = m[3].padStart(2, "0");
+  return `${y}.${mo}.${d}`;
+}
+
 function matchesSearch(item: ReservationItem, keyword: string): boolean {
   if (!keyword) return true;
   const normalized = keyword.trim().toLowerCase();
@@ -99,7 +119,7 @@ export default function HelpPage() {
       .sort()
       .map((date) => ({
         value: date,
-        label: date,
+        label: formatVisitDateDisplay(date),
       }));
   }, [data]);
 
@@ -127,8 +147,8 @@ export default function HelpPage() {
               value: typeFilter,
               onChange: setTypeFilter,
               options: [
-                { value: "personal", label: "개인 요청" },
-                { value: "organization", label: "기관 요청" },
+                { value: "personal", label: "개인" },
+                { value: "organization", label: "기관" },
               ],
             },
             {
@@ -145,7 +165,7 @@ export default function HelpPage() {
       <section className={styles.requestGroupSection}>
         {dateGroupEntries.map(([visitDate, items]) => (
           <section key={visitDate} className={styles.dateGroup}>
-            <h2 className={styles.dateTitle}>{visitDate}</h2>
+            <h2 className={styles.dateTitle}>{formatVisitDateHeading(visitDate)}</h2>
             <div className={styles.requestList}>
               {items.map((item) => {
                 const cardKey =
@@ -158,10 +178,12 @@ export default function HelpPage() {
                       <p className={styles.requestName}>
                         {item.reservationHolder} ({item.requestTypeLabel})
                       </p>
-                      <p className={styles.requestDateText}>{item.visitDate}</p>
+                      <p className={styles.requestDateText}>
+                        {formatVisitDateDisplay(item.visitDate)}
+                      </p>
                       <p className={styles.requestTimeText}>
                         <IoTimeOutline className={styles.timeIcon} aria-hidden="true" />
-                        오전 {item.startTime} - 오후 {item.endTime}
+                        오전 {item.startTime} ~ 오후 {item.endTime}
                       </p>
                     </div>
                     <div
