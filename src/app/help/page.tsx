@@ -1,40 +1,28 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { IoTimeOutline } from "react-icons/io5";
 import { SearchSelectBar } from "@/components/searchSelectBar";
-import { ReservationItem } from "@/types/help";
+import { formatVisitDateDisplay, formatVisitDateHeading } from "@/lib/help/formatVisitDate";
+import {
+  getHelpReservationCardId,
+  mergeHelpListItems,
+  type MergedReservationItem,
+} from "@/lib/help/mergeHelpListItems";
 import { useHelpListQuery } from "@/lib/query/useHelpListQuery";
 import { useHelpRequestStore } from "@/lib/store/helpRequestStore";
+import type { ReservationItem } from "@/types/help";
 import styles from "./page.module.scss";
 
-/** `2026-04-19` → `4월 19일` (타임존 없이 문자열만 파싱) */
-function formatVisitDateHeading(isoDate: string): string {
-  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(isoDate.trim());
-  if (!m) return isoDate;
-  const month = Number(m[2]);
-  const day = Number(m[3]);
-  if (month < 1 || month > 12 || day < 1 || day > 31) return isoDate;
-  return `${month}월 ${day}일`;
-}
-
-/** `2026-04-19` → `2026.04.19` */
-function formatVisitDateDisplay(isoDate: string): string {
-  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(isoDate.trim());
-  if (!m) return isoDate;
-  const y = m[1];
-  const mo = m[2].padStart(2, "0");
-  const d = m[3].padStart(2, "0");
-  return `${y}.${mo}.${d}`;
-}
-
-function matchesSearch(item: ReservationItem, keyword: string): boolean {
+function matchesSearch(item: MergedReservationItem, keyword: string): boolean {
   if (!keyword) return true;
   const normalized = keyword.trim().toLowerCase();
   if (!normalized) return true;
 
   return (
     item.reservationHolder.toLowerCase().includes(normalized) ||
+    (item.organizationName ?? "").toLowerCase().includes(normalized) ||
     item.address.toLowerCase().includes(normalized) ||
     item.reservationPhoneNumber.includes(normalized) ||
     (item.personalReservationId ?? "").toLowerCase().includes(normalized) ||
@@ -42,9 +30,15 @@ function matchesSearch(item: ReservationItem, keyword: string): boolean {
   );
 }
 
+function getApplicantTypeLabel(item: MergedReservationItem): "개인" | "기관" {
+  if (item.organizationReservationId) return "기관";
+  if (item.personalReservationId) return "개인";
+  return item.requestTypeLabel;
+}
+
 export default function HelpPage() {
   const { data, isLoading, isError } = useHelpListQuery();
-  const { setCountsFromHelpList, resetCounts } = useHelpRequestStore();
+  const { setHelpListFromQuery, resetCounts } = useHelpRequestStore();
 
   const [searchValue, setSearchValue] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -53,8 +47,8 @@ export default function HelpPage() {
 
   useEffect(() => {
     if (!data) return;
-    setCountsFromHelpList(data);
-  }, [data, setCountsFromHelpList]);
+    setHelpListFromQuery(data);
+  }, [data, setHelpListFromQuery]);
 
   useEffect(() => {
     if (!isError) return;
@@ -62,17 +56,8 @@ export default function HelpPage() {
   }, [isError, resetCounts]);
 
   const mergedItems = useMemo(() => {
-    const personal = (data?.personalReservations.content ?? []).map((item) => ({
-      ...item,
-      requestType: "personal" as const,
-      requestTypeLabel: "개인",
-    }));
-    const organization = (data?.organizationReservations.content ?? []).map((item) => ({
-      ...item,
-      requestType: "organization" as const,
-      requestTypeLabel: "기관",
-    }));
-    return [...personal, ...organization];
+    if (!data) return [];
+    return mergeHelpListItems(data);
   }, [data]);
 
   const filteredItems = useMemo(() => {
@@ -88,7 +73,7 @@ export default function HelpPage() {
   }, [dateFilter, mergedItems, searchValue, statusFilter, typeFilter]);
 
   const groupedItems = useMemo(() => {
-    return filteredItems.reduce<Record<string, typeof filteredItems>>((acc, item) => {
+    return filteredItems.reduce<Record<string, MergedReservationItem[]>>((acc, item) => {
       if (!acc[item.visitDate]) acc[item.visitDate] = [];
       acc[item.visitDate].push(item);
       return acc;
@@ -97,11 +82,11 @@ export default function HelpPage() {
 
   const statusOptions = useMemo(() => {
     const statuses = new Set<string>();
-    data?.personalReservations.content.forEach((item) =>
-      statuses.add(item.reservationStatus)
+    data?.personalReservations.content.forEach((row: ReservationItem) =>
+      statuses.add(row.reservationStatus),
     );
-    data?.organizationReservations.content.forEach((item) =>
-      statuses.add(item.reservationStatus)
+    data?.organizationReservations.content.forEach((row: ReservationItem) =>
+      statuses.add(row.reservationStatus),
     );
 
     return Array.from(statuses).map((status) => ({
@@ -112,8 +97,8 @@ export default function HelpPage() {
 
   const dateOptions = useMemo(() => {
     const dates = new Set<string>();
-    data?.personalReservations.content.forEach((item) => dates.add(item.visitDate));
-    data?.organizationReservations.content.forEach((item) => dates.add(item.visitDate));
+    data?.personalReservations.content.forEach((row: ReservationItem) => dates.add(row.visitDate));
+    data?.organizationReservations.content.forEach((row: ReservationItem) => dates.add(row.visitDate));
 
     return Array.from(dates)
       .sort()
@@ -168,36 +153,39 @@ export default function HelpPage() {
             <h2 className={styles.dateTitle}>{formatVisitDateHeading(visitDate)}</h2>
             <div className={styles.requestList}>
               {items.map((item) => {
-                const cardKey =
-                  item.personalReservationId ??
-                  item.organizationReservationId ??
-                  item.reservationHolderId;
+                const cardKey = getHelpReservationCardId(item);
                 return (
-                  <article key={cardKey} className={styles.requestItem}>
-                    <div className={styles.requestBody}>
-                      <p className={styles.requestName}>
-                        {item.reservationHolder} ({item.requestTypeLabel})
-                      </p>
-                      <p className={styles.requestDateText}>
-                        {formatVisitDateDisplay(item.visitDate)}
-                      </p>
-                      <p className={styles.requestTimeText}>
-                        <IoTimeOutline className={styles.timeIcon} aria-hidden="true" />
-                        오전 {item.startTime} ~ 오후 {item.endTime}
-                      </p>
-                    </div>
-                    <div
-                      className={`${styles.requestActionBar} ${
-                        item.reservationStatus === "거절"
-                          ? styles.requestActionReject
-                          : item.reservationStatus === "완료"
-                            ? styles.requestActionComplete
-                            : styles.requestActionWaiting
-                      }`}
-                    >
-                      {item.reservationStatus}
-                    </div>
-                  </article>
+                  <Link
+                    key={cardKey}
+                    href={`/help/${encodeURIComponent(cardKey)}`}
+                    className={styles.requestItemLink}
+                  >
+                    <article className={styles.requestItem}>
+                      <div className={styles.requestBody}>
+                        <p className={styles.requestName}>
+                          {item.reservationHolder} ({getApplicantTypeLabel(item)})
+                        </p>
+                        <p className={styles.requestDateText}>
+                          {formatVisitDateDisplay(item.visitDate)}
+                        </p>
+                        <p className={styles.requestTimeText}>
+                          <IoTimeOutline className={styles.timeIcon} aria-hidden="true" />
+                          오전 {item.startTime} ~ 오후 {item.endTime}
+                        </p>
+                      </div>
+                      <div
+                        className={`${styles.requestActionBar} ${
+                          item.reservationStatus === "거절"
+                            ? styles.requestActionReject
+                            : item.reservationStatus === "완료"
+                              ? styles.requestActionComplete
+                              : styles.requestActionWaiting
+                        }`}
+                      >
+                        {item.reservationStatus}
+                      </div>
+                    </article>
+                  </Link>
                 );
               })}
             </div>

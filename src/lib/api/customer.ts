@@ -7,3 +7,11 @@ export const getCustomer = async (): Promise<CustomerInquiryListResponse> => {
   );
   return response.data;
 };
+
+export const postCustomer = async (inquiryId: string, content: string) => {
+  const response = await instance.post(`/replies`, {
+    inquiryId,
+    content,
+  });
+  return response.data;
+};

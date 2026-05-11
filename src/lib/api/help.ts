@@ -8,7 +8,18 @@ export const getHelpList = async () => {
   return response.data;
 };
 
-export const getHelpDetail = async (id: string) => {
-  const response = await instance.get(`/help/${id}`);
-  return response;
+export const postPersonalHelp = async (personalReservationId: string, status: string) => {
+  const response = await instance.post(`/personal-reservation/status`, {
+    personalReservationId,
+    status,
+  });
+  return response.data;
+};
+
+export const postOrganizationHelp = async (organizationReservationId: string, status: string) => {
+  const response = await instance.post(`/organization-reservation/status`, {
+    organizationReservationId,
+    status,
+  });
+  return response.data;
 };

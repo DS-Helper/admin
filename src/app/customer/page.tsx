@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { SearchSelectBar } from "@/components/searchSelectBar";
 import type { CustomerInquiry } from "@/types/customer";
@@ -156,17 +157,23 @@ export default function CustomerPage() {
             <h2 className={styles.dateTitle}>{formatDateHeading(dateKey)}</h2>
             <div className={styles.inquiryList}>
               {items.map((item) => (
-                <article key={item.inquiryId} className={styles.inquiryItem}>
-                  <div className={styles.inquiryBody}>
-                    <p className={styles.inquiryUserName}>{item.user.name}</p>
-                    <p className={styles.inquiryTypeText}>{item.type}</p>
-                  </div>
-                  <div
-                    className={`${styles.inquiryStatusBar} ${statusBarClass(item.status)}`}
-                  >
-                    {item.status}
-                  </div>
-                </article>
+                <Link
+                  key={item.inquiryId}
+                  href={`/customer/${encodeURIComponent(item.inquiryId)}`}
+                  className={styles.inquiryItemLink}
+                >
+                  <article className={styles.inquiryItem}>
+                    <div className={styles.inquiryBody}>
+                      <p className={styles.inquiryUserName}>{item.user.name}</p>
+                      <p className={styles.inquiryTypeText}>{item.type}</p>
+                    </div>
+                    <div
+                      className={`${styles.inquiryStatusBar} ${statusBarClass(item.status)}`}
+                    >
+                      {item.status}
+                    </div>
+                  </article>
+                </Link>
               ))}
             </div>
           </section>

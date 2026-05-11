@@ -16,6 +16,7 @@ export interface ReservationPageable {
 export interface ReservationItem {
   personalReservationId?: string;
   organizationReservationId?: string;
+  organizationName?: string;
   reservationHolderId: string;
   reservationHolder: string;
   reservationPhoneNumber: string;

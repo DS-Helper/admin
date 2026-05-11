@@ -39,6 +39,18 @@
   gap: 1.2rem;
 }
 
+.requestItemLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 1.2rem;
+  outline-offset: 0.2rem;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-semantic-border-focus);
+  }
+}
+
 .requestItem {
   display: grid;
   grid-template-columns: 1fr 6rem;
