@@ -3,6 +3,7 @@ package com.project.ds_helper.domain.user.controller;
 import com.project.ds_helper.common.enums.SwaggerTagName;
 import com.project.ds_helper.common.util.CookieUtil;
 import com.project.ds_helper.common.util.JwtUtil;
+import com.project.ds_helper.domain.user.dto.request.AdminLoginReqDto;
 import com.project.ds_helper.domain.user.dto.request.OrganizationJoinReqDto;
 import com.project.ds_helper.domain.user.dto.request.UserJoinReqDto;
 import com.project.ds_helper.domain.user.service.UserService;
@@ -80,6 +81,16 @@ public class AuthController {
             HttpServletResponse httpServletResponse
     ) throws IOException {
         userService.userJoin(dto, httpServletResponse);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "관리자 로그인", description = "관리자 계정 이메일과 비밀번호를 받아 로그인을 진행합니다.")
+    @PostMapping("/login/admin")
+    public ResponseEntity<?> adminLogin(
+            @RequestBody @Valid AdminLoginReqDto dto,
+            HttpServletResponse response
+    ) {
+        userService.adminLogin(dto, response);
         return ResponseEntity.ok().build();
     }
 }

@@ -38,7 +38,11 @@ public record GetOrganizationReservationsByReservationStatusResDto(
  String recipientGender,
  int recipientNumber,
 String reservationStatus,
-         String note
+         String note,
+         @JsonSerialize(using = LocalDateSerializer.class)
+         @JsonDeserialize(using = LocalDateDeserializer.class)
+         @JsonFormat(pattern = "yyyy-MM-dd")
+         LocalDate applicationDate
 
         ) {
 //    @Builder
@@ -85,7 +89,8 @@ String reservationStatus,
                     organizationReservation.getRecipientGender().getKorean(),
                     organizationReservation.getRecipientNumber(),
                     organizationReservation.getReservationStatus().getKorean(),
-                    organizationReservation.getNote() != null? organizationReservation.getNote() : ""
+                    organizationReservation.getNote() != null? organizationReservation.getNote() : "",
+                    organizationReservation.getCreatedAt() != null? organizationReservation.getCreatedAt().toLocalDate() : null
                     );
         }
 

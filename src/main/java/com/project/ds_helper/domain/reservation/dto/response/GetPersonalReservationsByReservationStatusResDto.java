@@ -38,8 +38,11 @@ public record GetPersonalReservationsByReservationStatusResDto(
         String recipientGender,
         int recipientNumber,
         String reservationStatus,
-        String note
-
+        String note,
+        @JsonSerialize(using = LocalDateSerializer.class)
+        @JsonDeserialize(using = LocalDateDeserializer.class)
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        LocalDate applicationDate
 ) {
     public static GetPersonalReservationsByReservationStatusResDto fromPersonalReservationToReservation(PersonalReservation personalReservation){
         return new GetPersonalReservationsByReservationStatusResDto(
@@ -56,7 +59,8 @@ public record GetPersonalReservationsByReservationStatusResDto(
                 personalReservation.getRecipientGender().getKorean(),
                 personalReservation.getRecipientNumber(),
                 personalReservation.getReservationStatus().getKorean(),
-                personalReservation.getNote() != null? personalReservation.getNote() : ""
+                personalReservation.getNote() != null? personalReservation.getNote() : "",
+                personalReservation.getCreatedAt() != null? personalReservation.getCreatedAt().toLocalDate() : null
         );
     }
 }

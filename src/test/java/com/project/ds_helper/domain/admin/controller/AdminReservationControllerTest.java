@@ -24,13 +24,14 @@ class AdminReservationControllerTest {
     private AdminReservationController adminReservationController;
 
     @Test
-    @DisplayName("요청 상태 예약 목록 조회는 서비스 결과를 반환한다")
-    void getPersonalReservationsByRequestedReservations_returnsServiceResult() {
+    @DisplayName("예약 목록 조회는 서비스 결과를 반환한다")
+    void getRequestedReservations_returnsServiceResult() {
         Map<String, Object> responseDto = Map.of("personalReservations", "p", "organizationReservations", "o");
-        when(adminReservationService.getByRequestedReservations(0, 10, "desc", "createdAt")).thenReturn(responseDto);
+        when(adminReservationService.getRequestedReservations(null, null, null, null, null, 0, 10, "desc", "createdAt"))
+                .thenReturn(responseDto);
 
         ResponseEntity<?> response =
-                adminReservationController.getPersonalReservationsByRequestedReservations(0, 10, "desc", "createdAt");
+                adminReservationController.getRequestedReservations(null, null, null, null, null, 0, 10, "desc", "createdAt");
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody()).isEqualTo(responseDto);

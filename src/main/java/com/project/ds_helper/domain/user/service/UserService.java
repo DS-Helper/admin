@@ -131,23 +131,16 @@ public class UserService {
         }
         if(user.getType() != UserType.ORGANIZATION){ throw new RuntimeException("Not Organization"); }
 
-        if(user.getPassword().equals(bCryptPasswordEncoder.encode(password))){throw new IllegalArgumentException("Wrong Password");}
+        if(!bCryptPasswordEncoder.matches(password, user.getPassword())){throw new IllegalArgumentException("Wrong Password");}
 
         String userId = user.getId();
         String role = user.getRole().name();
         String type = user.getType().name();
-        log.debug("userId : {}, role : {}, type : {}", user, role, type);
+        log.debug("userId : {}, role : {}, type : {}", userId, role, type);
 
-        String accessToken = jwtUtil.generateAccessToken(userId, role, type);
-        String refreshToken = jwtUtil.generateRefreshToken(userId, role, type);
-
-        // redis에 refresh token 저장
-        stringRedisTemplate.opsForValue().set(jwtUtil.toRedisRefreshTokenKey(userId), refreshToken);
-
-        // resopnse의 header에 토큰 저장
-        httpServletResponse.setHeader(JwtTokenType.ACCESS_TOKEN_NAME.getTokenName(), accessToken);
-        httpServletResponse.setHeader(JwtTokenType.REFRESH_TOKEN_NAME.getTokenName(), refreshToken);
+        generateJwtTokenAndPutInResponseHeader(httpServletResponse, userId, role, type);
     }
+
 
     /**
      * 로그인 여부 확인
