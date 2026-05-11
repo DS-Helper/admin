@@ -1,0 +1,14 @@
+{
+  "groups": [
+    {
+      "name": "file.upload",
+      "type": "com.project.ds_helper.common.util.FileUtil",
+      "sourceType": "com.project.ds_helper.common.util.FileUtil"
+    }
+  ],
+  "properties": [],
+  "hints": [],
+  "ignored": {
+    "properties": []
+  }
+}

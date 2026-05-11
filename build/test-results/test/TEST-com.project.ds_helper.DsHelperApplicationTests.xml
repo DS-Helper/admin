@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.DsHelperApplicationTests" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:38:55" hostname="아기" time="0.66">
+  <properties/>
+  <testcase name="applicationClassExists()" classname="com.project.ds_helper.DsHelperApplicationTests" time="0.66"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

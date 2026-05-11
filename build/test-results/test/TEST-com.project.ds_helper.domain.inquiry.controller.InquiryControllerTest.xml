@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.inquiry.controller.InquiryControllerTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:09" hostname="아기" time="0.117">
+  <properties/>
+  <testcase name="문의 생성 시 FileUtil로 이미지 null 처리를 거쳐 서비스에 위임한다" classname="com.project.ds_helper.domain.inquiry.controller.InquiryControllerTest" time="0.104"/>
+  <testcase name="문의 목록 조회는 서비스 결과를 그대로 반환한다" classname="com.project.ds_helper.domain.inquiry.controller.InquiryControllerTest" time="0.003"/>
+  <testcase name="단건 문의 조회는 서비스 결과를 그대로 반환한다" classname="com.project.ds_helper.domain.inquiry.controller.InquiryControllerTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

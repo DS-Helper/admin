@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.user.controller.AuthControllerTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:14" hostname="아기" time="0.247">
+  <properties/>
+  <testcase name="로그인 여부 확인은 refreshToken 헤더를 읽어 서비스에 위임한다" classname="com.project.ds_helper.domain.user.controller.AuthControllerTest" time="0.231"/>
+  <testcase name="기관 가입은 서비스 호출 후 200을 반환한다" classname="com.project.ds_helper.domain.user.controller.AuthControllerTest" time="0.004"/>
+  <testcase name="일반 회원 가입은 서비스 호출 후 200을 반환한다" classname="com.project.ds_helper.domain.user.controller.AuthControllerTest" time="0.009"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

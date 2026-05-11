@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.trashbin.controller.TrashBinControllerTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:14" hostname="아기" time="0.099">
+  <properties/>
+  <testcase name="CSV 업로드 요청 시 저장 결과를 반환한다" classname="com.project.ds_helper.domain.trashbin.controller.TrashBinControllerTest" time="0.054"/>
+  <testcase name="쓰레기통 이미지 업로드 요청 시 업로드 결과를 반환한다" classname="com.project.ds_helper.domain.trashbin.controller.TrashBinControllerTest" time="0.007"/>
+  <testcase name="쓰레기통 목록 조회 요청 시 목록을 반환한다" classname="com.project.ds_helper.domain.trashbin.controller.TrashBinControllerTest" time="0.032"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

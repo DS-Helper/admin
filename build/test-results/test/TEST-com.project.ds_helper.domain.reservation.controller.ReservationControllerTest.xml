@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.reservation.controller.ReservationControllerTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:14" hostname="아기" time="0.036">
+  <properties/>
+  <testcase name="예약 선점 시간 조회는 서비스 결과를 그대로 반환한다" classname="com.project.ds_helper.domain.reservation.controller.ReservationControllerTest" time="0.036"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.admin.service.AdminOrganizationReservationServiceTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:06" hostname="아기" time="0.187">
+  <properties/>
+  <testcase name="관리자는 기관 예약 상태를 변경할 수 있다" classname="com.project.ds_helper.domain.admin.service.AdminOrganizationReservationServiceTest" time="0.118"/>
+  <testcase name="관리자가 아니면 기관 예약 상태를 변경할 수 없다" classname="com.project.ds_helper.domain.admin.service.AdminOrganizationReservationServiceTest" time="0.055"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

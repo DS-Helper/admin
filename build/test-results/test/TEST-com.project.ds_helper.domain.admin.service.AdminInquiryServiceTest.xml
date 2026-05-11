@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.admin.service.AdminInquiryServiceTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:06" hostname="아기" time="0.218">
+  <properties/>
+  <testcase name="미답변 문의 목록을 DTO로 변환한다" classname="com.project.ds_helper.domain.admin.service.AdminInquiryServiceTest" time="0.218"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

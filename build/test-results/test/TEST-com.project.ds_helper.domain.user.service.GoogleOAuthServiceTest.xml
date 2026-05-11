@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.user.service.GoogleOAuthServiceTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:16" hostname="아기" time="0.5">
+  <properties/>
+  <testcase name="JWT 생성 메서드는 refresh token을 redis에 저장하고 cookie 헤더를 추가한다" classname="com.project.ds_helper.domain.user.service.GoogleOAuthServiceTest" time="0.186"/>
+  <testcase name="구글 OAuth 회원 탈퇴는 토큰을 revoke하고 연결을 해제한다" classname="com.project.ds_helper.domain.user.service.GoogleOAuthServiceTest" time="0.029"/>
+  <testcase name="access token 기반 구글 로그인은 신규 회원이면 가입 후 JWT를 반환한다" classname="com.project.ds_helper.domain.user.service.GoogleOAuthServiceTest" time="0.012"/>
+  <testcase name="구글 신규 가입 시 동일 이메일이 있으면 가입을 거절한다" classname="com.project.ds_helper.domain.user.service.GoogleOAuthServiceTest" time="0.046"/>
+  <testcase name="구글 로그인 URL을 생성한다" classname="com.project.ds_helper.domain.user.service.GoogleOAuthServiceTest" time="0.2"/>
+  <testcase name="access token 기반 구글 로그인은 기존 회원이면 JWT를 반환한다" classname="com.project.ds_helper.domain.user.service.GoogleOAuthServiceTest" time="0.011"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

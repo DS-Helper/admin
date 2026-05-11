@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.post.service.PostServiceTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:11" hostname="아기" time="0.287">
+  <properties/>
+  <testcase name="삭제된 회원의 게시글은 목록 조회에서 제외된 결과만 반환한다" classname="com.project.ds_helper.domain.post.service.PostServiceTest" time="0.138"/>
+  <testcase name="게시글 목록 조회 시 keyword가 있으면 제목 LIKE 검색을 수행한다" classname="com.project.ds_helper.domain.post.service.PostServiceTest" time="0.01"/>
+  <testcase name="관리자는 작성자가 아니어도 게시글을 수정할 수 있다" classname="com.project.ds_helper.domain.post.service.PostServiceTest" time="0.007"/>
+  <testcase name="게시글 목록 조회는 viewCount 정렬을 허용한다" classname="com.project.ds_helper.domain.post.service.PostServiceTest" time="0.014"/>
+  <testcase name="게시글 수정 시 삭제 대상이 없어도 새 이미지는 추가 업로드한다" classname="com.project.ds_helper.domain.post.service.PostServiceTest" time="0.013"/>
+  <testcase name="게시글 삭제는 관리자일 때 S3 삭제 후 게시글 삭제를 호출한다" classname="com.project.ds_helper.domain.post.service.PostServiceTest" time="0.014"/>
+  <testcase name="게시글 삭제는 관리자만 수행할 수 있다" classname="com.project.ds_helper.domain.post.service.PostServiceTest" time="0.005"/>
+  <testcase name="게시글 생성은 제목이나 내용이 없으면 예외가 발생한다" classname="com.project.ds_helper.domain.post.service.PostServiceTest" time="0.009"/>
+  <testcase name="게시글 목록 조회는 페이지 DTO를 반환한다" classname="com.project.ds_helper.domain.post.service.PostServiceTest" time="0.032"/>
+  <testcase name="게시글 단건 조회는 조회수 증가 후 DTO를 반환한다" classname="com.project.ds_helper.domain.post.service.PostServiceTest" time="0.02"/>
+  <testcase name="게시글 목록 조회는 허용되지 않은 정렬 기준이면 예외를 던진다" classname="com.project.ds_helper.domain.post.service.PostServiceTest" time="0.003"/>
+  <testcase name="조회수 증가에 실패하면 예외가 발생한다" classname="com.project.ds_helper.domain.post.service.PostServiceTest" time="0.009"/>
+  <system-out><![CDATA[20:39:11.520 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto -- posts size : 1
+20:39:11.522 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt : 2026-03-27T10:00
+20:39:11.523 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt is null? : false
+20:39:11.523 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt convert to LocalDate : 2026-03-27
+20:39:11.545 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto -- posts size : 1
+20:39:11.546 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt : 2026-03-27T10:00
+20:39:11.546 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt is null? : false
+20:39:11.546 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt convert to LocalDate : 2026-03-27
+20:39:11.564 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto -- posts size : 1
+20:39:11.565 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt : 2026-03-27T10:00
+20:39:11.571 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt is null? : false
+20:39:11.572 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt convert to LocalDate : 2026-03-27
+20:39:11.582 [Test worker] INFO com.project.ds_helper.domain.post.entity.Post -- addImage called: keep.png
+20:39:11.588 [Test worker] INFO com.project.ds_helper.domain.post.entity.Post -- addImage called: stored-new
+20:39:11.646 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto -- posts size : 1
+20:39:11.647 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt : 2026-03-27T10:00
+20:39:11.648 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt is null? : false
+20:39:11.649 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt convert to LocalDate : 2026-03-27
+20:39:11.670 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt : 2026-03-27T10:00
+20:39:11.671 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt is null? : false
+20:39:11.672 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt convert to LocalDate : 2026-03-27
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

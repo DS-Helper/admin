@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.board.service.BoardServiceTest" tests="14" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:08" hostname="아기" time="0.794">
+  <properties/>
+  <testcase name="게시글 목록 조회 시 카테고리와 keyword를 함께 검색할 수 있다" classname="com.project.ds_helper.domain.board.service.BoardServiceTest" time="0.132"/>
+  <testcase name="카테고리별 게시글 조회 시 썸네일 URL과 좋아요 여부를 포함한다" classname="com.project.ds_helper.domain.board.service.BoardServiceTest" time="0.066"/>
+  <testcase name="이미지 업로드 중 예외가 발생하면 업로드한 S3 키를 롤백한다" classname="com.project.ds_helper.domain.board.service.BoardServiceTest" time="0.149"/>
+  <testcase name="삭제된 게시글은 상세 조회할 수 없다" classname="com.project.ds_helper.domain.board.service.BoardServiceTest" time="0.017"/>
+  <testcase name="게시글 목록 조회 시 keyword가 있으면 제목 LIKE 검색을 수행한다" classname="com.project.ds_helper.domain.board.service.BoardServiceTest" time="0.037"/>
+  <testcase name="게시글 상세 조회 시 좋아요, 스크랩, 이미지 URL을 포함한다" classname="com.project.ds_helper.domain.board.service.BoardServiceTest" time="0.081"/>
+  <testcase name="게시글 삭제는 작성자만 수행할 수 있다" classname="com.project.ds_helper.domain.board.service.BoardServiceTest" time="0.025"/>
+  <testcase name="게시글 생성 시 게시글과 이미지 정보를 저장한다" classname="com.project.ds_helper.domain.board.service.BoardServiceTest" time="0.046"/>
+  <testcase name="관리자는 작성자가 아니어도 게시글을 삭제할 수 있다" classname="com.project.ds_helper.domain.board.service.BoardServiceTest" time="0.032"/>
+  <testcase name="게시글 수정 시 유지하지 않는 이미지를 삭제하고 새 이미지를 저장한다" classname="com.project.ds_helper.domain.board.service.BoardServiceTest" time="0.016"/>
+  <testcase name="존재하지 않는 게시글 조회 시 예외가 발생한다" classname="com.project.ds_helper.domain.board.service.BoardServiceTest" time="0.03"/>
+  <testcase name="게시글 생성 시 이미지 개수가 제한을 초과하면 예외가 발생한다" classname="com.project.ds_helper.domain.board.service.BoardServiceTest" time="0.044"/>
+  <testcase name="비로그인 사용자의 게시글 상세 조회는 좋아요와 스크랩 여부를 false로 반환한다" classname="com.project.ds_helper.domain.board.service.BoardServiceTest" time="0.013"/>
+  <testcase name="비로그인 사용자의 게시글 목록 조회는 좋아요 여부를 false로 반환한다" classname="com.project.ds_helper.domain.board.service.BoardServiceTest" time="0.017"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

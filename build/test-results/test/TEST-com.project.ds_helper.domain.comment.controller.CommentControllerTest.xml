@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.comment.controller.CommentControllerTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:09" hostname="아기" time="0.164">
+  <properties/>
+  <testcase name="deleteComment returns no content" classname="com.project.ds_helper.domain.comment.controller.CommentControllerTest" time="0.13"/>
+  <testcase name="createComment returns created dto" classname="com.project.ds_helper.domain.comment.controller.CommentControllerTest" time="0.01"/>
+  <testcase name="updateComment returns updated dto" classname="com.project.ds_helper.domain.comment.controller.CommentControllerTest" time="0.008"/>
+  <testcase name="getParentComments includes writer info" classname="com.project.ds_helper.domain.comment.controller.CommentControllerTest" time="0.008"/>
+  <testcase name="getChildComments includes writer info" classname="com.project.ds_helper.domain.comment.controller.CommentControllerTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

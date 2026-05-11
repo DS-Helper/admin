@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.board.controller.BoardControllerTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:07" hostname="아기" time="0.261">
+  <properties/>
+  <testcase name="getBoardById includes writer info" classname="com.project.ds_helper.domain.board.controller.BoardControllerTest" time="0.175"/>
+  <testcase name="deleteBoard returns no content" classname="com.project.ds_helper.domain.board.controller.BoardControllerTest" time="0.003"/>
+  <testcase name="getBoardsByCategory includes writer info and like state" classname="com.project.ds_helper.domain.board.controller.BoardControllerTest" time="0.013"/>
+  <testcase name="getBoardsByCategory supports keyword" classname="com.project.ds_helper.domain.board.controller.BoardControllerTest" time="0.01"/>
+  <testcase name="createBoard delegates with empty images" classname="com.project.ds_helper.domain.board.controller.BoardControllerTest" time="0.023"/>
+  <testcase name="updateBoard delegates with empty images" classname="com.project.ds_helper.domain.board.controller.BoardControllerTest" time="0.009"/>
+  <testcase name="getMyBoards returns cursor response" classname="com.project.ds_helper.domain.board.controller.BoardControllerTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

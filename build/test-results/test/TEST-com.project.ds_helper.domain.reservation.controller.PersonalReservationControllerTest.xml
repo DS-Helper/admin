@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.reservation.controller.PersonalReservationControllerTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:14" hostname="아기" time="0.056">
+  <properties/>
+  <testcase name="개인 예약 취소는 서비스 호출 후 204를 반환한다" classname="com.project.ds_helper.domain.reservation.controller.PersonalReservationControllerTest" time="0.041"/>
+  <testcase name="개인 예약 단건 조회는 서비스 결과를 반환한다" classname="com.project.ds_helper.domain.reservation.controller.PersonalReservationControllerTest" time="0.004"/>
+  <testcase name="상태별 개인 예약 조회는 서비스 결과를 반환한다" classname="com.project.ds_helper.domain.reservation.controller.PersonalReservationControllerTest" time="0.01"/>
+  <system-out><![CDATA[20:39:14.134 [Test worker] INFO com.project.ds_helper.domain.reservation.dto.response.GetPersonalReservationsResDto -- content.size : 0, number : 0, size : 0, first : true, last : true. hasNext : false
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.notification.controller.NotificationControllerTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:10" hostname="아기" time="0.105">
+  <properties/>
+  <testcase name="알림 읽음 처리는 성공 응답을 반환한다" classname="com.project.ds_helper.domain.notification.controller.NotificationControllerTest" time="0.064"/>
+  <testcase name="미읽음 알림 개수 조회는 ResponseVo로 감싼 응답을 반환한다" classname="com.project.ds_helper.domain.notification.controller.NotificationControllerTest" time="0.009"/>
+  <testcase name="전체 알림 읽음 처리는 성공 응답을 반환한다" classname="com.project.ds_helper.domain.notification.controller.NotificationControllerTest" time="0.008"/>
+  <testcase name="내 알림 목록 조회는 ResponseVo로 감싼 커서 응답을 반환한다" classname="com.project.ds_helper.domain.notification.controller.NotificationControllerTest" time="0.017"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

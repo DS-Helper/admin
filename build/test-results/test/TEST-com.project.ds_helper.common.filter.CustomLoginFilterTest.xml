@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.common.filter.CustomLoginFilterTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:38:57" hostname="아기" time="7.955">
+  <properties/>
+  <testcase name="기관 로그인 성공 시 ResponseBody에 JwtResponse를 내려준다" classname="com.project.ds_helper.common.filter.CustomLoginFilterTest" time="7.955"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (C:\Users\dldbs\.gradle\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.17.6\17b32fd9f57deef02842f7f05abc4ad8127fe34e\byte-buddy-agent-1.17.6.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+]]></system-err>
+</testsuite>

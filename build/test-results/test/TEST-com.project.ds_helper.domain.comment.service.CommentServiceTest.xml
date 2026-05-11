@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.comment.service.CommentServiceTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:09" hostname="아기" time="0.154">
+  <properties/>
+  <testcase name="댓글 수정은 작성자의 댓글 내용만 변경한다" classname="com.project.ds_helper.domain.comment.service.CommentServiceTest" time="0.048"/>
+  <testcase name="cursorTime만 전달되면 예외가 발생한다" classname="com.project.ds_helper.domain.comment.service.CommentServiceTest" time="0.006"/>
+  <testcase name="관리자는 작성자가 아니어도 댓글을 삭제할 수 있다" classname="com.project.ds_helper.domain.comment.service.CommentServiceTest" time="0.004"/>
+  <testcase name="부모 댓글 조회는 커서와 hasNext를 계산한다" classname="com.project.ds_helper.domain.comment.service.CommentServiceTest" time="0.006"/>
+  <testcase name="cursorId만 전달되면 예외가 발생한다" classname="com.project.ds_helper.domain.comment.service.CommentServiceTest" time="0.008"/>
+  <testcase name="Depth1 댓글 생성 시 댓글 저장과 알림 생성을 함께 수행한다" classname="com.project.ds_helper.domain.comment.service.CommentServiceTest" time="0.018"/>
+  <testcase name="대댓글 조회는 DTO 목록과 커서를 반환한다" classname="com.project.ds_helper.domain.comment.service.CommentServiceTest" time="0.013"/>
+  <testcase name="Depth2 댓글 생성 시 부모 댓글과 게시글 관계를 검증한다" classname="com.project.ds_helper.domain.comment.service.CommentServiceTest" time="0.017"/>
+  <testcase name="대댓글 조회는 부모 댓글 존재 여부를 먼저 검증한다" classname="com.project.ds_helper.domain.comment.service.CommentServiceTest" time="0.006"/>
+  <testcase name="댓글 삭제 시 자식 댓글까지 soft delete 한다" classname="com.project.ds_helper.domain.comment.service.CommentServiceTest" time="0.003"/>
+  <testcase name="대댓글의 부모 댓글 게시글이 다르면 예외가 발생한다" classname="com.project.ds_helper.domain.comment.service.CommentServiceTest" time="0.005"/>
+  <testcase name="조회 size는 1 이상이어야 한다" classname="com.project.ds_helper.domain.comment.service.CommentServiceTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
