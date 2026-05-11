@@ -18,6 +18,9 @@
   --color-primitive-gray-200: #eeeeee;
   --color-primitive-gray-100: #f6f6f6;
 
+  /* 레이아웃: 모바일 고정 헤더 높이만큼 본문 패딩·오버레이 시작 위치와 맞춤 */
+  --admin-shell-mobile-top-offset: 8.7rem;
+
   /* text */
   --color-semantic-text-primary: var(--color-primitive-gray-800);
   --color-semantic-text-secondary: var(--color-primitive-gray-600);

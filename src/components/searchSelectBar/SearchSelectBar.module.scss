@@ -1,40 +1,47 @@
 .searchSelectBarWrap {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 1.2rem;
   width: 100%;
 }
 
-.searchSelectBar {
+.inputsGroup {
   display: flex;
+  flex: 1;
+  min-width: 0;
   align-items: center;
-  gap: 1rem;
-  width: 100%;
+  gap: 1.2rem;
+}
+
+.actionsGroup {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: stretch;
 }
 
 .searchBox {
   position: relative;
   display: flex;
   align-items: center;
-  width: 48.4rem;
-  flex-shrink: 0;
+  max-width: 48.4rem;
 }
 
 .searchIcon {
   position: absolute;
-  left: 1.6rem;
-  font-size: 1.8rem;
+  left: 1.2rem;
+  font-size: 2.2rem;
   color: var(--color-primitive-gray-400);
   pointer-events: none;
 }
 
 .searchInput {
   width: 100%;
-  height: 4.8rem;
-  padding: 0 1.6rem 0 4.4rem;
+  height: 4rem;
+  padding: 0.95rem 0 0.95rem 4rem;
   border: 1px solid var(--color-semantic-border-default);
-  border-radius: 1rem;
+  border-radius: 0.8rem;
   font-size: 1.5rem;
   color: var(--color-semantic-text-primary);
   background-color: var(--color-semantic-bg-page);
@@ -46,10 +53,20 @@
 
 .selectGroup {
   display: flex;
+  flex-direction: row;
   align-items: center;
   flex: 1;
   justify-content: space-between;
   gap: 1rem;
+  min-width: 0;
+}
+
+.selectRowPair {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
 }
 
 .selectFieldWrap {
@@ -61,8 +78,8 @@
 .selectField {
   appearance: none;
   width: 100%;
-  height: 4.8rem;
-  padding: 0 4rem 0 1.6rem;
+  height: 4rem;
+  padding: 0.95rem 0 0.95rem 1.2rem;
   border: 1px solid var(--color-semantic-border-default);
   border-radius: 1rem;
   background-color: var(--color-semantic-bg-page);
@@ -85,9 +102,9 @@
 }
 
 .searchButton {
-  min-width: 18rem;
-  padding: 1.1rem 1.8rem;
-  border-radius: 1rem;
+  min-width: 20.8rem;
+  padding: 1rem 0;
+  border-radius: 0.8rem;
   background-color: var(--color-semantic-bg-brand);
   color: var(--color-semantic-text-inverse);
   font-size: 1.5rem;
@@ -96,29 +113,50 @@
 }
 
 @media (max-width: 611px) {
-  .searchSelectBar {
+  .searchSelectBarWrap {
     flex-direction: column;
     align-items: stretch;
+    gap: 0.8rem;
+  }
+
+  .inputsGroup {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.8rem;
   }
 
   .searchBox {
+    max-width: none;
     width: 100%;
   }
 
   .selectGroup {
-    width: 100%;
     flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
+    width: 100%;
+    gap: 0.8rem;
+  }
+
+  .selectRowPair {
+    flex-direction: row;
+    width: 100%;
   }
 
   .selectFieldWrap {
     width: 100%;
-    flex: none;
+  }
+
+  .selectRowPair .selectFieldWrap {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .actionsGroup {
+    width: 100%;
   }
 
   .searchButton {
     width: 100%;
-    min-width: 0;
   }
 }

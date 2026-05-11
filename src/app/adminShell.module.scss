@@ -2,6 +2,7 @@
   display: flex;
   min-height: 100vh;
   background-color: var(--color-primitive-gray-100);
+  isolation: isolate;
 }
 
 .mainContent {
@@ -12,4 +13,13 @@
 
 .mainContentNoSidebar {
   padding: 0;
+}
+
+@media (max-width: 611px) {
+  .mainContent:not(.mainContentNoSidebar) {
+    position: relative;
+    /* Sidebar modalOverlay보다 반드시 뒤(z-index 높은 쪽이 위) */
+    z-index: 0;
+    padding-top: var(--admin-shell-mobile-top-offset);
+  }
 }
