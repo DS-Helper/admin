@@ -1,13 +1,13 @@
 .shell {
   display: flex;
   min-height: 100vh;
-  background-color: #f7f7f8;
+  background-color: var(--color-primitive-gray-100);
 }
 
 .mainContent {
   flex: 1;
   min-width: 0;
-  padding: 32px 36px;
+  padding: 3rem;
 }
 
 .mainContentNoSidebar {

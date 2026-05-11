@@ -1,0 +1,124 @@
+.searchSelectBarWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.2rem;
+  width: 100%;
+}
+
+.searchSelectBar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.searchBox {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 48.4rem;
+  flex-shrink: 0;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1.6rem;
+  font-size: 1.8rem;
+  color: var(--color-primitive-gray-400);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  height: 4.8rem;
+  padding: 0 1.6rem 0 4.4rem;
+  border: 1px solid var(--color-semantic-border-default);
+  border-radius: 1rem;
+  font-size: 1.5rem;
+  color: var(--color-semantic-text-primary);
+  background-color: var(--color-semantic-bg-page);
+
+  &::placeholder {
+    color: var(--color-primitive-gray-500);
+  }
+}
+
+.selectGroup {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.selectFieldWrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.selectField {
+  appearance: none;
+  width: 100%;
+  height: 4.8rem;
+  padding: 0 4rem 0 1.6rem;
+  border: 1px solid var(--color-semantic-border-default);
+  border-radius: 1rem;
+  background-color: var(--color-semantic-bg-page);
+  font-size: 1.5rem;
+  color: var(--color-semantic-text-primary);
+}
+
+.selectFieldPlaceholder {
+  color: var(--color-primitive-gray-500);
+}
+
+.arrowIcon {
+  position: absolute;
+  right: 1.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.7rem;
+  color: var(--color-primitive-gray-400);
+  pointer-events: none;
+}
+
+.searchButton {
+  min-width: 18rem;
+  padding: 1.1rem 1.8rem;
+  border-radius: 1rem;
+  background-color: var(--color-semantic-bg-brand);
+  color: var(--color-semantic-text-inverse);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+@media (max-width: 611px) {
+  .searchSelectBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchBox {
+    width: 100%;
+  }
+
+  .selectGroup {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+
+  .selectFieldWrap {
+    width: 100%;
+    flex: none;
+  }
+
+  .searchButton {
+    width: 100%;
+    min-width: 0;
+  }
+}

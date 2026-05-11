@@ -45,7 +45,7 @@ function makeNavImage(src: string) {
 
 const navItems: NavEntry[] = [
   { href: "/", label: "대시보드", Icon: IconDashboard, matchExact: true },
-  { href: "/help-requests", label: "도움 요청", Icon: makeNavImage("/icons/leafIcon.svg") },
+  { href: "/help", label: "도움 요청", Icon: makeNavImage("/icons/leafIcon.svg") },
   {
     href: "/customer-inquiries",
     label: "고객 문의",

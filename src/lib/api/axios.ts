@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from "axios";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
-const MANUAL_ADMIN_TOKEN = "토큰";
+const MANUAL_ADMIN_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJpZCI6ImM2NWIyYzBjLTYzZGYtNDlhMC04ZDk3LTZiMjhmN2YyNWVjNyIsInJvbGUiOiJBRE1JTiIsInR5cGUiOiJQRVJTT05BTCIsInRva2VuVHlwZSI6ImFjY2Vzc1Rva2VuIiwiaWF0IjoxNzc4MjE4OTAwLCJleHAiOjE3NzgyMjI1MDB9.2OtXSTohwgQGK3ShjwlJLfh7gp2tihBTciL4Ufzz_ns";
 
 function shouldAttachAuthorization(url: string): boolean {
   if (!url) return true;
