@@ -10,14 +10,14 @@ export default function Home() {
   const {
     waitingRequestCount,
     acceptedRequestCount,
-    setCountsFromHelpList,
+    setHelpListFromQuery,
     resetCounts,
   } = useHelpRequestStore();
 
   useEffect(() => {
     if (!data) return;
-    setCountsFromHelpList(data);
-  }, [data, setCountsFromHelpList]);
+    setHelpListFromQuery(data);
+  }, [data, setHelpListFromQuery]);
 
   useEffect(() => {
     if (!isError) return;

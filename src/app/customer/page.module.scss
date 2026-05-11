@@ -1,0 +1,120 @@
+@use "../../styles/typography" as typography;
+
+.customerMain {
+  display: flex;
+  flex-direction: column;
+  gap: 5rem;
+
+  @media (max-width: 611px) {
+    gap: 3rem;
+  }
+}
+
+.filterSection {
+  width: 100%;
+}
+
+.inquiryGroupSection {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.dateGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.dateTitle {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--color-primitive-gray-600);
+}
+
+.inquiryList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.inquiryItem {
+  display: grid;
+  grid-template-columns: 1fr 6rem;
+  min-height: 8.8rem;
+  border-radius: 1.2rem;
+  background-color: var(--color-semantic-bg-page);
+  overflow: hidden;
+  box-shadow: 0 0 0.4rem 0 rgba(0, 0, 0, 0.1);
+}
+
+.inquiryBody {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.8rem 2.4rem;
+}
+
+.inquiryUserName {
+  margin: 0;
+  color: var(--color-semantic-text-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.inquiryTypeText {
+  margin: 0;
+  color: var(--color-semantic-text-secondary);
+  @include typography.typography-label-m;
+}
+
+.inquiryStatusBar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.4rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.25;
+}
+
+/* 답변 대기: 연한 로즈 바 (디자인 시안) */
+.inquiryStatusWaiting {
+  background-color: var(--color-semantic-bg-brand);
+  color: var(--color-semantic-text-inverse);
+}
+
+/* 답변 완료 등: 연한 민트 바 */
+.inquiryStatusAnswered {
+  background-color: var(--color-semantic-bg-brand-soft);
+  color: var(--color-semantic-text-primary);
+}
+
+.emptyText {
+  margin: 0;
+  padding: 2.4rem;
+  border: 1px dashed var(--color-semantic-border-default);
+  border-radius: 1rem;
+  font-size: 1.4rem;
+  color: var(--color-semantic-text-secondary);
+  text-align: center;
+}
+
+.errorText {
+  margin: 0;
+  padding: 2.4rem;
+  border-radius: 1rem;
+  font-size: 1.4rem;
+  color: var(--color-semantic-text-danger, #b91c1c);
+  text-align: center;
+  background-color: var(--color-semantic-bg-neutral-soft);
+}
+
+@media (max-width: 960px) {
+  .inquiryItem {
+    grid-template-columns: 1fr 7.4rem;
+  }
+}
