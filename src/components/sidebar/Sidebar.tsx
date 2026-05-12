@@ -55,7 +55,7 @@ const navItems: NavEntry[] = [
   },
   { href: "/notifications", label: "알림", Icon: makeNavImage("/icons/noticeIcon.svg") },
   {
-    href: "/activity-posts",
+    href: "/helpStory",
     label: "활동 게시물",
     Icon: makeNavImage("/icons/boardIcon.svg"),
   },

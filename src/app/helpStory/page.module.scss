@@ -1,0 +1,192 @@
+@use "../../styles/typography" as typography;
+
+.helpStoryMain {
+  display: flex;
+  flex-direction: column;
+  gap: 5rem;
+  position: relative;
+  padding-bottom: 6rem;
+
+  @media (max-width: 611px) {
+    gap: 3rem;
+  }
+}
+
+.filterSection {
+  width: 100%;
+}
+
+.postGroupSection {
+  display: flex;
+  flex-direction: column;
+  gap: 3.2rem;
+}
+
+.dateGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.dateTitle {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--color-primitive-gray-600);
+}
+
+.postList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.postItemLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 1.2rem;
+  outline-offset: 0.2rem;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-semantic-border-focus);
+  }
+}
+
+.postCard {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 1.2rem;
+  min-height: 10rem;
+  padding: 1.2rem;
+  border-radius: 1.2rem;
+  background-color: var(--color-semantic-bg-page);
+  box-shadow: 0 0 0.4rem 0 rgba(0, 0, 0, 0.08);
+}
+
+.thumbnailWrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 8.6rem;
+  height: 8.6rem;
+  border-radius: 1rem;
+  overflow: hidden;
+  background-color: var(--color-primitive-gray-100);
+}
+
+.thumbnail {
+  object-fit: cover;
+}
+
+.postBody {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.6rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.postTitle {
+  margin: 0;
+  color: var(--color-semantic-text-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.postMeta {
+  margin: 0;
+  color: var(--color-semantic-text-secondary);
+  @include typography.typography-label-m;
+}
+
+.emptyText {
+  margin: 0;
+  padding: 2.4rem;
+  border: 1px dashed var(--color-semantic-border-default);
+  border-radius: 1rem;
+  font-size: 1.4rem;
+  color: var(--color-semantic-text-secondary);
+  text-align: center;
+}
+
+.loadingText {
+  margin: 0;
+  padding: 2.4rem;
+  font-size: 1.4rem;
+  color: var(--color-semantic-text-secondary);
+  text-align: center;
+}
+
+.errorText {
+  margin: 0;
+  padding: 2.4rem;
+  border-radius: 1rem;
+  background-color: var(--color-semantic-bg-danger-soft);
+  font-size: 1.4rem;
+  color: var(--color-semantic-text-danger);
+  text-align: center;
+}
+
+.fab {
+  position: fixed;
+  right: 2.4rem;
+  bottom: 2.4rem;
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.8rem;
+  height: 4.8rem;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--color-semantic-bg-brand);
+  color: var(--color-semantic-text-inverse);
+  box-shadow: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translateY(-0.1rem);
+    box-shadow: 0 0.6rem 1.4rem rgba(0, 0, 0, 0.22);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-semantic-border-focus);
+    outline-offset: 0.2rem;
+  }
+}
+
+.fabIcon {
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+@media (max-width: 611px) {
+  .postCard {
+    gap: 1.2rem;
+    min-height: 8.8rem;
+    padding: 1.2rem;
+  }
+
+  .thumbnailWrap {
+    width: 8.8rem;
+    height: 8.8rem;
+  }
+
+  .fab {
+    right: 1.6rem;
+    bottom: 1.6rem;
+    width: 5.2rem;
+    height: 5.2rem;
+  }
+}
