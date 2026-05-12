@@ -1,0 +1,115 @@
+.loginPage {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background-color: #f5f7fa;
+}
+
+.loginCard {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.loginTitle {
+  margin: 0;
+  font-size: var(--title-L-size);
+  font-weight: var(--title-L-weight);
+  line-height: 1.2;
+  color: var(--color-semantic-text-primary);
+  text-align: center;
+}
+
+.loginDescription {
+  margin: 0;
+  font-size: var(--body-M-size);
+  font-weight: var(--body-M-weight);
+  line-height: 1.5;
+  color: var(--color-semantic-text-secondary);
+}
+
+.loginForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.tokenField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.tokenLabel {
+  font-size: var(--body-M-size);
+  font-weight: var(--body-M-weight);
+  color: var(--color-semantic-text-primary);
+}
+
+.tokenInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1.2rem 1.4rem;
+  border: 1px solid var(--color-primitive-gray-300);
+  border-radius: 0.8rem;
+  font-size: var(--body-M-size);
+  color: var(--color-semantic-text-primary);
+  background-color: var(--color-semantic-bg-page);
+  outline: none;
+
+  &::placeholder {
+    color: var(--color-primitive-gray-500);
+  }
+
+  &:focus-visible {
+    border-color: var(--color-semantic-border-focus);
+    outline: 2px solid var(--color-semantic-border-focus);
+    outline-offset: 0.2rem;
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
+.loginActions {
+  display: flex;
+  flex-direction: column;
+}
+
+.loginSubmitButton {
+  width: 100%;
+  padding: 1rem 1.6rem;
+  border: none;
+  border-radius: 0.8rem;
+  background-color: var(--color-semantic-text-primary);
+  color: var(--color-semantic-bg-page);
+  font-size: var(--body-M-size);
+  font-weight: var(--body-M-weight);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    opacity: 0.92;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-semantic-border-focus);
+    outline-offset: 0.2rem;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.loginHelperText {
+  margin: 0;
+  font-size: var(--body-S-size);
+  font-weight: var(--body-S-weight);
+  line-height: 1.4;
+  color: var(--color-semantic-text-secondary);
+}

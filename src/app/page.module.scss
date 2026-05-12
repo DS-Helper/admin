@@ -1,0 +1,72 @@
+.dashboardMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;
+  min-height: 100%;
+}
+
+.dashboardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.dashboardTitle {
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-semantic-text-primary);
+}
+
+.dashboardDescription {
+  margin: 0;
+  font-size: 1.4rem;
+  line-height: 1.5;
+  color: var(--color-semantic-text-secondary);
+}
+
+.requestGrid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  text-align: center;
+  border-radius: 1.2rem;
+  overflow: hidden;
+}
+
+.requestGrid::after {
+  content: "";
+  position: absolute;
+  top: 2.8rem;
+  bottom: 2.8rem;
+  left: 50%;
+  width: 1px;
+  background-color: var(--color-primitive-gray-300);
+  transform: translateX(-50%);
+}
+
+.requestCard {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: .4rem;
+  min-height: 9.375rem;
+  padding: 2.4rem 0;
+  background-color: var(--color-semantic-bg-page);
+}
+
+.requestLabel {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--color-semantic-text-primary);
+}
+
+.requestCount {
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--color-semantic-text-primary);
+}

@@ -1,0 +1,180 @@
+import { create } from "zustand";
+import { User } from "@/types/userType";
+import { persist } from "zustand/middleware";
+import { getCheckAuth as getUserCheckAuth } from "../api/authUser";
+
+interface UserState {
+  user: User | null;
+  userId: string | null;
+  userRole: string | null;
+  isVerified: boolean;
+  userType: "individual" | "organization" | null;
+  accessToken: string | null;
+  refreshToken: string | null;
+  selectedSocialLoginProvider: "kakao" | "naver" | "google" | null;
+  setUser: (user: User | null) => void;
+  setUserId: (userId: string | null) => void;
+  setUserRole: (userRole: string | null) => void;
+  setIsVerified: (isVerified: boolean) => void;
+  setUserType: (userType: "individual" | "organization" | null) => void;
+  setSelectedSocialLoginProvider: (
+    provider: "kakao" | "naver" | "google" | null
+  ) => void;
+  checkAuthStatus: (options?: { force?: boolean }) => Promise<void>;
+}
+
+type UserPersistedSlice = Pick<
+  UserState,
+  "user" | "userId" | "userRole" | "isVerified" | "userType" | "accessToken" | "selectedSocialLoginProvider"
+>;
+
+function normalizeToken(value: unknown): string | null {
+  if (value == null) return null;
+  const s = String(value).trim();
+  return s || null;
+}
+
+export const useUserStore = create(
+  persist<UserState, [], [], UserPersistedSlice>(
+    (set, get) => ({
+      user: null,
+      userId: null,
+      userRole: null,
+      isVerified: false,
+      userType: null,
+      accessToken: null,
+      refreshToken: null,
+      selectedSocialLoginProvider: null,
+      setUser: (user) => set({ user }),
+      setUserId: (userId) => set({ userId }),
+      setUserRole: (userRole) => set({ userRole }),
+      setIsVerified: (isVerified) => set({ isVerified }),
+      setUserType: (userType) => set({ userType }),
+      setSelectedSocialLoginProvider: (selectedSocialLoginProvider) =>
+        set({ selectedSocialLoginProvider }),
+      checkAuthStatus: async (options) => {
+        const force = options?.force === true;
+        const { userType, isVerified, accessToken, refreshToken } = get();
+
+        if (!force && isVerified && userType) {
+          return;
+        }
+
+        // 토큰이 준비되기 전에는 check-logged-in 호출을 지연시켜
+        // OAuth/로그인 API 응답보다 먼저 검증 API가 실행되는 레이스를 방지한다.
+        const hasOrgToken = typeof accessToken === "string" && !!accessToken.trim();
+        const hasUserToken =
+          typeof refreshToken === "string" && !!refreshToken.trim();
+
+        if (userType === "organization" && !hasOrgToken) {
+          return;
+        }
+        if (userType !== "organization" && !hasUserToken) {
+          return;
+        }
+
+        try {
+          const response = await getUserCheckAuth();
+          if (response && response.data === true) {
+            set({ isVerified: true });
+          } else {
+            set({
+              isVerified: false,
+              user: null,
+              userId: null,
+              userRole: null,
+              userType: null,
+              accessToken: null,
+              refreshToken: null,
+            });
+          }
+        } catch {
+          set({
+            isVerified: false,
+            user: null,
+            userId: null,
+            userRole: null,
+            userType: null,
+            accessToken: null,
+            refreshToken: null,
+          });
+        }
+      },
+    }),
+    {
+      name: "user-store",
+      partialize: (state) => ({
+        user: state.user,
+        userId: state.userId,
+        userRole: state.userRole,
+        isVerified: state.isVerified,
+        userType: state.userType,
+        accessToken: state.accessToken,
+        selectedSocialLoginProvider: state.selectedSocialLoginProvider,
+      }),
+      onRehydrateStorage: () => () => {},
+    }
+  )
+);
+
+export type AppliedLoginTokenState = {
+  hasAccessToken: boolean;
+  hasRefreshToken: boolean;
+};
+
+export function applyLoginResponseTokens(body: unknown): AppliedLoginTokenState {
+  if (body == null || typeof body !== "object") {
+    return { hasAccessToken: false, hasRefreshToken: false };
+  }
+  const o = body as Record<string, unknown>;
+  const nested =
+    o.data != null && typeof o.data === "object"
+      ? (o.data as Record<string, unknown>)
+      : null;
+
+  const access =
+    normalizeToken(o.accessToken) ||
+    normalizeToken(o.access_token) ||
+    normalizeToken(o.token) ||
+    (nested &&
+      (normalizeToken(nested.accessToken) ||
+        normalizeToken(nested.access_token) ||
+        normalizeToken(nested.token)));
+
+  const refresh =
+    normalizeToken(o.refreshToken) ||
+    normalizeToken(o.refresh_token) ||
+    (nested &&
+      (normalizeToken(nested.refreshToken) ||
+        normalizeToken(nested.refresh_token)));
+
+  const patch: Partial<Pick<UserState, "accessToken" | "refreshToken">> = {};
+  if (access) patch.accessToken = access;
+  if (refresh) patch.refreshToken = refresh;
+  if (Object.keys(patch).length > 0) {
+    useUserStore.setState(patch);
+  }
+
+  const { accessToken, refreshToken } = useUserStore.getState();
+  return {
+    hasAccessToken: typeof accessToken === "string" && !!accessToken.trim(),
+    hasRefreshToken: typeof refreshToken === "string" && !!refreshToken.trim(),
+  };
+}
+
+export function clearAuthCredentials(): void {
+  useUserStore.setState({ accessToken: null, refreshToken: null });
+}
+
+export function resetUserSession(): void {
+  useUserStore.setState({
+    user: null,
+    userId: null,
+    userRole: null,
+    isVerified: false,
+    userType: null,
+    accessToken: null,
+    refreshToken: null,
+    selectedSocialLoginProvider: null,
+  });
+}

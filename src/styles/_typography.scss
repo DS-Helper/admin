@@ -1,0 +1,134 @@
+// 단일 소스: 컴파일 타임 토큰 (SCSS 변수)
+$typography-display-size: 4.6rem;
+$typography-display-weight: 700;
+
+$typography-title-xl-size: 3.2rem;
+$typography-title-xl-weight: 500;
+
+$typography-title-l-size: 2.4rem;
+$typography-title-l-weight: 600;
+
+$typography-title-m-size: 2rem;
+$typography-title-m-weight: 600;
+
+$typography-title-s-size: 1.6rem;
+$typography-title-s-weight: 600;
+
+$typography-title-xs-size: 1.4rem;
+$typography-title-xs-weight: 700;
+
+$typography-body-l-size: 1.8rem;
+$typography-body-l-weight: 600;
+
+$typography-body-m-size: 1.6rem;
+$typography-body-m-weight: 400;
+
+$typography-body-s-size: 1.4rem;
+$typography-body-s-weight: 400;
+
+$typography-caption-size: 1.4rem;
+$typography-caption-weight: 400;
+
+$typography-label-m-size: 1.5rem;
+$typography-label-m-weight: 500;
+
+$typography-label-s-size: 1.3rem;
+$typography-label-s-weight: 600;
+
+$typography-value-m-size: 1.5rem;
+$typography-value-m-weight: 400;
+
+/// `:root` 등에 붙여 기존 `var(--*-size)` / `var(--*-weight)` 계약을 유지합니다.
+@mixin define-css-variables {
+  --Display-size: #{$typography-display-size};
+  --Display-weight: #{$typography-display-weight};
+  --title-XL-size: #{$typography-title-xl-size};
+  --title-XL-weight: #{$typography-title-xl-weight};
+  --title-L-size: #{$typography-title-l-size};
+  --title-L-weight: #{$typography-title-l-weight};
+  --title-M-size: #{$typography-title-m-size};
+  --title-M-weight: #{$typography-title-m-weight};
+  --title-S-size: #{$typography-title-s-size};
+  --title-S-weight: #{$typography-title-s-weight};
+  --title-XS-size: #{$typography-title-xs-size};
+  --title-XS-weight: #{$typography-title-xs-weight};
+  --body-L-size: #{$typography-body-l-size};
+  --body-L-weight: #{$typography-body-l-weight};
+  --body-M-size: #{$typography-body-m-size};
+  --body-M-weight: #{$typography-body-m-weight};
+  --body-S-size: #{$typography-body-s-size};
+  --body-S-weight: #{$typography-body-s-weight};
+  --caption-size: #{$typography-caption-size};
+  --caption-weight: #{$typography-caption-weight};
+  --label-M-size: #{$typography-label-m-size};
+  --label-M-weight: #{$typography-label-m-weight};
+  --label-S-size: #{$typography-label-s-size};
+  --label-S-weight: #{$typography-label-s-weight};
+  --value-M-size: #{$typography-value-m-size};
+  --value-M-weight: #{$typography-value-m-weight};
+}
+
+@mixin typography-display {
+  font-size: var(--Display-size);
+  font-weight: var(--Display-weight);
+}
+
+@mixin typography-title-xl {
+  font-size: var(--title-XL-size);
+  font-weight: var(--title-XL-weight);
+}
+
+@mixin typography-title-l {
+  font-size: var(--title-L-size);
+  font-weight: var(--title-L-weight);
+}
+
+@mixin typography-title-m {
+  font-size: var(--title-M-size);
+  font-weight: var(--title-M-weight);
+}
+
+@mixin typography-title-s {
+  font-size: var(--title-S-size);
+  font-weight: var(--title-S-weight);
+}
+
+@mixin typography-title-xs {
+  font-size: var(--title-XS-size);
+  font-weight: var(--title-XS-weight);
+}
+
+@mixin typography-body-l {
+  font-size: var(--body-L-size);
+  font-weight: var(--body-L-weight);
+}
+
+@mixin typography-body-m {
+  font-size: var(--body-M-size);
+  font-weight: var(--body-M-weight);
+}
+
+@mixin typography-body-s {
+  font-size: var(--body-S-size);
+  font-weight: var(--body-S-weight);
+}
+
+@mixin typography-caption {
+  font-size: var(--caption-size);
+  font-weight: var(--caption-weight);
+}
+
+@mixin typography-label-m {
+  font-size: var(--label-M-size);
+  font-weight: var(--label-M-weight);
+}
+
+@mixin typography-label-s {
+  font-size: var(--label-S-size);
+  font-weight: var(--label-S-weight);
+}
+
+@mixin typography-value-m {
+  font-size: var(--value-M-size);
+  font-weight: var(--value-M-weight);
+}
