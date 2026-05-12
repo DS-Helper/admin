@@ -1,4 +1,4 @@
-import { instance } from "./axios";
+import { apiRootBaseUrl, instance } from "./axios";
 import type { CustomerInquiryListResponse } from "@/types/customer";
 
 export const getCustomer = async (): Promise<CustomerInquiryListResponse> => {
@@ -9,9 +9,10 @@ export const getCustomer = async (): Promise<CustomerInquiryListResponse> => {
 };
 
 export const postCustomer = async (inquiryId: string, content: string) => {
-  const response = await instance.post(`/replies`, {
-    inquiryId,
-    content,
-  });
+  const response = await instance.post(
+    `/replies`,
+    { inquiryId, content },
+    { baseURL: apiRootBaseUrl },
+  );
   return response.data;
 };
