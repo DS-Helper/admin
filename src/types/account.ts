@@ -19,3 +19,9 @@ export interface AccountMyInfoResponse {
   message: string;
   data: AccountMyInfoData;
 }
+
+/** `/user/my-identifier` 본문 (또는 `data` 안에 동일 필드) */
+export interface AccountIdentifierData {
+  userId: string;
+  userRole: string;
+}

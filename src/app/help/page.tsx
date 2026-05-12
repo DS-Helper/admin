@@ -179,6 +179,8 @@ export default function HelpPage() {
                             ? styles.requestActionReject
                             : item.reservationStatus === "완료"
                               ? styles.requestActionComplete
+                              : item.reservationStatus === "수락"
+                              ? styles.requestActionAccept
                               : styles.requestActionWaiting
                         }`}
                       >

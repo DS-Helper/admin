@@ -30,43 +30,80 @@
   color: var(--color-semantic-text-secondary);
 }
 
+.loginForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.tokenField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.tokenLabel {
+  font-size: var(--body-M-size);
+  font-weight: var(--body-M-weight);
+  color: var(--color-semantic-text-primary);
+}
+
+.tokenInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1.2rem 1.4rem;
+  border: 1px solid var(--color-primitive-gray-300);
+  border-radius: 0.8rem;
+  font-size: var(--body-M-size);
+  color: var(--color-semantic-text-primary);
+  background-color: var(--color-semantic-bg-page);
+  outline: none;
+
+  &::placeholder {
+    color: var(--color-primitive-gray-500);
+  }
+
+  &:focus-visible {
+    border-color: var(--color-semantic-border-focus);
+    outline: 2px solid var(--color-semantic-border-focus);
+    outline-offset: 0.2rem;
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
 .loginActions {
   display: flex;
   flex-direction: column;
 }
 
-.kakaoButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
+.loginSubmitButton {
   width: 100%;
-  padding: 1rem 3rem;
+  padding: 1rem 1.6rem;
   border: none;
-  border-radius: 5rem;
-  background-color: #fee500;
-  color: var(--color-semantic-text-primary);
+  border-radius: 0.8rem;
+  background-color: var(--color-semantic-text-primary);
+  color: var(--color-semantic-bg-page);
   font-size: var(--body-M-size);
   font-weight: var(--body-M-weight);
   cursor: pointer;
-  transition:
-    background-color 0.15s ease,
-    transform 0.05s ease,
-}
 
-.kakaoIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  font-size: 2rem;
-}
+  &:hover:not(:disabled) {
+    opacity: 0.92;
+  }
 
-.kakaoLabel {
-  text-align: center;
-  font-size: var(--body-M-size);
-  font-weight: var(--body-M-weight);
+  &:focus-visible {
+    outline: 2px solid var(--color-semantic-border-focus);
+    outline-offset: 0.2rem;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 
 .loginHelperText {
@@ -76,4 +113,3 @@
   line-height: 1.4;
   color: var(--color-semantic-text-secondary);
 }
-

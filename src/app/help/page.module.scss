@@ -105,13 +105,18 @@
 }
 
 .requestActionWaiting {
+  background-color: var(--color-semantic-bg-brand-soft);
+  color: var(--color-semantic-bg-brand);
+}
+
+.requestActionAccept {
   background-color: var(--color-semantic-bg-brand);
   color: var(--color-semantic-text-inverse);
 }
 
 .requestActionReject {
-  background-color: var(--color-semantic-bg-danger);
-  color: var(--color-semantic-text-inverse);
+  background-color: var(--color-semantic-bg-danger-soft);
+  color: var(--color-semantic-text-danger);
 }
 
 .requestActionComplete {

@@ -1,8 +1,15 @@
 import axios, { AxiosInstance } from "axios";
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
-// 토큰
-const MANUAL_ADMIN_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJpZCI6ImM2NWIyYzBjLTYzZGYtNDlhMC04ZDk3LTZiMjhmN2YyNWVjNyIsInJvbGUiOiJBRE1JTiIsInR5cGUiOiJQRVJTT05BTCIsInRva2VuVHlwZSI6ImFjY2Vzc1Rva2VuIiwiaWF0IjoxNzc4NDg5MDc2LCJleHAiOjE3Nzg0OTI2NzZ9.MunaWpYTGSO96403vWi_67d1HGxCZdj4i1Sy6tPXBZo";
+import { ADMIN_ACCESS_TOKEN_STORAGE_KEY, clearAdminAccessToken } from "@/lib/auth/adminSession";
+
+export const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+
+function resolveBearerToken(): string {
+  if (typeof window !== "undefined") {
+    return window.localStorage.getItem(ADMIN_ACCESS_TOKEN_STORAGE_KEY)?.trim() ?? "";
+  }
+  return "";
+}
 
 function shouldAttachAuthorization(url: string): boolean {
   if (!url) return true;
@@ -16,7 +23,7 @@ function shouldAttachAuthorization(url: string): boolean {
 }
 
 export const instance: AxiosInstance = axios.create({
-  baseURL: apiBaseUrl,
+  baseURL: apiBaseUrl || undefined,
   withCredentials: true,
 });
 
@@ -27,7 +34,7 @@ instance.interceptors.request.use(
       return config;
     }
 
-    const token = MANUAL_ADMIN_TOKEN.trim();
+    const token = resolveBearerToken();
     if (!token) return config;
 
     config.headers = config.headers ?? {};
@@ -37,7 +44,7 @@ instance.interceptors.request.use(
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 instance.interceptors.response.use(
@@ -47,6 +54,11 @@ instance.interceptors.response.use(
       const url = error.config?.url || "";
       if (url.includes("/auth/check-logged-in")) {
         return Promise.reject(error);
+      }
+      if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+        window.alert("관리자 로그인이 필요합니다.");
+        clearAdminAccessToken();
+        window.location.assign("/login");
       }
     }
 
@@ -62,5 +74,5 @@ instance.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );

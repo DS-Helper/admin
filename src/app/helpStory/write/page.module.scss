@@ -6,7 +6,7 @@
   gap: 2.4rem;
   max-width: 72rem;
   margin: 0 auto;
-  padding-bottom: 4rem;
+  padding: 10rem;
 }
 
 .pageTitle {
@@ -247,12 +247,7 @@
 }
 
 @media (max-width: 611px) {
-  .actionsRow {
-    flex-direction: column-reverse;
-  }
-
-  .backButton,
-  .submitButton {
-    width: 100%;
+  .writeMain {
+    padding: 11rem 0;
   }
 }

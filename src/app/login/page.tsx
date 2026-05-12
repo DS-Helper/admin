@@ -1,46 +1,50 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { RiKakaoTalkFill } from "react-icons/ri";
 
 import styles from "./page.module.scss";
+import { getMyIdentifier } from "@/lib/api/account";
 import {
-  buildKakaoAuthorizeUrl,
-  getLogin,
-} from "@/lib/api/authUser";
+  LOGIN_REQUIRED_NOTICE_KEY,
+  LOGIN_REQUIRED_NOTICE_VALUE,
+  persistAdminAccessToken,
+} from "@/lib/auth/adminSession";
 
-export default function LoginPage() {
+function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [accessToken, setAccessToken] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const code = searchParams.get("code");
-    if (!code || isAuthenticating) return;
+    if (searchParams.get(LOGIN_REQUIRED_NOTICE_KEY) !== LOGIN_REQUIRED_NOTICE_VALUE) {
+      return;
+    }
+    window.alert("관리자 로그인이 필요합니다.");
+    router.replace("/login");
+  }, [searchParams, router]);
 
-    const run = async () => {
-      try {
-        setIsAuthenticating(true);
-        await getLogin(code);
-        router.replace("/");
-      } finally {
-        setIsAuthenticating(false);
-      }
-    };
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const trimmed = accessToken.trim();
+    if (!trimmed || isSubmitting) return;
 
-    void run();
-  }, [searchParams, isAuthenticating, router]);
-
-  const handleKakaoLoginClick = () => {
+    setIsSubmitting(true);
     try {
-      const url = buildKakaoAuthorizeUrl();
-      if (typeof window !== "undefined") {
-        window.location.href = url;
+      const identifier = await getMyIdentifier(trimmed);
+      if (identifier?.userRole === "ADMIN") {
+        persistAdminAccessToken(trimmed);
+        router.replace("/");
+        return;
       }
-    } catch {
-      alert("카카오 로그인 초기화 중 오류가 발생했습니다.");
+      if (identifier) {
+        window.alert("관리자 계정이 아닙니다.");
+        return;
+      }
+      window.alert("관리자 계정으로 로그인을 하세요.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -48,21 +52,52 @@ export default function LoginPage() {
     <main className={styles.loginPage}>
       <section className={styles.loginCard}>
         <h1 className={styles.loginTitle}>관리자 로그인</h1>
-        <div className={styles.loginActions}>
-          <button
-            type="button"
-            className={styles.kakaoButton}
-            onClick={handleKakaoLoginClick}
-            disabled={isAuthenticating}
-          >
-            <span className={styles.kakaoIcon} aria-hidden="true">
-              <RiKakaoTalkFill />
-            </span>
-            <span className={styles.kakaoLabel}>카카오 로그인하기</span>
-          </button>
-        </div>
+        <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
+          <div className={styles.tokenField}>
+            <label className={styles.tokenLabel} htmlFor="login-access-token">
+              Access token
+            </label>
+            <input
+              id="login-access-token"
+              name="accessToken"
+              type="password"
+              autoComplete="off"
+              className={styles.tokenInput}
+              value={accessToken}
+              onChange={(e) => setAccessToken(e.target.value)}
+              placeholder="토큰을 입력하세요"
+              disabled={isSubmitting}
+              spellCheck={false}
+            />
+          </div>
+          <div className={styles.loginActions}>
+            <button
+              type="submit"
+              className={styles.loginSubmitButton}
+              disabled={isSubmitting || !accessToken.trim()}
+            >
+              {isSubmitting ? "확인 중…" : "로그인"}
+            </button>
+          </div>
+        </form>
       </section>
     </main>
   );
 }
 
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className={styles.loginPage}>
+          <section className={styles.loginCard}>
+            <h1 className={styles.loginTitle}>관리자 로그인</h1>
+            <p className={styles.loginDescription}>불러오는 중입니다.</p>
+          </section>
+        </main>
+      }
+    >
+      <LoginPageInner />
+    </Suspense>
+  );
+}

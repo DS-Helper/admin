@@ -13,12 +13,25 @@ type AppShellProps = {
 export default function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const isLoginPage = pathname === "/login";
+  const isHelpStorySubPage = pathname?.startsWith("/helpStory/") ?? false;
 
   if (isLoginPage) {
     return (
       <div className={shellStyles.shell}>
         <main
           className={`${shellStyles.mainContent} ${shellStyles.mainContentNoSidebar}`}
+        >
+          {children}
+        </main>
+      </div>
+    );
+  }
+
+  if (isHelpStorySubPage) {
+    return (
+      <div className={shellStyles.shell}>
+        <main
+          className={`${shellStyles.mainContent} ${shellStyles.mainContentHelpStoryWhite}`}
         >
           {children}
         </main>

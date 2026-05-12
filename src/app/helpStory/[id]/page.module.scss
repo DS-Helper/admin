@@ -1,0 +1,119 @@
+@use "../../../styles/typography" as typography;
+
+.detailMain {
+  display: flex;
+  flex-direction: column;
+  gap: 6rem;
+  max-width: 57rem;
+  margin: 3.7rem auto 0;
+  padding-bottom: 4rem;
+}
+
+.headerBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.8rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 5rem;
+  font-weight: 500;
+  color: var(--color-semantic-text-primary);
+}
+
+.metaDate {
+  margin: 0;
+  color: var(--color-primitive-gray-800);
+  font-size: 1.7rem;
+  font-weight: 400;
+}
+
+.heroImageWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  max-height: 48rem;
+  overflow: hidden;
+  background-color: var(--color-primitive-gray-100);
+}
+
+.heroImage {
+  object-fit: cover;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+}
+
+.paragraph {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 500;
+  line-height: 1.8;
+  color: var(--color-primitive-gray-800);
+  white-space: pre-wrap;
+}
+
+.backButton {
+  padding: 0.4rem 1.2rem;
+  border-radius: 0.5rem;
+  background-color: var(--color-semantic-bg-brand);
+  color: var(--color-primitive-white);
+  cursor: pointer;
+  text-align: center;
+  @include typography.typography-label-m;
+}
+
+.actionsRow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  margin-top: 1.6rem;
+}
+
+.actionButton {
+  padding: 0.4rem 1.2rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-primitive-gray-300);
+  background-color: var(--color-semantic-bg-page);
+  color: var(--color-semantic-text-primary);
+  cursor: pointer;
+  text-align: center;
+  @include typography.typography-label-m;
+}
+
+.actionButtonDanger {
+  background-color: var(--color-primitive-red-500);
+  color: var(--color-primitive-white);
+  border: none;
+}
+
+.loadingText,
+.errorText,
+.emptyText {
+  margin: 0;
+  padding: 2.4rem;
+  font-size: 1.5rem;
+  text-align: center;
+  color: var(--color-semantic-text-secondary);
+}
+
+.errorText {
+  color: var(--color-semantic-text-danger);
+}
+
+@media (max-width: 611px) {
+  .detailMain {
+    margin: 3rem auto 0;
+  }
+
+  .heroImageWrap {
+    aspect-ratio: 4 / 3;
+    max-height: none;
+  }
+}

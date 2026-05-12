@@ -10,9 +10,28 @@ import {
   useHelpStoryPostQuery,
 } from "@/lib/query/useHelpStoryPostQuery";
 import { helpStoryPostsQueryKey } from "@/lib/query/useHelpStoryPostsQuery";
+import type { HelpStoryPost } from "@/types/helpStory";
 import styles from "./page.module.scss";
 
 const IMAGE_SLOT_COUNT = 1;
+const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+
+/** 수정 PUT의 dto.imageUrls: 새 파일로 덮어쓰는 슬롯의 기존 URL은 제외, 나머지 유지 */
+function putDtoImageUrls(
+  post: HelpStoryPost,
+  imageSlots: (File | null)[],
+  remoteImageUrl: string | null,
+): string[] {
+  const hasNewFile = imageSlots.some((f) => f !== null);
+  if (hasNewFile) {
+    return post.imageUrls.filter((_, index) => !imageSlots[index]);
+  }
+  const allSlotsEmpty = imageSlots.every((f) => f === null);
+  if (allSlotsEmpty && !remoteImageUrl) {
+    return [];
+  }
+  return post.imageUrls;
+}
 
 function formatFileSize(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes < 0) return "0 B";
@@ -166,6 +185,10 @@ function HelpStoryWriteForm({ editPostId }: { editPostId: string }) {
   }, [isEdit, editPost]);
 
   const setImageAt = useCallback((index: number, file: File | null) => {
+    if (file && file.size > MAX_IMAGE_SIZE_BYTES) {
+      window.alert("이미지는 10MB 이하만 첨부할 수 있습니다.");
+      return;
+    }
     if (file) setRemoteImageUrl(null);
     setImageSlots((prev) => {
       const next = [...prev];
@@ -191,7 +214,18 @@ function HelpStoryWriteForm({ editPostId }: { editPostId: string }) {
 
   const mutation = useMutation({
     mutationFn: async (payload: { title: string; content: string; images: File[] }) => {
-      if (isEdit) return putPosts(editPostId, payload);
+      if (isEdit) {
+        if (!editPost) {
+          throw new Error("게시물 정보가 없습니다.");
+        }
+        return putPosts({
+          postId: editPostId,
+          title: payload.title,
+          content: payload.content,
+          imageUrls: putDtoImageUrls(editPost, imageSlots, remoteImageUrl),
+          images: payload.images,
+        });
+      }
       return postPosts(payload);
     },
     onSuccess: async () => {
@@ -224,6 +258,10 @@ function HelpStoryWriteForm({ editPostId }: { editPostId: string }) {
     }
 
     const extraImages = imageSlots.filter((f): f is File => f !== null);
+    if (extraImages.some((f) => f.size > MAX_IMAGE_SIZE_BYTES)) {
+      window.alert("이미지는 10MB 이하만 첨부할 수 있습니다.");
+      return;
+    }
 
     mutation.mutate({
       title: trimmedTitle,
