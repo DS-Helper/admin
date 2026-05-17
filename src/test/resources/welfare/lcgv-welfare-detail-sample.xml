@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<wantedDtl>
+  <resultCode>0</resultCode>
+  <resultMessage>SUCCESS</resultMessage>
+  <servId>WLF00006281</servId>
+  <servNm>방학기간 초등아동 자녀 일시 배달비 지원사업</servNm>
+  <sprtTrgtCn>전라남도 광양시에 거주하는 초등아동 가구</sprtTrgtCn>
+  <slctCritCn>거주 및 연령 요건 충족</slctCritCn>
+  <alwServCn>방학기간 배달비 지원</alwServCn>
+  <aplyMtdCn>모바일앱 또는 인터넷 신청</aplyMtdCn>
+  <inqplCtadrList>
+    <wlfareInfoReldNm>문의처</wlfareInfoReldNm>
+    <wlfareInfoReldCn>119</wlfareInfoReldCn>
+    <wlfareInfoDtlCd>10</wlfareInfoDtlCd>
+  </inqplCtadrList>
+  <inqplHmpgReldList>
+    <wlfareInfoDtlCd>20</wlfareInfoDtlCd>
+    <wlfareInfoReldNm>홈페이지</wlfareInfoReldNm>
+    <wlfareInfoReldCn>https://www.bokjiro.go.kr</wlfareInfoReldCn>
+  </inqplHmpgReldList>
+  <baslawList>
+    <wlfareInfoDtlCd>30</wlfareInfoDtlCd>
+    <wlfareInfoReldNm>근거법</wlfareInfoReldNm>
+    <wlfareInfoReldCn>광양시 조례</wlfareInfoReldCn>
+  </baslawList>
+  <basfrmList>
+    <wlfareInfoReldCn>신청서</wlfareInfoReldCn>
+    <wlfareInfoDtlCd>40</wlfareInfoDtlCd>
+    <wlfareInfoReldNm>서식</wlfareInfoReldNm>
+  </basfrmList>
+</wantedDtl>

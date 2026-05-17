@@ -84,13 +84,4 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "관리자 로그인", description = "관리자 계정 이메일과 비밀번호를 받아 로그인을 진행합니다.")
-    @PostMapping("/login/admin")
-    public ResponseEntity<?> adminLogin(
-            @RequestBody @Valid AdminLoginReqDto dto,
-            HttpServletResponse response
-    ) {
-        userService.adminLogin(dto, response);
-        return ResponseEntity.ok().build();
-    }
 }

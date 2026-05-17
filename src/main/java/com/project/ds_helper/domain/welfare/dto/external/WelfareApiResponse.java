@@ -1,6 +1,9 @@
 package com.project.ds_helper.domain.welfare.dto.external;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +14,7 @@ import java.util.List;
  */
 @Getter
 @NoArgsConstructor
+@JacksonXmlRootElement(localName = "wantedList")
 public class WelfareApiResponse {
 
     @JsonProperty("resultCode")
@@ -29,5 +33,7 @@ public class WelfareApiResponse {
     private Integer numberOfRows;
 
     @JsonProperty("servList")
+    @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+    @JacksonXmlElementWrapper(useWrapping = false)
     private List<WelfareApiItem> serviceList;
 }

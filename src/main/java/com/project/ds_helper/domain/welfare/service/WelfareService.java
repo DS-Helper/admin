@@ -1,5 +1,7 @@
 package com.project.ds_helper.domain.welfare.service;
 
+import com.project.ds_helper.common.enums.ErrorCode;
+import com.project.ds_helper.common.exception.BusinessException;
 import com.project.ds_helper.domain.user.entity.User;
 import com.project.ds_helper.domain.welfare.dto.request.WelfareRecommendRequest;
 import com.project.ds_helper.domain.welfare.dto.response.WelfareDetailResponse;
@@ -28,6 +30,7 @@ public class WelfareService {
 
     private final WelfareServiceRepository welfareServiceRepository;
     private final WelfareProfileRepository welfareProfileRepository;
+    private final WelfareSyncService welfareSyncService;
 
     /**
      * 사용자의 정보를 기반으로 맞춤 복지 혜택을 추천합니다.
@@ -63,6 +66,8 @@ public class WelfareService {
         String targetCondition = "선택안함".equals(request.getTargetCondition()) ? null : request.getTargetCondition();
         
         List<WelfareServiceEntity> recommendedEntities = welfareServiceRepository.findRecommendedWelfare(
+                request.getCityProvinceName(),
+                request.getDistrictName(),
                 lifeCycleCode,
                 request.getInterestTheme(),
                 targetCondition
@@ -84,7 +89,11 @@ public class WelfareService {
         log.info("복지 혜택 상세 조회 시작: serviceId={}", serviceId);
 
         WelfareServiceEntity entity = welfareServiceRepository.findById(serviceId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 복지 서비스입니다. serviceId=" + serviceId));
+                .orElseGet(() -> {
+                    log.info("WelfareService.getWelfareDetail DB miss. fallback public data API. serviceId={}", serviceId);
+                    return welfareSyncService.fetchAndSaveWelfareDetailByServiceId(serviceId)
+                            .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Welfare service not found. serviceId=" + serviceId));
+                });
 
         return WelfareDetailResponse.from(entity);
     }
@@ -94,6 +103,6 @@ public class WelfareService {
      */
     public WelfareProfile getUserWelfareProfile(User user) {
         return welfareProfileRepository.findByUser(user)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 복지 프로필이 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Welfare profile not found. userId=" + user.getId()));
     }
 }

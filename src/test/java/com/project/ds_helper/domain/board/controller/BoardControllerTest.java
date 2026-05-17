@@ -17,7 +17,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -165,6 +167,41 @@ class BoardControllerTest {
     }
 
     @Test
+    @DisplayName("createBoard delegates with provided images")
+    void createBoard_withImages_delegatesOriginalList() throws Exception {
+        CreateBoardReqDto dto = new CreateBoardReqDto("?꾩껜", "?쒕ぉ", "?댁슜");
+        MultipartFile image = new MockMultipartFile("images", "a.png", "image/png", "a".getBytes());
+        CreateBoardResponseDto created = new CreateBoardResponseDto(
+                "board-1", "title", "content", "writer", null,
+                0, 0, 0, false, false, List.of("url"), null
+        );
+        when(boardService.createBoard(authentication, dto, List.of(image))).thenReturn(created);
+
+        ResponseEntity<ResponseVo<CreateBoardResponseDto>> response =
+                boardController.createBoard(authentication, dto, List.of(image));
+
+        verify(boardService).createBoard(authentication, dto, List.of(image));
+        assertThat(response.getStatusCode().value()).isEqualTo(201);
+    }
+
+    @Test
+    @DisplayName("createBoard delegates with empty image list")
+    void createBoard_withEmptyImages_delegatesWithEmptyList() throws Exception {
+        CreateBoardReqDto dto = new CreateBoardReqDto("?꾩껜", "?쒕ぉ", "?댁슜");
+        CreateBoardResponseDto created = new CreateBoardResponseDto(
+                "board-1", "title", "content", "writer", null,
+                0, 0, 0, false, false, List.of(), null
+        );
+        when(boardService.createBoard(eq(authentication), eq(dto), anyList())).thenReturn(created);
+
+        ResponseEntity<ResponseVo<CreateBoardResponseDto>> response =
+                boardController.createBoard(authentication, dto, List.of());
+
+        verify(boardService).createBoard(eq(authentication), eq(dto), anyList());
+        assertThat(response.getStatusCode().value()).isEqualTo(201);
+    }
+
+    @Test
     @DisplayName("getMyBoards returns cursor response")
     void getMyBoards_returnsCursorResponse() {
         GetMyBoardsResponseDto board = GetMyBoardsResponseDto.builder()
@@ -199,6 +236,40 @@ class BoardControllerTest {
         UpdateBoardRequestDto dto = new UpdateBoardRequestDto("board-1", "updated title", "updated content", List.of());
 
         ResponseEntity<ResponseVo<Void>> response = boardController.updateBoard(authentication, dto, null);
+
+        verify(boardService).updateBoard(eq(authentication), eq(dto), anyList());
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+    }
+
+    @Test
+    @DisplayName("updateBoard delegates with provided images")
+    void updateBoard_withImages_delegatesOriginalList() throws Exception {
+        UpdateBoardRequestDto dto = new UpdateBoardRequestDto("board-1", "updated title", "updated content", List.of());
+        MultipartFile image = new MockMultipartFile("images", "a.png", "image/png", "a".getBytes());
+
+        ResponseEntity<ResponseVo<Void>> response = boardController.updateBoard(authentication, dto, List.of(image));
+
+        verify(boardService).updateBoard(authentication, dto, List.of(image));
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+    }
+
+    @Test
+    @DisplayName("updateBoard delegates with empty image list")
+    void updateBoard_withEmptyImages_delegatesWithEmptyList() throws Exception {
+        UpdateBoardRequestDto dto = new UpdateBoardRequestDto("board-1", "updated title", "updated content", List.of());
+
+        ResponseEntity<ResponseVo<Void>> response = boardController.updateBoard(authentication, dto, List.of());
+
+        verify(boardService).updateBoard(eq(authentication), eq(dto), anyList());
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+    }
+
+    @Test
+    @DisplayName("updateBoard handles null keep image URLs")
+    void updateBoard_withNullKeepImageUrls_delegates() throws Exception {
+        UpdateBoardRequestDto dto = new UpdateBoardRequestDto("board-1", "updated title", "updated content", null);
+
+        ResponseEntity<ResponseVo<Void>> response = boardController.updateBoard(authentication, dto, List.of());
 
         verify(boardService).updateBoard(eq(authentication), eq(dto), anyList());
         assertThat(response.getStatusCode().value()).isEqualTo(200);

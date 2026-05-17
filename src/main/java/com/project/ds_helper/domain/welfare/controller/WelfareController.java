@@ -6,6 +6,7 @@ import com.project.ds_helper.domain.welfare.dto.request.WelfareRecommendRequest;
 import com.project.ds_helper.domain.welfare.dto.response.WelfareDetailResponse;
 import com.project.ds_helper.domain.welfare.dto.response.WelfareListResponse;
 import com.project.ds_helper.domain.welfare.service.WelfareService;
+import com.project.ds_helper.common.enums.SwaggerTagName;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -24,7 +25,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/welfare")
-@Tag(name = "Welfare", description = "복지 서비스 추천 및 조회 API")
+@Tag(name = SwaggerTagName.WELFARE, description = "복지 서비스 추천 및 조회 API")
 public class WelfareController {
 
     private final WelfareService welfareService;

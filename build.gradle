@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.3'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'jacoco'
 }
 
 group = 'com.project'
@@ -80,10 +81,94 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+	finalizedBy jacocoTestReport
+}
+
+jacoco {
+	toolVersion = '0.8.12'
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.required = true
+		html.required = true
+		csv.required = true
+	}
+}
+
+jacocoTestCoverageVerification {
+	dependsOn test
+	violationRules {
+		rule {
+			element = 'CLASS'
+			includes = [
+					'com.project.ds_helper.domain.welfare.controller.AdminWelfareController',
+					'com.project.ds_helper.domain.welfare.service.WelfareSyncService',
+					'com.project.ds_helper.domain.welfare.service.WelfareDetailSyncParser',
+					'com.project.ds_helper.domain.welfare.service.DetailSyncPayload',
+					'com.project.ds_helper.domain.post.controller.PostController',
+					'com.project.ds_helper.domain.post.service.PostService',
+					'com.project.ds_helper.domain.post.entity.Post',
+					'com.project.ds_helper.domain.post.entity.PostImage',
+					'com.project.ds_helper.domain.post.dto.request.CreatePostReqDto',
+					'com.project.ds_helper.domain.post.dto.request.UpdatePostReqDto',
+					'com.project.ds_helper.domain.post.dto.response.GetPostResDto',
+					'com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto',
+					'com.project.ds_helper.domain.post.util.ImageCompressionUtil',
+					'com.project.ds_helper.domain.post.util.ImageUtil',
+					'com.project.ds_helper.domain.post.util.S3Util',
+					'com.project.ds_helper.domain.post.util.WebpImageWriteParamConfigurer',
+					'com.project.ds_helper.domain.post.util.WebpImageWriterProvider',
+					'com.project.ds_helper.domain.board.controller.BoardController',
+					'com.project.ds_helper.domain.board.controller.BoardLikeController',
+					'com.project.ds_helper.domain.board.controller.BoardScrapController',
+					'com.project.ds_helper.domain.board.dto.response.CreateBoardResponseDto',
+					'com.project.ds_helper.domain.board.dto.response.GetBoardByIdResponseDto',
+					'com.project.ds_helper.domain.board.dto.response.GetBoardsByCategoryResponseDto.Board',
+					'com.project.ds_helper.domain.board.dto.response.GetLikedBoardsResponseDto.Board',
+					'com.project.ds_helper.domain.board.dto.response.GetMyBoardsResponseDto',
+					'com.project.ds_helper.domain.board.dto.response.GetScrappedBoardsResponseDto.Board',
+					'com.project.ds_helper.domain.board.entity.Board',
+					'com.project.ds_helper.domain.board.entity.BoardImage',
+					'com.project.ds_helper.domain.board.entity.BoardLike',
+					'com.project.ds_helper.domain.board.entity.BoardScrap',
+					'com.project.ds_helper.domain.board.enums.BoardCategory',
+					'com.project.ds_helper.domain.board.service.BoardLikeService',
+					'com.project.ds_helper.domain.board.service.BoardScrapService',
+					'com.project.ds_helper.domain.board.service.BoardService',
+					'com.project.ds_helper.domain.board.service.BoardService.BoardImageUpdatePlan',
+					'com.project.ds_helper.domain.board.service.BoardService.ImageUploadBatch'
+			]
+
+			limit {
+				counter = 'LINE'
+				value = 'COVEREDRATIO'
+				minimum = 1.0
+			}
+
+			limit {
+				counter = 'BRANCH'
+				value = 'COVEREDRATIO'
+				minimum = 1.0
+			}
+
+			limit {
+				counter = 'METHOD'
+				value = 'COVEREDRATIO'
+				minimum = 1.0
+			}
+		}
+	}
+}
+
+tasks.named('check') {
+	dependsOn jacocoTestCoverageVerification
 }
 
 tasks.named('jar') {

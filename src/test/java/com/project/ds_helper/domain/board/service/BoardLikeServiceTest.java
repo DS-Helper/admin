@@ -122,6 +122,36 @@ class BoardLikeServiceTest {
                 .hasMessageContaining("Board Not Found");
     }
 
+    @Test
+    @DisplayName("좋아요 취소 카운트 갱신 대상 게시글이 없으면 예외가 발생한다")
+    void toggleBoardLike_throwsWhenDecreaseCountUpdateFails() {
+        User user = user("user-1");
+        Board board = board("board-1", false, user);
+        BoardLike boardLike = BoardLike.builder().board(board).user(user).build();
+
+        when(userUtil.extractUserId(authentication)).thenReturn("user-1");
+        when(userUtil.findUserById("user-1")).thenReturn(user);
+        when(boardRepository.findById("board-1")).thenReturn(Optional.of(board));
+        when(boardLikeRepository.findByUser_IdAndBoard_Id("user-1", "board-1")).thenReturn(Optional.of(boardLike));
+        when(boardRepository.decreaseLikeCount("board-1")).thenReturn(0);
+
+        assertThatThrownBy(() -> boardLikeService.toggleBoardLike(authentication, "board-1"))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessageContaining("Board Not Found");
+    }
+
+    @Test
+    @DisplayName("좋아요 대상 게시글이 없으면 예외가 발생한다")
+    void toggleBoardLike_throwsWhenBoardMissing() {
+        when(userUtil.extractUserId(authentication)).thenReturn("user-1");
+        when(userUtil.findUserById("user-1")).thenReturn(user("user-1"));
+        when(boardRepository.findById("missing")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> boardLikeService.toggleBoardLike(authentication, "missing"))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessageContaining("Board Not Found");
+    }
+
     private User user(String id) {
         return User.builder().id(id).name("tester").build();
     }

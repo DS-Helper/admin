@@ -22,4 +22,5 @@ public enum SwaggerTagName {
     public static final String USER = "유저";
     public static final String TEST = "테스트";
     public static final String NOTIFICATION = "알림";
+    public static final String WELFARE = "복지 서비스";
 }

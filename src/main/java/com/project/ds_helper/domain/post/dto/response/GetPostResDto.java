@@ -10,7 +10,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,9 +37,10 @@ public class GetPostResDto {
     private String createdAt;
 
     public static GetPostResDto toDto(Post post){
-        log.info("createdAt : {}", post.getCreatedAt());
-        log.info("createdAt is null? : {}", post.getCreatedAt() == null);
-        log.info("createdAt convert to LocalDate : {}", post.getCreatedAt().toLocalDate().toString());
+        LocalDateTime createdAt = post.getCreatedAt();
+        String createdAtAsDate = createdAt.toLocalDate().toString();
+        log.info("createdAt : {}", createdAt);
+        log.info("createdAt convert to LocalDate : {}", createdAtAsDate);
         return GetPostResDto.builder()
                 .postId(post.getId())
                 .title(post.getTitle())
@@ -48,7 +48,7 @@ public class GetPostResDto {
                 .writerName(post.getUser().getName())
                 .imageUrls(post.getPostImages().stream().map(PostImage::getUrl).toList())
                 .viewCount(post.getViewCount())
-                .createdAt(post.getCreatedAt() == null? null : post.getCreatedAt().toLocalDate().toString())
+                .createdAt(createdAtAsDate)
                 .build();
     }
 

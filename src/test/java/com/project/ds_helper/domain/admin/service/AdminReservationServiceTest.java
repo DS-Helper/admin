@@ -43,46 +43,36 @@ class AdminReservationServiceTest {
     private AdminReservationService adminReservationService;
 
     @Test
-    @DisplayName("요청 상태 개인/기관 예약 목록을 함께 반환한다")
-    void getByRequestedReservations_returnsBothPages() {
+    @DisplayName("예약 목록 필터링 조회를 지원한다")
+    void getRequestedReservations_withFilters() {
         PersonalReservation personal = PersonalReservation.builder()
-                .id("personal-1")
-                .user(User.builder().id("user-1").name("tester").build())
+                .id("p1")
                 .name("tester")
-                .phoneNumber("010-1111-1111")
-                .visitDate(LocalDate.of(2026, 3, 29))
-                .startTime(LocalTime.of(10, 0))
-                .endTime(LocalTime.of(11, 0))
-                .address("seoul")
-                .requirement("req")
-                .recipientGender(RecipientGenderType.BOTH)
-                .recipientNumber(1)
+                .user(User.builder().id("user-1").build())
                 .reservationStatus(ReservationStatus.REQUESTED)
+                .recipientGender(RecipientGenderType.MALE)
+                .recipientNumber(1)
                 .build();
         OrganizationReservation organization = OrganizationReservation.builder()
-                .id("org-1")
-                .user(User.builder().id("org-user-1").name("org").build())
-                .organizationName("org-name")
-                .name("holder")
-                .phoneNumber("010-2222-2222")
-                .address("seoul")
-                .requirement("req")
-                .recipientGender(RecipientGenderType.BOTH)
-                .recipientNumber(2)
-                .reservationSchedule(ReservationSchedule.builder()
-                        .visitDate(LocalDate.of(2026, 3, 29))
-                        .startTime(LocalTime.of(10, 0))
-                        .endTime(LocalTime.of(11, 0))
-                        .build())
+                .id("o1")
+                .name("org")
+                .user(User.builder().id("user-2").build())
                 .reservationStatus(ReservationStatus.REQUESTED)
+                .reservationSchedule(ReservationSchedule.builder()
+                        .visitDate(LocalDate.of(2026, 3, 30))
+                        .startTime(LocalTime.of(14, 0))
+                        .endTime(LocalTime.of(15, 0))
+                        .build())
+                .recipientGender(RecipientGenderType.FEMALE)
+                .recipientNumber(2)
                 .build();
 
-        when(adminPersonalReservationRepository.findAllByReservationStatus(org.mockito.ArgumentMatchers.eq(ReservationStatus.REQUESTED), any(Pageable.class)))
+        when(adminPersonalReservationRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(personal)));
-        when(adminOrganizationReservationRepository.findAllByReservationStatus(org.mockito.ArgumentMatchers.eq(ReservationStatus.REQUESTED), any(Pageable.class)))
+        when(adminOrganizationReservationRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(organization)));
 
-        Object result = adminReservationService.getByRequestedReservations(0, 10, "desc", "createdAt");
+        Object result = adminReservationService.getRequestedReservations(null, null, null, null, null, 0, 10, "desc", "createdAt");
 
         assertThat(result).isInstanceOf(Map.class);
         Map<?, ?> body = (Map<?, ?>) result;

@@ -15,8 +15,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Iterator;
 
 @Component
 @Slf4j
@@ -24,6 +22,18 @@ public class ImageCompressionUtil {
 
     private static final int MAX_LONG_EDGE = 1920;
     private static final float WEBP_QUALITY = 0.8f;
+    private final WebpImageWriterProvider webpImageWriterProvider;
+    private final WebpImageWriteParamConfigurer webpImageWriteParamConfigurer;
+
+    public ImageCompressionUtil() {
+        this(new WebpImageWriterProvider(), new WebpImageWriteParamConfigurer());
+    }
+
+    ImageCompressionUtil(WebpImageWriterProvider webpImageWriterProvider,
+                         WebpImageWriteParamConfigurer webpImageWriteParamConfigurer) {
+        this.webpImageWriterProvider = webpImageWriterProvider;
+        this.webpImageWriteParamConfigurer = webpImageWriteParamConfigurer;
+    }
 
     /**
      * 모든 S3 업로드는 여기서 한 번 공통 압축을 거친다.
@@ -140,61 +150,24 @@ public class ImageCompressionUtil {
     }
 
     private byte[] writeCompressedBytes(BufferedImage image) throws IOException {
-        ImageWriter writer = findWebpWriter();
+        ImageWriter writer = webpImageWriterProvider.findWebpWriter();
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
              ImageOutputStream imageOutputStream = ImageIO.createImageOutputStream(outputStream)) {
 
             writer.setOutput(imageOutputStream);
 
             ImageWriteParam writeParam = writer.getDefaultWriteParam();
-            if (writeParam.canWriteCompressed()) {
-                writeParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-                String[] compressionTypes = writeParam.getCompressionTypes();
-                if (compressionTypes != null && compressionTypes.length > 0) {
-                    String lossyCompressionType = findLossyCompressionType(compressionTypes);
-                    writeParam.setCompressionType(lossyCompressionType);
-                    log.debug("ImageCompressionUtil.writeCompressedBytes selected compressionType={}", lossyCompressionType);
-                }
-                writeParam.setCompressionQuality(WEBP_QUALITY);
-            }
+            webpImageWriteParamConfigurer.configure(writeParam, WEBP_QUALITY);
 
             writer.write(null, new IIOImage(image, null, null), writeParam);
             imageOutputStream.flush();
             outputStream.flush();
 
             byte[] bytes = outputStream.toByteArray();
-            if (bytes.length == 0) {
-                throw new IOException("Compressed image verification failed");
-            }
+            webpImageWriteParamConfigurer.verifyCompressedBytes(bytes);
             return bytes;
         } finally {
             writer.dispose();
         }
-    }
-
-    private ImageWriter findWebpWriter() {
-        ImageIO.scanForPlugins();
-
-        for (String formatName : new String[]{"webp", "WebP", "WEBP"}) {
-            Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName(formatName);
-            if (writers.hasNext()) {
-                ImageWriter writer = writers.next();
-                log.debug("ImageCompressionUtil.findWebpWriter selected formatName={}, writer={}",
-                        formatName, writer.getClass().getName());
-                return writer;
-            }
-        }
-
-        throw new IllegalStateException("No ImageWriter found for WebP. availableWriterFormats="
-                + Arrays.toString(ImageIO.getWriterFormatNames()));
-    }
-
-    private String findLossyCompressionType(String[] compressionTypes) {
-        for (String compressionType : compressionTypes) {
-            if ("lossy".equalsIgnoreCase(compressionType)) {
-                return compressionType;
-            }
-        }
-        return compressionTypes[0];
     }
 }

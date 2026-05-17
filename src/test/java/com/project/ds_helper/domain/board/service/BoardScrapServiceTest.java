@@ -155,6 +155,32 @@ class BoardScrapServiceTest {
         assertThat(result).isEqualTo(9L);
     }
 
+    @Test
+    @DisplayName("스크랩 목록 조회는 오름차순 정렬도 지원한다")
+    void getMyScrappedBoards_supportsAscendingSort() {
+        Page<Board> emptyPage = new PageImpl<>(List.of());
+
+        when(userUtil.extractUserId(authentication)).thenReturn("user-1");
+        when(boardScrapRepository.findScrappedBoards(org.mockito.ArgumentMatchers.eq("user-1"), any(Pageable.class))).thenReturn(emptyPage);
+
+        GetScrappedBoardsResponseDto result =
+                boardScrapService.getMyScrappedBoards(authentication, 0, 10, "asc", "createdAt");
+
+        assertThat(result.getBoards()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("스크랩 대상 게시글이 없으면 예외가 발생한다")
+    void toggleBoardScrap_throwsWhenBoardMissing() {
+        when(userUtil.extractUserId(authentication)).thenReturn("user-1");
+        when(userUtil.findUserById("user-1")).thenReturn(user("user-1"));
+        when(boardRepository.findById("missing")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> boardScrapService.toggleBoardScrap(authentication, "missing"))
+                .isInstanceOf(jakarta.persistence.EntityNotFoundException.class)
+                .hasMessageContaining("Board Not Found");
+    }
+
     private User user(String id) {
         return User.builder().id(id).name("tester").build();
     }

@@ -22,3 +22,9 @@ spring:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+public:
+  data:
+    portal:
+      service:
+        key: ${TEST_PUBLIC_DATA_PORTAL_SERVICE_KEY:https://apis.data.go.kr/B554287/LocalGovernmentWelfareInformations/LcgvWelfarelist?serviceKey=4b40d9c02c4024d5d3536419a0638d645875c1b353e64075c6de43d192e8a3b3}

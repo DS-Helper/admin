@@ -111,8 +111,7 @@ public class BoardService {
             log.debug("BoardService.createBoard failed. boardId={}, uploadedKeyCount={}, errorType={}",
                     newBoard.getId(), uploadedS3Keys.size(), e.getClass().getSimpleName());
             rollbackUploadedImages(uploadedS3Keys);
-            rethrowBoardWriteException(e);
-            return null;
+            throw rethrowBoardWriteException(e);
         }
     }
 
@@ -284,7 +283,7 @@ public class BoardService {
 
             // 5. 업로드 도중 실패했다면 이미 올라간 S3 파일만 롤백한다.
             rollbackUploadedImages(uploadedS3Keys);
-            rethrowBoardWriteException(e);
+            throw rethrowBoardWriteException(e);
         }
     }
 
@@ -518,14 +517,14 @@ public class BoardService {
         }
     }
 
-    private void rethrowBoardWriteException(Exception e) throws IOException {
+    private RuntimeException rethrowBoardWriteException(Exception e) throws IOException {
         if (e instanceof IOException ioException) {
             throw ioException;
         }
         if (e instanceof RuntimeException runtimeException) {
-            throw runtimeException;
+            return runtimeException;
         }
-        throw new RuntimeException(e);
+        return new RuntimeException(e);
     }
 
     public Board findBoardById(String boardId) {
