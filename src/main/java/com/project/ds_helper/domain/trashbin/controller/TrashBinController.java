@@ -4,10 +4,12 @@ import com.project.ds_helper.common.dto.response.ResponseVo;
 import com.project.ds_helper.common.enums.SuccessCode;
 import com.project.ds_helper.domain.trashbin.dto.response.GetTrashBinsResponseDto;
 import com.project.ds_helper.domain.trashbin.dto.response.UploadTrashBinImageResponseDto;
+import com.project.ds_helper.domain.trashbin.dto.response.UploadTrashBinImagesResponseDto;
 import com.project.ds_helper.domain.trashbin.dto.response.UploadTrashBinsResponseDto;
 import com.project.ds_helper.domain.trashbin.service.TrashBinService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @Slf4j
@@ -76,6 +79,28 @@ public class TrashBinController {
 
         UploadTrashBinImageResponseDto responseDto = trashBinService.uploadTrashBinImage(image);
         ResponseVo<UploadTrashBinImageResponseDto> responseVo =
+                new ResponseVo<>(true, SuccessCode.OK, SuccessCode.OK.getMessage(), responseDto);
+        return new ResponseEntity<>(responseVo, responseVo.getCode().httpStatus());
+    }
+
+    @Operation(
+            summary = "쓰레기통 이미지 복수 업로드",
+            description = "여러 이미지 파일을 한 번에 업로드합니다. 각 파일명은 기존 단일 업로드와 동일하게 위도 값이어야 합니다. 예: 35.808057.png"
+    )
+    @PostMapping(value = "/images/bulk", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResponseVo<UploadTrashBinImagesResponseDto>> uploadTrashBinImages(
+            @Parameter(
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            array = @ArraySchema(schema = @Schema(type = "string", format = "binary"))
+                    )
+            )
+            @RequestPart("images") List<MultipartFile> images
+    ) throws IOException {
+        log.debug("TrashBinController.uploadTrashBinImages called. imageCount={}", images == null ? 0 : images.size());
+
+        UploadTrashBinImagesResponseDto responseDto = trashBinService.uploadTrashBinImages(images);
+        ResponseVo<UploadTrashBinImagesResponseDto> responseVo =
                 new ResponseVo<>(true, SuccessCode.OK, SuccessCode.OK.getMessage(), responseDto);
         return new ResponseEntity<>(responseVo, responseVo.getCode().httpStatus());
     }

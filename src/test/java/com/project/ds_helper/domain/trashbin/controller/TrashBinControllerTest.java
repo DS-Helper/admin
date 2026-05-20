@@ -4,6 +4,7 @@ import com.project.ds_helper.common.dto.response.PageResponseDto;
 import com.project.ds_helper.common.dto.response.ResponseVo;
 import com.project.ds_helper.domain.trashbin.dto.response.GetTrashBinsResponseDto;
 import com.project.ds_helper.domain.trashbin.dto.response.UploadTrashBinImageResponseDto;
+import com.project.ds_helper.domain.trashbin.dto.response.UploadTrashBinImagesResponseDto;
 import com.project.ds_helper.domain.trashbin.dto.response.UploadTrashBinsResponseDto;
 import com.project.ds_helper.domain.trashbin.service.TrashBinService;
 import org.junit.jupiter.api.DisplayName;
@@ -93,5 +94,52 @@ class TrashBinControllerTest {
         assertThat(response.getBody().getData().imageId()).isEqualTo("image-1");
         assertThat(response.getBody().getData().alreadyExists()).isFalse();
         assertThat(response.getBody().getData().contentType()).isEqualTo("image/webp");
+    }
+
+    @Test
+    @DisplayName("쓰레기통 이미지 복수 업로드 요청 시 업로드 결과 목록을 반환한다")
+    void uploadTrashBinImages_returnsUploadedImages() throws Exception {
+        MockMultipartFile image1 = new MockMultipartFile("images", "35.808057.png", "image/png", "image1".getBytes());
+        MockMultipartFile image2 = new MockMultipartFile("images", "35.808058.png", "image/png", "image2".getBytes());
+        UploadTrashBinImageResponseDto uploaded = UploadTrashBinImageResponseDto.builder()
+                .trashBinId("trash-bin-1")
+                .latitude(35.808057)
+                .alreadyExists(false)
+                .imageId("image-1")
+                .storedName("stored-1")
+                .build();
+        UploadTrashBinImageResponseDto alreadyExists = UploadTrashBinImageResponseDto.builder()
+                .trashBinId("trash-bin-2")
+                .latitude(35.808058)
+                .alreadyExists(true)
+                .imageId("image-2")
+                .storedName("stored-2")
+                .build();
+        UploadTrashBinImagesResponseDto responseDto = UploadTrashBinImagesResponseDto.from(List.of(uploaded, alreadyExists));
+        when(trashBinService.uploadTrashBinImages(List.of(image1, image2))).thenReturn(responseDto);
+
+        ResponseEntity<ResponseVo<UploadTrashBinImagesResponseDto>> response =
+                trashBinController.uploadTrashBinImages(List.of(image1, image2));
+
+        verify(trashBinService).uploadTrashBinImages(List.of(image1, image2));
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody().getData().requestedCount()).isEqualTo(2);
+        assertThat(response.getBody().getData().uploadedCount()).isEqualTo(1);
+        assertThat(response.getBody().getData().alreadyExistsCount()).isEqualTo(1);
+        assertThat(response.getBody().getData().images()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("쓰레기통 이미지 복수 업로드 요청이 null이어도 서비스로 위임한다")
+    void uploadTrashBinImages_delegatesNullImages() throws Exception {
+        UploadTrashBinImagesResponseDto responseDto = UploadTrashBinImagesResponseDto.from(List.of());
+        when(trashBinService.uploadTrashBinImages(null)).thenReturn(responseDto);
+
+        ResponseEntity<ResponseVo<UploadTrashBinImagesResponseDto>> response =
+                trashBinController.uploadTrashBinImages(null);
+
+        verify(trashBinService).uploadTrashBinImages(null);
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody().getData().requestedCount()).isZero();
     }
 }

@@ -143,7 +143,15 @@ jacocoTestCoverageVerification {
 					'com.project.ds_helper.domain.board.service.BoardScrapService',
 					'com.project.ds_helper.domain.board.service.BoardService',
 					'com.project.ds_helper.domain.board.service.BoardService.BoardImageUpdatePlan',
-					'com.project.ds_helper.domain.board.service.BoardService.ImageUploadBatch'
+					'com.project.ds_helper.domain.board.service.BoardService.ImageUploadBatch',
+					'com.project.ds_helper.domain.trashbin.controller.TrashBinController',
+					'com.project.ds_helper.domain.trashbin.dto.response.GetTrashBinsResponseDto.TrashBinItem',
+					'com.project.ds_helper.domain.trashbin.dto.response.UploadTrashBinImageResponseDto',
+					'com.project.ds_helper.domain.trashbin.dto.response.UploadTrashBinImagesResponseDto',
+					'com.project.ds_helper.domain.trashbin.dto.response.UploadTrashBinsResponseDto',
+					'com.project.ds_helper.domain.trashbin.entity.TrashBin',
+					'com.project.ds_helper.domain.trashbin.entity.TrashBinImage',
+					'com.project.ds_helper.domain.trashbin.service.TrashBinService'
 			]
 
 			limit {

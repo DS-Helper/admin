@@ -9,6 +9,7 @@ import com.project.ds_helper.domain.post.util.ImageUtil;
 import com.project.ds_helper.domain.post.util.S3Util;
 import com.project.ds_helper.domain.trashbin.dto.response.GetTrashBinsResponseDto;
 import com.project.ds_helper.domain.trashbin.dto.response.UploadTrashBinImageResponseDto;
+import com.project.ds_helper.domain.trashbin.dto.response.UploadTrashBinImagesResponseDto;
 import com.project.ds_helper.domain.trashbin.dto.response.UploadTrashBinsResponseDto;
 import com.project.ds_helper.domain.trashbin.entity.TrashBin;
 import com.project.ds_helper.domain.trashbin.entity.TrashBinImage;
@@ -174,6 +175,27 @@ public class TrashBinService {
             if (uploadedToS3) {
                 rollbackUploadedImage(storedFilename);
             }
+            throw e;
+        }
+    }
+
+    public UploadTrashBinImagesResponseDto uploadTrashBinImages(List<MultipartFile> images) throws IOException {
+        log.debug("TrashBinService.uploadTrashBinImages started. imageCount={}", images == null ? 0 : images.size());
+
+        if (images == null || images.isEmpty()) {
+            throw invalidParameter("images are required");
+        }
+
+        List<UploadTrashBinImageResponseDto> uploadedImages = new ArrayList<>(images.size());
+        try {
+            for (MultipartFile image : images) {
+                uploadedImages.add(uploadTrashBinImage(image));
+            }
+
+            log.debug("TrashBinService.uploadTrashBinImages completed. requestedCount={}", uploadedImages.size());
+            return UploadTrashBinImagesResponseDto.from(uploadedImages);
+        } catch (Exception e) {
+            rollbackUploadedImages(uploadedImages);
             throw e;
         }
     }
@@ -367,6 +389,14 @@ public class TrashBinService {
             log.debug("TrashBinService.rollbackUploadedImage completed. storedFilename={}", storedFilename);
         } catch (Exception rollbackException) {
             log.error("TrashBinService.rollbackUploadedImage failed. storedFilename={}", storedFilename, rollbackException);
+        }
+    }
+
+    private void rollbackUploadedImages(List<UploadTrashBinImageResponseDto> uploadedImages) {
+        for (UploadTrashBinImageResponseDto uploadedImage : uploadedImages) {
+            if (!uploadedImage.alreadyExists()) {
+                rollbackUploadedImage(uploadedImage.storedName());
+            }
         }
     }
 
