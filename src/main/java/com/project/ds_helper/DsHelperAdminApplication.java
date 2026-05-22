@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class DsHelperAdminApplication {
 
 	public static void main(String[] args) {
+		java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("Asia/Seoul"));
 		SpringApplication.run(DsHelperAdminApplication.class, args);
 	}
 
