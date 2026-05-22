@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotificationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.notification.service</a> &gt; <span class="el_source">NotificationService.java</span></div><h1>NotificationService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.notification.service;
+
+import com.project.ds_helper.common.dto.response.CursorResponseDto;
+import com.project.ds_helper.common.util.UserUtil;
+import com.project.ds_helper.domain.board.entity.Board;
+import com.project.ds_helper.domain.comment.entity.Comment;
+import com.project.ds_helper.domain.notification.dto.response.GetNotificationsResponseDto;
+import com.project.ds_helper.domain.notification.dto.response.UnreadNotificationCountResponseDto;
+import com.project.ds_helper.domain.notification.entity.Notification;
+import com.project.ds_helper.domain.notification.enums.NotificationType;
+import com.project.ds_helper.domain.notification.repository.NotificationRepository;
+import com.project.ds_helper.domain.user.entity.User;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+@Service
+@RequiredArgsConstructor
+public class NotificationService {
+
+    private static final String BOARD_COMMENT_NOTIFICATION_CONTENT = &quot;내 게시글에 댓글이 작성되었습니다.&quot;;
+    private static final String BOARD_REPLY_NOTIFICATION_CONTENT = &quot;내 게시글에 대댓글이 작성되었습니다.&quot;;
+    private static final String COMMENT_REPLY_NOTIFICATION_CONTENT = &quot;내 댓글에 대댓글이 작성되었습니다.&quot;;
+
+    private final NotificationRepository notificationRepository;
+    private final UserUtil userUtil;
+
+    @Transactional
+    public void createNotificationsForComment(Comment comment) {
+<span class="fc" id="L40">        User commentWriter = comment.getUser();</span>
+<span class="fc" id="L41">        Board board = comment.getBoard();</span>
+<span class="fc" id="L42">        Comment parentComment = comment.getParent();</span>
+
+<span class="fc" id="L44">        List&lt;Notification&gt; notifications = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L45">        Set&lt;String&gt; recipientIds = new HashSet&lt;&gt;();</span>
+
+<span class="fc bfc" id="L47" title="All 2 branches covered.">        if (parentComment != null) {</span>
+<span class="fc" id="L48">            addNotificationIfNeeded(</span>
+                    notifications,
+                    recipientIds,
+<span class="fc" id="L51">                    parentComment.getUser(),</span>
+                    commentWriter,
+                    NotificationType.COMMENT_REPLY,
+<span class="fc" id="L54">                    board.getId(),</span>
+<span class="fc" id="L55">                    parentComment.getId(),</span>
+                    COMMENT_REPLY_NOTIFICATION_CONTENT
+            );
+        }
+
+<span class="fc" id="L60">        addNotificationIfNeeded(</span>
+                notifications,
+                recipientIds,
+<span class="fc" id="L63">                board.getUser(),</span>
+                commentWriter,
+                NotificationType.BOARD_COMMENT,
+<span class="fc" id="L66">                board.getId(),</span>
+<span class="fc" id="L67">                comment.getId(),</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">                parentComment == null ? BOARD_COMMENT_NOTIFICATION_CONTENT : BOARD_REPLY_NOTIFICATION_CONTENT</span>
+        );
+
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        if (!notifications.isEmpty()) {</span>
+<span class="fc" id="L72">            notificationRepository.saveAll(notifications);</span>
+        }
+<span class="fc" id="L74">    }</span>
+
+    @Transactional(readOnly = true)
+    public CursorResponseDto&lt;GetNotificationsResponseDto&gt; getMyNotifications(
+            Authentication authentication,
+            LocalDateTime cursorTime,
+            String cursorId,
+            int size
+    ) {
+<span class="fc" id="L83">        validateSize(size);</span>
+<span class="fc" id="L84">        validateCursor(cursorTime, cursorId);</span>
+
+<span class="fc" id="L86">        String userId = userUtil.extractUserId(authentication);</span>
+<span class="fc" id="L87">        Pageable pageable = PageRequest.of(0, size + 1);</span>
+
+<span class="fc" id="L89">        List&lt;Notification&gt; notifications = notificationRepository.findNotificationsWithCursor(</span>
+                userId,
+                cursorTime,
+                cursorId,
+                pageable
+        );
+
+<span class="pc bpc" id="L96" title="1 of 2 branches missed.">        boolean hasNext = notifications.size() &gt; size;</span>
+<span class="pc bpc" id="L97" title="1 of 2 branches missed.">        if (hasNext) {</span>
+<span class="fc" id="L98">            notifications.remove(size);</span>
+        }
+
+<span class="fc" id="L101">        LocalDateTime nextCursorTime = null;</span>
+<span class="fc" id="L102">        String nextCursorId = null;</span>
+<span class="pc bpc" id="L103" title="1 of 2 branches missed.">        if (!notifications.isEmpty()) {</span>
+<span class="fc" id="L104">            Notification lastNotification = notifications.getLast();</span>
+<span class="fc" id="L105">            nextCursorTime = lastNotification.getCreatedAt();</span>
+<span class="fc" id="L106">            nextCursorId = lastNotification.getId();</span>
+        }
+
+<span class="fc" id="L109">        List&lt;GetNotificationsResponseDto&gt; content = notifications.stream()</span>
+<span class="fc" id="L110">                .map(GetNotificationsResponseDto::toDto)</span>
+<span class="fc" id="L111">                .toList();</span>
+
+<span class="fc" id="L113">        return CursorResponseDto.toDto(content, nextCursorTime, nextCursorId, hasNext);</span>
+    }
+
+    @Transactional
+    public void markAsRead(Authentication authentication, String notificationId) {
+<span class="fc" id="L118">        String userId = userUtil.extractUserId(authentication);</span>
+<span class="fc" id="L119">        Notification notification = notificationRepository.findByIdAndUser_Id(notificationId, userId)</span>
+<span class="fc" id="L120">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Notification Not Found&quot;));</span>
+<span class="fc" id="L121">        notification.markAsRead();</span>
+<span class="fc" id="L122">    }</span>
+
+    @Transactional
+    public void markAllAsRead(Authentication authentication) {
+<span class="fc" id="L126">        String userId = userUtil.extractUserId(authentication);</span>
+<span class="fc" id="L127">        notificationRepository.markAllAsReadByUserId(userId);</span>
+<span class="fc" id="L128">    }</span>
+
+    @Transactional(readOnly = true)
+    public UnreadNotificationCountResponseDto getUnreadNotificationCount(Authentication authentication) {
+<span class="fc" id="L132">        String userId = userUtil.extractUserId(authentication);</span>
+<span class="fc" id="L133">        long unreadCount = notificationRepository.countByUser_IdAndIsReadFalse(userId);</span>
+<span class="fc" id="L134">        return UnreadNotificationCountResponseDto.toDto(unreadCount);</span>
+    }
+
+    private void addNotificationIfNeeded(
+            List&lt;Notification&gt; notifications,
+            Set&lt;String&gt; recipientIds,
+            User recipient,
+            User commentWriter,
+            NotificationType type,
+            String boardId,
+            String commentId,
+            String content
+    ) {
+<span class="pc bpc" id="L147" title="2 of 4 branches missed.">        if (recipient == null || commentWriter == null) {</span>
+<span class="nc" id="L148">            return;</span>
+        }
+
+<span class="fc bfc" id="L151" title="All 2 branches covered.">        if (recipient.getId().equals(commentWriter.getId())) {</span>
+<span class="fc" id="L152">            return;</span>
+        }
+
+<span class="fc bfc" id="L155" title="All 2 branches covered.">        if (!recipientIds.add(recipient.getId())) {</span>
+<span class="fc" id="L156">            return;</span>
+        }
+
+<span class="fc" id="L159">        notifications.add(Notification.builder()</span>
+<span class="fc" id="L160">                .user(recipient)</span>
+<span class="fc" id="L161">                .type(type)</span>
+<span class="fc" id="L162">                .boardId(boardId)</span>
+<span class="fc" id="L163">                .commentId(commentId)</span>
+<span class="fc" id="L164">                .content(content)</span>
+<span class="fc" id="L165">                .build());</span>
+<span class="fc" id="L166">    }</span>
+
+    private void validateCursor(LocalDateTime cursorTime, String cursorId) {
+<span class="pc bpc" id="L169" title="1 of 6 branches missed.">        if ((cursorTime == null) != (cursorId == null)) {</span>
+<span class="fc" id="L170">            throw new IllegalArgumentException(&quot;cursorTime and cursorId must be provided together&quot;);</span>
+        }
+<span class="fc" id="L172">    }</span>
+
+    private void validateSize(int size) {
+<span class="fc bfc" id="L175" title="All 2 branches covered.">        if (size &lt;= 0) {</span>
+<span class="fc" id="L176">            throw new IllegalArgumentException(&quot;size must be positive&quot;);</span>
+        }
+<span class="fc" id="L178">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

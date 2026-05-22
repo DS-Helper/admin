@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CreatePersonalReservationResDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.reservation.dto.response</a> &gt; <span class="el_source">CreatePersonalReservationResDto.java</span></div><h1>CreatePersonalReservationResDto.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.reservation.dto.response;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
+import com.project.ds_helper.domain.reservation.entity.PersonalReservation;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.*;
+import lombok.*;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Getter
+public class CreatePersonalReservationResDto {
+
+    @NotNull
+    @Schema(example = &quot;20949013-9cbe-44e0-9916-f4e919bcef64&quot;)
+    private String personalReservationId;
+
+    @NotNull
+    @Schema(example = &quot;20949013-9cbe-44e0-9916-f4e919bcef64&quot;)
+    private String reservationHolderId;
+
+    @NotNull
+    @Schema(example = &quot;박효신&quot;)
+    private String reservationHolder;
+
+    @NotNull
+    @Schema(example = &quot;010-0000-0000&quot;)
+    @JsonFormat(pattern = &quot;^01[016789]-\\d{3,4}-\\d{4}$\n&quot;) // 하이픈 있는 상태만 허용
+    private String reservationPhoneNumber;
+
+    @NotNull
+    @Schema(example = &quot;2025-12-31&quot;)
+    @JsonSerialize(using = LocalDateSerializer.class)
+    @JsonDeserialize(using = LocalDateDeserializer.class)
+    @JsonFormat(pattern = &quot;yyyy-MM-dd&quot;)
+    private String visitDate;
+
+
+    @NotNull
+    @Schema(example = &quot;14:22&quot;)
+    @JsonSerialize(using = LocalTimeSerializer.class)
+    @JsonDeserialize(using = LocalTimeDeserializer.class)
+    @JsonFormat(pattern = &quot;HH:mm&quot;)
+    private String startTime;
+
+    @NotNull
+    @Schema(example = &quot;17:22&quot;)
+    @JsonSerialize(using = LocalTimeSerializer.class)
+    @JsonDeserialize(using = LocalTimeDeserializer.class)
+    @JsonFormat(pattern = &quot;HH:mm&quot;)
+    private String endTime;
+
+    @NotBlank(message = &quot;주소는 필수 입력 항목입니다.&quot;)
+    @Schema(example = &quot;부산광역시 서래동 서래중앙로 181번길 92, 서래아파트 101동 1304호&quot;)
+    private String address;
+
+    @Schema(example = &quot;서류 작업 도와주세요.&quot;)
+    private String requirement;
+
+    @NotBlank(message = &quot;성별은 필수 입력 항목입니다.&quot;)
+    @Schema(example = &quot;남&quot;)
+    private String recipientGender;
+
+    @NotNull
+    @Min(value = 1)
+    @Max(value = 100)
+    @Schema(example = &quot;1&quot;)
+    private int recipientNumber;
+
+    @NotNull
+    @Schema(example = &quot;대기&quot;)
+    private String reservationStatus;
+
+    public static CreatePersonalReservationResDto toDto(PersonalReservation personalReservation){
+<span class="nc" id="L87">        return CreatePersonalReservationResDto.builder()</span>
+<span class="nc" id="L88">                .personalReservationId(personalReservation.getId())</span>
+<span class="nc" id="L89">                .reservationHolderId(personalReservation.getUser().getId())</span>
+<span class="nc" id="L90">                .reservationHolder(personalReservation.getName())</span>
+<span class="nc" id="L91">                .reservationPhoneNumber(personalReservation.getPhoneNumber())</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">                .visitDate(personalReservation.getReservationSchedule().getVisitDate() != null? personalReservation.getReservationSchedule().getVisitDate().toString() : null)</span>
+<span class="nc" id="L93">                .startTime(personalReservation.getReservationSchedule().getStartTime().toString())</span>
+<span class="nc" id="L94">                .endTime(personalReservation.getReservationSchedule().getEndTime().toString())</span>
+<span class="nc" id="L95">                .address(personalReservation.getAddress())</span>
+<span class="nc" id="L96">                .requirement(personalReservation.getRequirement())</span>
+<span class="nc" id="L97">                .recipientGender(personalReservation.getRecipientGender().getKorean())</span>
+<span class="nc" id="L98">                .recipientNumber(personalReservation.getRecipientNumber())</span>
+<span class="nc" id="L99">                .reservationStatus(personalReservation.getReservationStatus().getKorean())</span>
+<span class="nc" id="L100">                .build();</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

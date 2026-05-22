@@ -1,0 +1,11 @@
+.gradle/
+.idea/
+build/
+out/
+bin/
+logs/
+*.log
+.env
+.env.example
+docker-compose.yml
+Dockerfile

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WelfareService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.welfare.service</a> &gt; <span class="el_source">WelfareService.java</span></div><h1>WelfareService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.welfare.service;
+
+import com.project.ds_helper.common.enums.ErrorCode;
+import com.project.ds_helper.common.exception.BusinessException;
+import com.project.ds_helper.domain.user.entity.User;
+import com.project.ds_helper.domain.welfare.dto.request.WelfareRecommendRequest;
+import com.project.ds_helper.domain.welfare.dto.response.WelfareDetailResponse;
+import com.project.ds_helper.domain.welfare.dto.response.WelfareListResponse;
+import com.project.ds_helper.domain.welfare.entity.WelfareProfile;
+import com.project.ds_helper.domain.welfare.entity.WelfareServiceEntity;
+import com.project.ds_helper.domain.welfare.repository.WelfareProfileRepository;
+import com.project.ds_helper.domain.welfare.repository.WelfareServiceRepository;
+import com.project.ds_helper.domain.welfare.util.WelfareUtils;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * 복지 서비스 비즈니스 로직 클래스
+ */
+<span class="nc" id="L25">@Slf4j</span>
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class WelfareService {
+
+    private final WelfareServiceRepository welfareServiceRepository;
+    private final WelfareProfileRepository welfareProfileRepository;
+    private final WelfareSyncService welfareSyncService;
+
+    /**
+     * 사용자의 정보를 기반으로 맞춤 복지 혜택을 추천합니다.
+     * 
+     * @param user 현재 로그인한 사용자
+     * @param request 추천 요청 데이터 (지역, 나이 등)
+     * @return 추천된 복지 혜택 목록
+     */
+    @Transactional
+    public List&lt;WelfareListResponse&gt; recommendWelfare(User user, WelfareRecommendRequest request) {
+<span class="nc" id="L44">        log.info(&quot;사용자 {}의 복지 추천 시작: 지역={}, 나이={}&quot;, user.getId(), request.getDistrictName(), request.getAge());</span>
+
+        // 1. 나이를 기반으로 생애주기 코드로 변환 (동작 규칙 4-2 반영)
+<span class="nc" id="L47">        String lifeCycleCode = WelfareUtils.convertAgeToLifeCycleCode(request.getAge());</span>
+        
+        // 2. 사용자 복지 프로필 저장 또는 갱신 (동작 규칙 7 반영)
+<span class="nc" id="L50">        WelfareProfile profile = welfareProfileRepository.findByUser(user)</span>
+<span class="nc" id="L51">                .orElse(WelfareProfile.builder().user(user).build());</span>
+        
+<span class="nc" id="L53">        profile.updateProfile(</span>
+<span class="nc" id="L54">                request.getCityProvinceName(),</span>
+<span class="nc" id="L55">                request.getDistrictName(),</span>
+<span class="nc" id="L56">                request.getAge(),</span>
+                lifeCycleCode,
+<span class="nc" id="L58">                request.getInterestTheme(),</span>
+<span class="nc" id="L59">                request.getTargetCondition()</span>
+        );
+<span class="nc" id="L61">        welfareProfileRepository.save(profile);</span>
+
+        // 3. DB에서 추천 기준에 맞는 혜택 조회 (추천 기준 1~4 반영)
+        // 지역 필터링은 현재 단순화를 위해 생략하거나 Repository 쿼리에서 처리하도록 설계
+        // 실제 운영 시에는 '선택안함' 처리 로직(동작 규칙 4-4)이 포함됩니다.
+<span class="nc bnc" id="L66" title="All 2 branches missed.">        String targetCondition = &quot;선택안함&quot;.equals(request.getTargetCondition()) ? null : request.getTargetCondition();</span>
+        
+<span class="nc" id="L68">        List&lt;WelfareServiceEntity&gt; recommendedEntities = welfareServiceRepository.findRecommendedWelfare(</span>
+<span class="nc" id="L69">                request.getCityProvinceName(),</span>
+<span class="nc" id="L70">                request.getDistrictName(),</span>
+                lifeCycleCode,
+<span class="nc" id="L72">                request.getInterestTheme(),</span>
+                targetCondition
+        );
+
+        // 4. 결과를 DTO로 변환하여 반환
+<span class="nc" id="L77">        return recommendedEntities.stream()</span>
+<span class="nc" id="L78">                .map(WelfareListResponse::from)</span>
+<span class="nc" id="L79">                .collect(Collectors.toList());</span>
+    }
+
+    /**
+     * 복지 혜택의 상세 정보를 조회합니다.
+     * 
+     * @param serviceId 서비스 식별자
+     * @return 상세 정보 응답 DTO
+     */
+    public WelfareDetailResponse getWelfareDetail(String serviceId) {
+<span class="nc" id="L89">        log.info(&quot;복지 혜택 상세 조회 시작: serviceId={}&quot;, serviceId);</span>
+
+<span class="nc" id="L91">        WelfareServiceEntity entity = welfareServiceRepository.findById(serviceId)</span>
+<span class="nc" id="L92">                .orElseGet(() -&gt; {</span>
+<span class="nc" id="L93">                    log.info(&quot;WelfareService.getWelfareDetail DB miss. fallback public data API. serviceId={}&quot;, serviceId);</span>
+<span class="nc" id="L94">                    return welfareSyncService.fetchAndSaveWelfareDetailByServiceId(serviceId)</span>
+<span class="nc" id="L95">                            .orElseThrow(() -&gt; new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, &quot;Welfare service not found. serviceId=&quot; + serviceId));</span>
+                });
+
+<span class="nc" id="L98">        return WelfareDetailResponse.from(entity);</span>
+    }
+
+    /**
+     * 저장된 사용자 복지 프로필을 조회합니다.
+     */
+    public WelfareProfile getUserWelfareProfile(User user) {
+<span class="nc" id="L105">        return welfareProfileRepository.findByUser(user)</span>
+<span class="nc" id="L106">                .orElseThrow(() -&gt; new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, &quot;Welfare profile not found. userId=&quot; + user.getId()));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

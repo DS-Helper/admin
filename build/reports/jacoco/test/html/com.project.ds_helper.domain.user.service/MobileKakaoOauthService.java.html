@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MobileKakaoOauthService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.user.service</a> &gt; <span class="el_source">MobileKakaoOauthService.java</span></div><h1>MobileKakaoOauthService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.user.service;
+
+import com.project.ds_helper.common.dto.response.JwtResponse;
+import com.project.ds_helper.common.util.CookieUtil;
+import com.project.ds_helper.common.util.JwtUtil;
+import com.project.ds_helper.domain.user.dto.request.MobileKakaoLoginRequestDto;
+import com.project.ds_helper.domain.user.dto.response.KakaoTokenResponse;
+import com.project.ds_helper.domain.user.dto.response.KakaoUserResponse;
+import com.project.ds_helper.domain.user.entity.KakaoOauth;
+import com.project.ds_helper.domain.user.entity.User;
+import com.project.ds_helper.domain.user.enums.UserType;
+import com.project.ds_helper.domain.user.repository.KakaoOauthRepository;
+import com.project.ds_helper.domain.user.repository.UserRepository;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import java.io.IOException;
+import java.time.Duration;
+import java.util.Optional;
+
+@Service
+<span class="fc" id="L32">@Slf4j</span>
+public class MobileKakaoOauthService {
+
+    @Value(&quot;${kakao.client.id}&quot;)
+    private String clientId ;
+    @Value(&quot;${kakao.client.secret}&quot;)
+    String clientSecret;
+
+    private final WebClient kakaoOauthWebClient;
+    private final WebClient kakaoApiWebClient;
+    private final KakaoOauthRepository kakaoOauthRepository;
+    private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
+    private final RestTemplate restTemplate;
+    private final CookieUtil cookieUtil;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final UserLoginHistoryService userLoginHistoryService;
+
+    public MobileKakaoOauthService(@Qualifier(&quot;kakaoOauthWebClient&quot;) WebClient kakaoOauthWebClient,
+            @Qualifier(&quot;kakaoApiWebClient&quot;) WebClient kakaoApiWebClient,
+            RestTemplate restTemplate,
+            JwtUtil jwtUtil, CookieUtil cookieUtil,
+            KakaoOauthRepository kakaoOauthRepository,
+            UserRepository userRepository,
+            @Qualifier(&quot;CustomStringRedisTemplate&quot;) StringRedisTemplate stringRedisTemplate,
+<span class="fc" id="L57">            UserLoginHistoryService userLoginHistoryService){</span>
+<span class="fc" id="L58">        this.kakaoOauthWebClient = kakaoOauthWebClient;</span>
+<span class="fc" id="L59">        this.kakaoApiWebClient = kakaoApiWebClient;</span>
+<span class="fc" id="L60">        this.restTemplate = restTemplate;</span>
+<span class="fc" id="L61">        this.jwtUtil = jwtUtil;</span>
+<span class="fc" id="L62">        this.cookieUtil = cookieUtil;</span>
+<span class="fc" id="L63">        this.kakaoOauthRepository = kakaoOauthRepository;</span>
+<span class="fc" id="L64">        this.userRepository = userRepository;</span>
+<span class="fc" id="L65">        this.stringRedisTemplate = stringRedisTemplate;</span>
+<span class="fc" id="L66">        this.userLoginHistoryService = userLoginHistoryService;</span>
+<span class="fc" id="L67">    }</span>
+
+
+
+    /**
+     * 모바일 카카오 로그인
+     * 
+     * OauthType provider,
+     * String accessToken을 받아 회원가입 or 로그인 진행
+     * **/
+    public JwtResponse mobileKakaoLogin(
+            MobileKakaoLoginRequestDto dto,
+            HttpServletResponse httpServletResponse
+    ) throws IOException {
+        // 토큰에서 유저 정보 조회 (비동기로 시작 -&gt; 동기화)
+<span class="fc" id="L82">        KakaoUserResponse kakaoUserResponse = fetchUserInfo(dto.accessToken());</span>
+<span class="fc" id="L83">        log.debug(&quot;kakao user responded successfully&quot;);</span>
+
+        // 유저 정보 추출
+<span class="fc" id="L86">        Long socialOauthId = kakaoUserResponse.getSocialOauthId();</span>
+
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">        if(kakaoUserResponse.getKakaoAccount() == null){</span>
+<span class="nc" id="L89">            throw new IOException(&quot;No Kakao Account&quot;);</span>
+        }
+
+<span class="fc" id="L92">        String email = kakaoUserResponse.getKakaoAccount().getEmail();</span>
+<span class="pc bpc" id="L93" title="1 of 2 branches missed.">        if (email != null) {</span>
+<span class="fc" id="L94">            email = email.trim();</span>
+<span class="pc bpc" id="L95" title="1 of 2 branches missed.">            if (email.isEmpty()) {</span>
+<span class="nc" id="L96">                email = null;</span>
+            }
+        }
+<span class="fc" id="L99">        String name = kakaoUserResponse.getKakaoAccount().getName();</span>
+<span class="fc" id="L100">        String gender =  kakaoUserResponse.getKakaoAccount().getGender();</span>
+<span class="fc" id="L101">        String birthyear = kakaoUserResponse.getKakaoAccount().getBirthyear();</span>
+
+<span class="fc" id="L103">        String profileImageUrl = &quot;&quot;;</span>
+<span class="fc" id="L104">        String phoneNumber = &quot;&quot;;</span>
+<span class="pc bpc" id="L105" title="1 of 2 branches missed.">        if(kakaoUserResponse.getKakaoAccount().getProfile() != null){</span>
+<span class="fc" id="L106">            profileImageUrl = kakaoUserResponse.getKakaoAccount().getProfile().getProfileImageUrl();</span>
+<span class="fc" id="L107">            phoneNumber = kakaoUserResponse.getKakaoAccount().getPhoneNumber();</span>
+        }
+<span class="fc" id="L109">        log.debug(&quot;socialOauthId : {}, email : {}, name : {}, profileImageUrl : {}, gender : {},birthyear : {}, profileImageUrl : {}, phoneNumber : {}&quot;</span>
+                , socialOauthId, email, name, profileImageUrl, gender, birthyear, profileImageUrl, phoneNumber);
+
+        // 카카오 회원가입 유무에 따른 처리 (socialOauthId, email)
+<span class="fc" id="L113">        Optional&lt;KakaoOauth&gt; optionalKakaoOauth = kakaoOauthRepository.findBySocialOauthIdAndOauthEmail(socialOauthId, email);</span>
+<span class="fc" id="L114">        log.debug(&quot;optionalKakaoOauth selected&quot;);</span>
+        // 기 가입된 유저 토큰 반환 처리
+<span class="fc bfc" id="L116" title="All 2 branches covered.">        if(optionalKakaoOauth.isPresent()){</span>
+<span class="fc" id="L117">            log.debug(&quot;Already Joined Kakao Oauth User&quot;);</span>
+
+            // 토큰 발급을 위한 userId, userRole 획득
+<span class="fc" id="L120">            KakaoOauth kakaoOauth = optionalKakaoOauth.get();</span>
+<span class="fc" id="L121">            kakaoOauth.updateRefreshToken(dto.refreshToken());</span>
+            //if (kakaoOauth.getUser().isDeleted()) {
+                //throw new IllegalArgumentException(&quot;Deleted User&quot;);
+            //}
+<span class="fc" id="L125">            String userId = kakaoOauth.getUser().getId();</span>
+<span class="fc" id="L126">            String userRole = kakaoOauth.getUser().getRole().name();</span>
+<span class="fc" id="L127">            String userType = kakaoOauth.getUser().getType().name();</span>
+<span class="fc" id="L128">            log.debug(&quot;userId : {}, userRole : {}&quot;, userId, userRole);</span>
+
+<span class="fc" id="L130">            String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);</span>
+<span class="fc" id="L131">            String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);</span>
+<span class="fc" id="L132">            userLoginHistoryService.recordSuccessfulLogin(kakaoOauth.getUser());</span>
+<span class="fc" id="L133">            saveRefreshTokenWithTtl(userId, refreshToken);</span>
+<span class="fc" id="L134">            return new JwtResponse(accessToken, refreshToken);</span>
+
+        }else {
+            // provider와 무관하게 User 테이블 기준 이메일 중복 가입을 차단한다.
+<span class="pc bpc" id="L138" title="2 of 4 branches missed.">            if (email != null &amp;&amp; userRepository.existsByEmail(email)) {</span>
+<span class="fc" id="L139">                log.debug(&quot;mobile kakao signup rejected. duplicated email found in user table. email={}&quot;, email);</span>
+<span class="fc" id="L140">                throw new IllegalArgumentException(&quot;Email Already Exist&quot;);</span>
+            }
+            // Email 기반 로컬 회원가입 여부 조회
+            // 로컬 회원이 있다면 KakaoOauth에 매핑
+            // 추후 로직 추가
+
+            // 로컬 회원가입 미가입 신규 회원가입 처리
+<span class="nc" id="L147">            User newUser = User.builder()</span>
+<span class="nc" id="L148">                    .email(email)</span>
+<span class="nc" id="L149">                    .name(name)</span>
+<span class="nc" id="L150">                    .profileImageUrl(profileImageUrl)</span>
+<span class="nc" id="L151">                    .gender(gender)</span>
+<span class="nc" id="L152">                    .birthyear(birthyear)</span>
+<span class="nc" id="L153">                    .phoneNumber(phoneNumber)</span>
+<span class="nc" id="L154">                    .type(UserType.PERSONAL)</span>
+<span class="nc" id="L155">                    .kakaoOauthConnected(true)</span>
+<span class="nc" id="L156">                    .build();</span>
+<span class="nc" id="L157">            log.debug(&quot;newUser is built&quot;);</span>
+
+            // 신규 유저 저장
+<span class="nc" id="L160">            User user = userRepository.save(newUser);</span>
+<span class="nc" id="L161">            log.debug(&quot;user saved&quot;);</span>
+
+            // KakaoOauth 빌드
+<span class="nc" id="L164">            KakaoOauth kakaoOauth = KakaoOauth.builder()</span>
+<span class="nc" id="L165">                    .user(user)</span>
+<span class="nc" id="L166">                    .socialOauthId(socialOauthId)</span>
+<span class="nc" id="L167">                    .oauthEmail(email)</span>
+<span class="nc" id="L168">                    .refreshToken(dto.refreshToken())</span>
+<span class="nc" id="L169">                    .build();</span>
+<span class="nc" id="L170">            log.debug(&quot;kakaoOauth is built&quot;);</span>
+
+            // kakaoOauth 저장
+<span class="nc" id="L173">            kakaoOauthRepository.save(kakaoOauth);</span>
+<span class="nc" id="L174">            log.debug(&quot;kakaoOauth is saved&quot;);</span>
+
+            // jwt token 발급
+<span class="nc" id="L177">            String userId = user.getId();</span>
+<span class="nc" id="L178">            String userRole = user.getRole().name();</span>
+<span class="nc" id="L179">            String userType = user.getType().name();</span>
+<span class="nc" id="L180">            log.debug(&quot;userId : {}. userRole : {}, userType : {}&quot;, userId, userRole, userType);</span>
+
+            // jwt 토큰 발급 및 쿠키 저장
+<span class="nc" id="L183">            String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);</span>
+<span class="nc" id="L184">            String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);</span>
+<span class="nc" id="L185">            userLoginHistoryService.recordSuccessfulLogin(user);</span>
+<span class="nc" id="L186">            saveRefreshTokenWithTtl(userId, refreshToken);</span>
+<span class="nc" id="L187">            return new JwtResponse(accessToken, refreshToken);</span>
+        }
+    }
+
+    /**
+     * 2) 받은 액세스 토큰으로 사용자 정보 조회
+     */
+    public KakaoUserResponse fetchUserInfo(String accessToken) { // Mono&lt;KakaoUserResponse&gt;
+<span class="nc" id="L195">        return kakaoApiWebClient.get()</span>
+<span class="nc" id="L196">                .uri(&quot;/v2/user/me&quot;)</span>
+<span class="nc" id="L197">                .header(HttpHeaders.AUTHORIZATION, &quot;Bearer &quot; + accessToken)</span>
+<span class="nc" id="L198">                .retrieve()</span>
+<span class="nc" id="L199">                .bodyToMono(KakaoUserResponse.class)</span>
+<span class="nc" id="L200">                .block(Duration.ofMillis(5000));</span>
+    }
+
+    /**
+     * jwt token 발급 후 쿠키에 저장하는 메소드
+     * **/
+    public void generateJwtTokenAndPutInCookie(HttpServletResponse httpServletResponse, String userId, String userRole, String userType){
+        // jwt 토큰 생성
+<span class="nc" id="L208">        String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);</span>
+<span class="nc" id="L209">        String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);</span>
+<span class="nc" id="L210">        log.debug(&quot;accessToken : {}, refreshToken : {}&quot;, accessToken, refreshToken);</span>
+
+<span class="nc" id="L212">        saveRefreshTokenWithTtl(userId, refreshToken);</span>
+
+        // 쿠키에 토큰 추가
+<span class="nc" id="L215">        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookieUtil.addAccessTokenCookie(accessToken).toString());</span>
+<span class="nc" id="L216">        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookieUtil.addRefreshTokenCookie(refreshToken).toString());</span>
+<span class="nc" id="L217">        log.debug(&quot;jwt token is put in cookie&quot;);</span>
+<span class="nc" id="L218">    }</span>
+
+    private void saveRefreshTokenWithTtl(String userId, String refreshToken) {
+<span class="fc" id="L221">        stringRedisTemplate.opsForValue().set(</span>
+<span class="fc" id="L222">                jwtUtil.toRedisRefreshTokenKey(userId),</span>
+                refreshToken,
+<span class="fc" id="L224">                Duration.ofMillis(jwtUtil.getRefreshTokenExpirationTime())</span>
+        );
+<span class="fc" id="L226">        log.debug(&quot;RefreshToken Saved. UserId : {}, key : {}&quot;, userId, jwtUtil.toRedisRefreshTokenKey(userId));</span>
+<span class="fc" id="L227">    }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

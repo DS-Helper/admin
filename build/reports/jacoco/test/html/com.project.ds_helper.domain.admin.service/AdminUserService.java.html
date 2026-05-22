@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminUserService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.admin.service</a> &gt; <span class="el_source">AdminUserService.java</span></div><h1>AdminUserService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.admin.service;
+
+import com.project.ds_helper.common.util.UserUtil;
+import com.project.ds_helper.domain.admin.dto.response.GetPersonalReservationByNameResponse;
+import com.project.ds_helper.domain.admin.repository.AdminUserRepository;
+import com.project.ds_helper.domain.reservation.entity.PersonalReservation;
+import com.project.ds_helper.domain.reservation.repository.PersonalReservationRepository;
+import com.project.ds_helper.domain.user.entity.User;
+import com.project.ds_helper.domain.user.enums.UserRole;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+<span class="fc" id="L21">@Slf4j</span>
+public class AdminUserService {
+
+    private final AdminUserRepository adminUserRepository;
+    private final PersonalReservationRepository personalReservationRepository;
+    private final UserUtil userUtil;
+
+    /**
+     * 가입된 유저 수 조회
+     **/
+    public Object userCount(Authentication authentication) {
+
+<span class="fc" id="L33">        String role = &quot;USER&quot;;</span>
+<span class="fc" id="L34">        int userCount = adminUserRepository.countByRole(role);</span>
+<span class="fc" id="L35">        HashMap&lt;String, Integer&gt; responseDto = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L36">        responseDto.put(&quot;userCount&quot;, userCount);</span>
+<span class="fc" id="L37">        return responseDto;</span>
+    }
+
+    /**
+     * name 기반 유저 조회
+     * 동일 이름 유저가 여러명일 경우 모두 반환
+     * **/
+    public Object getUserInfoByName(String name, Authentication authentication) {
+        
+        // 유저 조회 및 검증
+<span class="fc" id="L47">        String userId = userUtil.extractUserId(authentication);</span>
+<span class="fc" id="L48">        log.debug(&quot;AdminUserService.getUserInfoByName started. requesterUserId={}&quot;, userId);</span>
+
+<span class="fc" id="L50">        User user = userUtil.findUserById(userId);</span>
+<span class="fc" id="L51">        UserRole userRole = user.getRole();</span>
+<span class="fc" id="L52">        log.debug(&quot;AdminUserService.getUserInfoByName requester role resolved. userRole={}&quot;, userRole.name());</span>
+
+        // 관리자만 접근 가능
+<span class="fc bfc" id="L55" title="All 2 branches covered.">        if(!userRole.equals(UserRole.ADMIN)){</span>
+<span class="fc" id="L56">            throw new AccessDeniedException(&quot;Only Admin Can Access&quot;);</span>
+        }
+        
+        // 예약 내역 조회, dto 변환 후 반환
+<span class="fc" id="L60">        List&lt;PersonalReservation&gt; personalReservations = personalReservationRepository.findAllByNameOrderByCreatedAtDesc(name);</span>
+<span class="fc" id="L61">        return personalReservations.stream().map(GetPersonalReservationByNameResponse::toDto).toList();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

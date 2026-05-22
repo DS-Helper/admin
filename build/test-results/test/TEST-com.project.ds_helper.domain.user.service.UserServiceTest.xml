@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.project.ds_helper.domain.user.service.UserServiceTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:18" hostname="아기" time="0.365">
+<testsuite name="com.project.ds_helper.domain.user.service.UserServiceTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:03:05" hostname="아기" time="0.234">
   <properties/>
-  <testcase name="새 프로필 이미지가 없고 삭제 요청도 아니면 기존 프로필 이미지를 유지한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.208"/>
-  <testcase name="로그인 체크는 refresh token이 비어 있으면 false를 반환한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.015"/>
-  <testcase name="로그인 체크는 redis refresh token이 유효하면 true를 반환한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.033"/>
-  <testcase name="현재 유저 식별자 조회는 사용자 식별자를 반환한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.033"/>
-  <testcase name="내 정보 조회는 사용자 DTO를 반환한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.02"/>
-  <testcase name="새 프로필 이미지가 있으면 기존 관리 이미지 삭제 후 새 이미지로 교체한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.009"/>
-  <testcase name="기관 회원 가입은 비밀번호가 다르면 예외가 발생한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.006"/>
-  <testcase name="프로필 이미지 삭제 요청이면 기존 관리 이미지를 삭제하고 null로 변경한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.007"/>
-  <testcase name="JWT 생성 후 redis와 헤더에 토큰을 저장한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.005"/>
-  <testcase name="일반 회원 가입은 이메일이 중복이면 예외가 발생한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.004"/>
-  <testcase name="프로필 이미지 삭제와 새 파일 업로드를 동시에 요청하면 예외가 발생한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.007"/>
+  <testcase name="새 프로필 이미지가 없고 삭제 요청도 아니면 기존 프로필 이미지를 유지한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.158"/>
+  <testcase name="로그인 체크는 refresh token이 비어 있으면 false를 반환한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.007"/>
+  <testcase name="로그인 체크는 redis refresh token이 유효하면 true를 반환한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.011"/>
+  <testcase name="현재 유저 식별자 조회는 사용자 식별자를 반환한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.009"/>
+  <testcase name="내 정보 조회는 사용자 DTO를 반환한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.004"/>
+  <testcase name="새 프로필 이미지가 있으면 기존 관리 이미지 삭제 후 새 이미지로 교체한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.011"/>
+  <testcase name="기관 회원 가입은 비밀번호가 다르면 예외가 발생한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.003"/>
+  <testcase name="프로필 이미지 삭제 요청이면 기존 관리 이미지를 삭제하고 null로 변경한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.003"/>
+  <testcase name="JWT 생성 후 redis와 헤더에 토큰을 저장한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.002"/>
+  <testcase name="일반 회원 가입은 이메일이 중복이면 예외가 발생한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.003"/>
+  <testcase name="프로필 이미지 삭제와 새 파일 업로드를 동시에 요청하면 예외가 발생한다" classname="com.project.ds_helper.domain.user.service.UserServiceTest" time="0.002"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecurityConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.common.security</a> &gt; <span class="el_source">SecurityConfig.java</span></div><h1>SecurityConfig.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.common.security;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.ds_helper.common.filter.CustomLoginFilter;
+import com.project.ds_helper.common.filter.CustomLogoutFilter;
+import com.project.ds_helper.common.filter.JwtFilter;
+import com.project.ds_helper.common.util.CookieUtil;
+import com.project.ds_helper.common.util.JwtUtil;
+import com.project.ds_helper.domain.user.repository.UserRepository;
+import com.project.ds_helper.domain.user.service.UserLoginHistoryService;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
+
+@Configuration
+@EnableWebSecurity(debug = false)
+public class SecurityConfig {
+
+    private final JwtUtil jwtUtil;
+    private final CookieUtil cookieUtil;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final AuthenticationConfiguration authenticationConfiguration;
+    private final ObjectMapper objectMapper;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final UserRepository userRepository;
+    private final UserLoginHistoryService userLoginHistoryService;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
+
+    public SecurityConfig(
+            JwtUtil jwtUtil,
+            CookieUtil cookieUtil,
+            StringRedisTemplate stringRedisTemplate,
+            AuthenticationConfiguration authenticationConfiguration,
+            @Qualifier(&quot;customObjectMapper&quot;) ObjectMapper objectMapper,
+            BCryptPasswordEncoder bCryptPasswordEncoder,
+            UserRepository userRepository,
+            UserLoginHistoryService userLoginHistoryService,
+            CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
+            CustomAccessDeniedHandler customAccessDeniedHandler
+<span class="nc" id="L56">    ) {</span>
+<span class="nc" id="L57">        this.jwtUtil = jwtUtil;</span>
+<span class="nc" id="L58">        this.cookieUtil = cookieUtil;</span>
+<span class="nc" id="L59">        this.stringRedisTemplate = stringRedisTemplate;</span>
+<span class="nc" id="L60">        this.authenticationConfiguration = authenticationConfiguration;</span>
+<span class="nc" id="L61">        this.objectMapper = objectMapper;</span>
+<span class="nc" id="L62">        this.bCryptPasswordEncoder = bCryptPasswordEncoder;</span>
+<span class="nc" id="L63">        this.userRepository = userRepository;</span>
+<span class="nc" id="L64">        this.userLoginHistoryService = userLoginHistoryService;</span>
+<span class="nc" id="L65">        this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;</span>
+<span class="nc" id="L66">        this.customAccessDeniedHandler = customAccessDeniedHandler;</span>
+<span class="nc" id="L67">    }</span>
+
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+<span class="nc" id="L71">        http.csrf(AbstractHttpConfigurer::disable);</span>
+<span class="nc" id="L72">        http.cors(cors -&gt; cors.configurationSource(corsConfigurationSource()));</span>
+<span class="nc" id="L73">        http.formLogin(AbstractHttpConfigurer::disable);</span>
+<span class="nc" id="L74">        http.httpBasic(AbstractHttpConfigurer::disable);</span>
+<span class="nc" id="L75">        http.logout(AbstractHttpConfigurer::disable);</span>
+<span class="nc" id="L76">        http.exceptionHandling(exception -&gt; exception</span>
+<span class="nc" id="L77">                .authenticationEntryPoint(customAuthenticationEntryPoint)</span>
+<span class="nc" id="L78">                .accessDeniedHandler(customAccessDeniedHandler)</span>
+        );
+
+<span class="nc" id="L81">        http.addFilterBefore(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);</span>
+<span class="nc" id="L82">        http.addFilterAt(</span>
+                new CustomLoginFilter(
+<span class="nc" id="L84">                        getAuthenticationManager(authenticationConfiguration),</span>
+                        jwtUtil,
+                        cookieUtil,
+                        bCryptPasswordEncoder,
+                        stringRedisTemplate,
+                        userRepository,
+                        userLoginHistoryService,
+                        objectMapper
+                ),
+                UsernamePasswordAuthenticationFilter.class
+        );
+<span class="nc" id="L95">        http.addFilterBefore(</span>
+                new CustomLogoutFilter(stringRedisTemplate, jwtUtil, cookieUtil, objectMapper),
+                LogoutFilter.class
+        );
+
+<span class="nc" id="L100">        http.authorizeHttpRequests(auth -&gt; auth</span>
+<span class="nc" id="L101">                .requestMatchers(&quot;/auth/check-logged-in&quot;).permitAll()</span>
+<span class="nc" id="L102">                .requestMatchers(&quot;/health-check&quot;).permitAll()</span>
+<span class="nc" id="L103">                .requestMatchers(&quot;/test/**&quot;).permitAll()</span>
+<span class="nc" id="L104">                .requestMatchers(&quot;/admin/**&quot;).hasAuthority(&quot;ADMIN&quot;)</span>
+                // 쓰레기통 기준 데이터와 이미지는 운영 데이터이므로 관리자만 업로드할 수 있다.
+<span class="nc" id="L106">                .requestMatchers(HttpMethod.POST, &quot;/trash-bins/upload&quot;, &quot;/trash-bins/images&quot;).hasAuthority(&quot;ADMIN&quot;)</span>
+<span class="nc" id="L107">                .requestMatchers(</span>
+                        &quot;/oauth/**&quot;,
+                        &quot;/trash-bins/**&quot;,
+                        &quot;/api/v1/mobile/oauth/**&quot;,
+                        &quot;/v3/api-docs/**&quot;,
+                        &quot;/swagger-ui/**&quot;,
+                        &quot;/swagger-ui.html&quot;,
+                        &quot;/swagger/**&quot;
+<span class="nc" id="L115">                ).permitAll()</span>
+<span class="nc" id="L116">                .requestMatchers(HttpMethod.POST, &quot;/auth/join/organization&quot;).permitAll()</span>
+<span class="nc" id="L117">                .requestMatchers(HttpMethod.POST, &quot;/auth/join/user&quot;).permitAll()</span>
+<span class="nc" id="L118">                .requestMatchers(HttpMethod.POST, &quot;/auth/login/organization&quot;).permitAll()</span>
+<span class="nc" id="L119">                .requestMatchers(HttpMethod.GET, &quot;/posts&quot;, &quot;/posts/*&quot;, &quot;/boards&quot;, &quot;/board/*&quot;, &quot;/comments/*/comments&quot;, &quot;/comments/*/children&quot;).permitAll()</span>
+<span class="nc" id="L120">                .anyRequest().authenticated()</span>
+        );
+
+<span class="nc" id="L123">        return http.build();</span>
+    }
+
+    @Bean
+    UrlBasedCorsConfigurationSource corsConfigurationSource() {
+<span class="nc" id="L128">        CorsConfiguration configuration = new CorsConfiguration();</span>
+<span class="nc" id="L129">        configuration.setAllowedOriginPatterns(List.of(</span>
+                &quot;*&quot;,
+                &quot;http://localhost:3000&quot;, &quot;http://localhost:5173&quot;, &quot;http://localhost:8080&quot;,
+                &quot;https://testmy-netlify.app&quot;, &quot;https://test.dshelper.kro.kr&quot;,
+                &quot;https://client.dshelper.kro.kr&quot;,
+                &quot;https://dshelper.netlify.app&quot;,
+                &quot;https://www.dshelper.kr&quot;, &quot;https://server.dshelper.kr&quot;,
+                &quot;https://test.dshelper.kr&quot;
+        ));
+<span class="nc" id="L138">        configuration.setAllowedMethods(List.of(&quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;PATCH&quot;, &quot;DELETE&quot;, &quot;OPTIONS&quot;));</span>
+<span class="nc" id="L139">        configuration.setAllowedHeaders(List.of(&quot;*&quot;));</span>
+<span class="nc" id="L140">        configuration.setExposedHeaders(List.of(&quot;*&quot;));</span>
+<span class="nc" id="L141">        configuration.setAllowCredentials(true);</span>
+
+<span class="nc" id="L143">        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();</span>
+<span class="nc" id="L144">        source.registerCorsConfiguration(&quot;/**&quot;, configuration);</span>
+<span class="nc" id="L145">        return source;</span>
+    }
+
+    @Bean
+    AuthenticationManager getAuthenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+<span class="nc" id="L150">        return authenticationConfiguration.getAuthenticationManager();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

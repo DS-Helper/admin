@@ -54,6 +54,8 @@ class MobileKakaoOauthServiceTest {
     @Mock
     private CookieUtil cookieUtil;
     @Mock
+    private UserLoginHistoryService userLoginHistoryService;
+    @Mock
     private StringRedisTemplate stringRedisTemplate;
     @Mock
     private ValueOperations<String, String> valueOperations;
@@ -66,7 +68,7 @@ class MobileKakaoOauthServiceTest {
     @Test
     @DisplayName("모바일 카카오 로그인은 기존 회원에게 access token과 refresh token을 각각 발급한다")
     void mobileKakaoLogin_existingUser_returnsDistinctTokens() throws IOException {
-        MobileKakaoLoginRequestDto dto = new MobileKakaoLoginRequestDto(OauthType.KAKAO, "kakao-access-token");
+        MobileKakaoLoginRequestDto dto = new MobileKakaoLoginRequestDto(OauthType.KAKAO, "kakao-access-token", "kakao-provider-refresh-token");
         MobileKakaoOauthService spyService = spy(service);
         doReturn(createKakaoUserResponse(1L, "user@test.com", "홍길동", "male", "2000", "https://img", "010-1234-5678"))
                 .when(spyService).fetchUserInfo("kakao-access-token");
@@ -90,6 +92,7 @@ class MobileKakaoOauthServiceTest {
         assertThat(result.accessToken()).isEqualTo("access-token");
         assertThat(result.refreshToken()).isEqualTo("refresh-token");
         assertThat(result.refreshToken()).isNotEqualTo(result.accessToken());
+        assertThat(kakaoOauth.getRefreshToken()).isEqualTo("kakao-provider-refresh-token");
         verify(jwtUtil).generateRefreshToken("user-id", "USER", "PERSONAL");
         verify(userRepository, never()).save(any(User.class));
     }
@@ -97,7 +100,7 @@ class MobileKakaoOauthServiceTest {
     @Test
     @DisplayName("모바일 카카오 신규 가입 시 동일 이메일이 있으면 가입을 거절한다")
     void mobileKakaoLogin_throwsWhenEmailExists() throws IOException {
-        MobileKakaoLoginRequestDto dto = new MobileKakaoLoginRequestDto(OauthType.KAKAO, "kakao-access-token");
+        MobileKakaoLoginRequestDto dto = new MobileKakaoLoginRequestDto(OauthType.KAKAO, "kakao-access-token", null);
         MobileKakaoOauthService spyService = spy(service);
         doReturn(createKakaoUserResponse(2L, "dup@test.com", "중복", "female", "2001", "https://img2", "010-9999-9999"))
                 .when(spyService).fetchUserInfo("kakao-access-token");

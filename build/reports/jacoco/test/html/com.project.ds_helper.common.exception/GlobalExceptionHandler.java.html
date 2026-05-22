@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.common.exception</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.common.exception;
+
+import com.project.ds_helper.common.dto.response.ResponseVo;
+import com.project.ds_helper.common.enums.ErrorCode;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolationException;
+import java.nio.file.AccessDeniedException;
+
+import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.RedisConnectionFailureException;
+import org.springframework.security.authentication.AuthenticationServiceException;
+import org.springframework.validation.BindException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+@RestControllerAdvice
+<span class="nc" id="L24">@Slf4j</span>
+<span class="nc" id="L25">public class GlobalExceptionHandler {</span>
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity&lt;ResponseVo&gt; handleBusinessException(BusinessException ex) {
+<span class="nc" id="L29">        ErrorCode errorCode = ex.getErrorCode();</span>
+<span class="nc" id="L30">        return buildErrorResponse(errorCode, ex, ex.getMessage());</span>
+    }
+
+    @ExceptionHandler({
+            MethodArgumentNotValidException.class,
+            BindException.class,
+            ConstraintViolationException.class,
+            MissingServletRequestParameterException.class,
+            MethodArgumentTypeMismatchException.class,
+            HttpMessageNotReadableException.class,
+            IllegalArgumentException.class,
+            BadRequestException.class
+    })
+    public ResponseEntity&lt;ResponseVo&gt; handleBadRequestExceptions(Exception ex) {
+<span class="nc" id="L44">        return buildErrorResponse(resolveBadRequestCode(ex), ex);</span>
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity&lt;ResponseVo&gt; handleFileAccessDeniedException(AccessDeniedException ex) {
+<span class="nc" id="L49">        return buildErrorResponse(ErrorCode.ACCESS_DENIED, ex);</span>
+    }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity&lt;ResponseVo&gt; handleSpringAccessDeniedException(
+            org.springframework.security.access.AccessDeniedException ex
+    ) {
+<span class="nc" id="L56">        return buildErrorResponse(ErrorCode.ACCESS_DENIED, ex);</span>
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity&lt;ResponseVo&gt; handleEntityNotFoundException(EntityNotFoundException ex) {
+<span class="nc" id="L61">        return buildErrorResponse(ErrorCode.RESOURCE_NOT_FOUND, ex);</span>
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity&lt;ResponseVo&gt; handleConflictException(IllegalStateException ex) {
+<span class="nc" id="L66">        return buildErrorResponse(ErrorCode.CONFLICT, ex);</span>
+    }
+
+    @ExceptionHandler(AuthenticationServiceException.class)
+    public ResponseEntity&lt;ResponseVo&gt; handleAuthenticationServiceException(AuthenticationServiceException ex) {
+<span class="nc" id="L71">        return buildErrorResponse(ErrorCode.UNAUTHORIZED, ex);</span>
+    }
+
+    @ExceptionHandler(RedisConnectionFailureException.class)
+    public ResponseEntity&lt;ResponseVo&gt; handleRedisConnectionFailureException(RedisConnectionFailureException ex) {
+<span class="nc" id="L76">        return buildErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, ex);</span>
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity&lt;ResponseVo&gt; handleDataAccessException(DataAccessException ex) {
+<span class="nc" id="L81">        return buildErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, ex);</span>
+    }
+
+    @ExceptionHandler(NullPointerException.class)
+    public ResponseEntity&lt;ResponseVo&gt; handleNullPointerException(NullPointerException ex) {
+<span class="nc" id="L86">        return buildErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, ex);</span>
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity&lt;ResponseVo&gt; handleException(Exception ex) {
+<span class="nc" id="L91">        return buildErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, ex);</span>
+    }
+
+    private ResponseEntity&lt;ResponseVo&gt; buildErrorResponse(ErrorCode errorCode, Exception ex) {
+<span class="nc" id="L95">        return buildErrorResponse(errorCode, ex, errorCode.getMessage());</span>
+    }
+
+    private ResponseEntity&lt;ResponseVo&gt; buildErrorResponse(ErrorCode errorCode, Exception ex, String message) {
+<span class="nc" id="L99">        log.error(&quot;Handled exception. code={}, type={}, message={}&quot;, errorCode.getCode(), ex.getClass().getSimpleName(), ex.getMessage(), ex);</span>
+<span class="nc" id="L100">        ResponseVo responseVo = ResponseVo.error(errorCode, message);</span>
+<span class="nc" id="L101">        return new ResponseEntity&lt;&gt;(responseVo, errorCode.getHttpStatus());</span>
+    }
+
+    private ErrorCode resolveBadRequestCode(Exception ex) {
+<span class="nc bnc" id="L105" title="All 6 branches missed.">        if (ex instanceof MethodArgumentNotValidException</span>
+                || ex instanceof BindException
+                || ex instanceof ConstraintViolationException) {
+<span class="nc" id="L108">            return ErrorCode.VALIDATION_ERROR;</span>
+        }
+
+<span class="nc bnc" id="L111" title="All 2 branches missed.">        if (ex instanceof IllegalArgumentException) {</span>
+<span class="nc" id="L112">            return ErrorCode.INVALID_PARAMETER;</span>
+        }
+
+<span class="nc" id="L115">        return ErrorCode.BAD_REQUEST;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

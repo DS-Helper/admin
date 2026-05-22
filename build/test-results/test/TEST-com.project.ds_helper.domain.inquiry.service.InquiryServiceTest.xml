@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.project.ds_helper.domain.inquiry.service.InquiryServiceTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:10" hostname="아기" time="0.447">
+<testsuite name="com.project.ds_helper.domain.inquiry.service.InquiryServiceTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:02:55" hostname="아기" time="0.498">
   <properties/>
-  <testcase name="이미지 2개가 있는 문의 생성은 예외가 발생한다" classname="com.project.ds_helper.domain.inquiry.service.InquiryServiceTest" time="0.228"/>
-  <testcase name="이미지가 없는 문의 생성은 문의만 저장한다" classname="com.project.ds_helper.domain.inquiry.service.InquiryServiceTest" time="0.015"/>
-  <testcase name="단건 문의 조회는 Inquiry DTO를 반환한다" classname="com.project.ds_helper.domain.inquiry.service.InquiryServiceTest" time="0.005"/>
-  <testcase name="내 문의 목록 조회는 페이지 응답 DTO를 반환한다" classname="com.project.ds_helper.domain.inquiry.service.InquiryServiceTest" time="0.073"/>
-  <testcase name="이미지 1개가 있는 문의 생성은 저장과 업로드를 수행한다" classname="com.project.ds_helper.domain.inquiry.service.InquiryServiceTest" time="0.12"/>
+  <testcase name="이미지 2개가 있는 문의 생성은 예외가 발생한다" classname="com.project.ds_helper.domain.inquiry.service.InquiryServiceTest" time="0.333"/>
+  <testcase name="이미지가 없는 문의 생성은 문의만 저장한다" classname="com.project.ds_helper.domain.inquiry.service.InquiryServiceTest" time="0.01"/>
+  <testcase name="단건 문의 조회는 Inquiry DTO를 반환한다" classname="com.project.ds_helper.domain.inquiry.service.InquiryServiceTest" time="0.028"/>
+  <testcase name="내 문의 목록 조회는 페이지 응답 DTO를 반환한다" classname="com.project.ds_helper.domain.inquiry.service.InquiryServiceTest" time="0.003"/>
+  <testcase name="이미지 1개가 있는 문의 생성은 저장과 업로드를 수행한다" classname="com.project.ds_helper.domain.inquiry.service.InquiryServiceTest" time="0.121"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

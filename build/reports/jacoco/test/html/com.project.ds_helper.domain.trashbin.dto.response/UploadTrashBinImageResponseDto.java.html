@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UploadTrashBinImageResponseDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.trashbin.dto.response</a> &gt; <span class="el_source">UploadTrashBinImageResponseDto.java</span></div><h1>UploadTrashBinImageResponseDto.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.trashbin.dto.response;
+
+import com.project.ds_helper.domain.trashbin.entity.TrashBin;
+import com.project.ds_helper.domain.trashbin.entity.TrashBinImage;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+
+@Builder
+@Schema(description = &quot;쓰레기통 이미지 업로드 응답 DTO&quot;)
+<span class="fc" id="L10">public record UploadTrashBinImageResponseDto(</span>
+        @Schema(description = &quot;이미지가 매핑되었거나 이미 매핑되어 있던 쓰레기통 ID&quot;, example = &quot;3f9c7c8e-4d5a-4b1e-9a2f-7c1d2e8f9a01&quot;)
+        String trashBinId,
+
+        @Schema(description = &quot;파일명에서 파싱한 매핑 기준 위도&quot;, example = &quot;35.808057&quot;)
+        Double latitude,
+
+        @Schema(description = &quot;매핑된 쓰레기통 경도&quot;, example = &quot;128.508827&quot;)
+        Double longitude,
+
+        @Schema(description = &quot;동일 위도 이미지가 이미 저장되어 있었는지 여부&quot;, example = &quot;false&quot;)
+        boolean alreadyExists,
+
+        @Schema(description = &quot;업로드/중복 처리 결과 메시지&quot;, example = &quot;Image uploaded successfully&quot;)
+        String message,
+
+        @Schema(description = &quot;이미지 ID&quot;, example = &quot;8dece4df-d2fb-4a4d-a908-8aa7b8e7b922&quot;)
+        String imageId,
+
+        @Schema(description = &quot;원본 파일명&quot;, example = &quot;35.808057.png&quot;)
+        String originalName,
+
+        @Schema(description = &quot;S3 저장 파일명&quot;, example = &quot;20260503120000_uuid&quot;)
+        String storedName,
+
+        @Schema(description = &quot;S3 object key&quot;, example = &quot;images/20260503120000_uuid&quot;)
+        String s3Key,
+
+        @Schema(description = &quot;S3 이미지 URL&quot;, example = &quot;https://bucket.s3.ap-northeast-2.amazonaws.com/images/20260503120000_uuid&quot;)
+        String imageUrl,
+
+        @Schema(description = &quot;압축 후 파일 크기&quot;, example = &quot;4521&quot;)
+        Long size,
+
+        @Schema(description = &quot;압축 후 content type&quot;, example = &quot;image/webp&quot;)
+        String contentType
+) {
+
+    public static UploadTrashBinImageResponseDto uploaded(TrashBin trashBin, TrashBinImage image) {
+<span class="fc" id="L49">        return toDto(trashBin, image, false, &quot;Image uploaded successfully&quot;);</span>
+    }
+
+    public static UploadTrashBinImageResponseDto alreadyExists(TrashBinImage image) {
+<span class="fc" id="L53">        return toDto(image.getTrashBin(), image, true, &quot;Image already exists for latitude&quot;);</span>
+    }
+
+    private static UploadTrashBinImageResponseDto toDto(
+            TrashBin trashBin,
+            TrashBinImage image,
+            boolean alreadyExists,
+            String message
+    ) {
+<span class="fc" id="L62">        return UploadTrashBinImageResponseDto.builder()</span>
+<span class="fc" id="L63">                .trashBinId(trashBin.getId())</span>
+<span class="fc" id="L64">                .latitude(trashBin.getLatitude())</span>
+<span class="fc" id="L65">                .longitude(trashBin.getLongitude())</span>
+<span class="fc" id="L66">                .alreadyExists(alreadyExists)</span>
+<span class="fc" id="L67">                .message(message)</span>
+<span class="fc" id="L68">                .imageId(image.getId())</span>
+<span class="fc" id="L69">                .originalName(image.getOriginalName())</span>
+<span class="fc" id="L70">                .storedName(image.getStoredName())</span>
+<span class="fc" id="L71">                .s3Key(image.getS3Key())</span>
+<span class="fc" id="L72">                .imageUrl(image.getUrl())</span>
+<span class="fc" id="L73">                .size(image.getSize())</span>
+<span class="fc" id="L74">                .contentType(image.getContentType())</span>
+<span class="fc" id="L75">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

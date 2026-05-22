@@ -23,7 +23,7 @@
 <tr>
 <td>
 <div class="infoBox" id="tests">
-<div class="counter">12</div>
+<div class="counter">27</div>
 <p>tests</p>
 </div>
 </td>
@@ -41,7 +41,7 @@
 </td>
 <td>
 <div class="infoBox" id="duration">
-<div class="counter">0.274s</div>
+<div class="counter">0.300s</div>
 <p>duration</p>
 </div>
 </td>
@@ -79,45 +79,75 @@
 </tr>
 </thead>
 <tr>
+<td class="success">게시글 생성은 이미지가 있으면 압축, 엔티티 추가, S3 업로드를 수행한다</td>
+<td class="success">createPost_savesPostWithImages()</td>
+<td class="success">0.013s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">게시글 생성은 빈 이미지 목록이면 게시글만 저장한다</td>
+<td class="success">createPost_savesPostWithoutImagesWhenImagesEmpty()</td>
+<td class="success">0.008s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">게시글 생성은 이미지가 없으면 게시글만 저장한다</td>
+<td class="success">createPost_savesPostWithoutImagesWhenImagesNull()</td>
+<td class="success">0.003s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">게시글 생성은 내용이 없으면 예외가 발생한다</td>
+<td class="success">createPost_throwsWhenContentInvalid()</td>
+<td class="success">0.005s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
 <td class="success">게시글 생성은 제목이나 내용이 없으면 예외가 발생한다</td>
 <td class="success">createPost_throwsWhenDtoInvalid()</td>
-<td class="success">0.009s</td>
+<td class="success">0.003s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
 <td class="success">게시글 삭제는 관리자일 때 S3 삭제 후 게시글 삭제를 호출한다</td>
 <td class="success">deletePost_deletesS3AndPostWhenAdmin()</td>
-<td class="success">0.014s</td>
+<td class="success">0.008s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
 <td class="success">게시글 삭제는 관리자만 수행할 수 있다</td>
 <td class="success">deletePost_throwsWhenUserIsNotAdmin()</td>
-<td class="success">0.005s</td>
+<td class="success">0.003s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
 <td class="success">게시글 목록 조회는 viewCount 정렬을 허용한다</td>
 <td class="success">getAllPostOfUser_allowsViewCountSort()</td>
-<td class="success">0.014s</td>
+<td class="success">0.006s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
 <td class="success">삭제된 회원의 게시글은 목록 조회에서 제외된 결과만 반환한다</td>
 <td class="success">getAllPostOfUser_ignoresSoftDeletedUsers()</td>
-<td class="success">0.138s</td>
+<td class="success">0.004s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
 <td class="success">게시글 목록 조회는 페이지 DTO를 반환한다</td>
 <td class="success">getAllPostOfUser_returnsPagedDto()</td>
-<td class="success">0.032s</td>
+<td class="success">0.009s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
 <td class="success">게시글 목록 조회 시 keyword가 있으면 제목 LIKE 검색을 수행한다</td>
 <td class="success">getAllPostOfUser_searchesByKeyword()</td>
-<td class="success">0.010s</td>
+<td class="success">0.005s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">게시글 목록 조회는 오름차순 정렬을 지원한다</td>
+<td class="success">getAllPostOfUser_supportsAscendingSort()</td>
+<td class="success">0.136s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
@@ -127,27 +157,87 @@
 <td class="success">passed</td>
 </tr>
 <tr>
+<td class="success">게시글 목록 조회는 blank keyword면 전체 조회를 수행한다</td>
+<td class="success">getAllPostOfUser_usesFindAllWhenKeywordIsBlank()</td>
+<td class="success">0.003s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
 <td class="success">게시글 단건 조회는 조회수 증가 후 DTO를 반환한다</td>
 <td class="success">getOnePost_returnsDto()</td>
-<td class="success">0.020s</td>
+<td class="success">0.008s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">게시글 단건 조회는 게시글이 없으면 예외가 발생한다</td>
+<td class="success">getOnePost_throwsWhenPostMissing()</td>
+<td class="success">0.004s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
 <td class="success">조회수 증가에 실패하면 예외가 발생한다</td>
 <td class="success">getOnePost_throwsWhenViewCountUpdateFails()</td>
-<td class="success">0.009s</td>
+<td class="success">0.003s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
 <td class="success">관리자는 작성자가 아니어도 게시글을 수정할 수 있다</td>
 <td class="success">updatePost_allowsAdminEvenWhenNotWriter()</td>
+<td class="success">0.009s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">게시글 수정은 기존 이미지 삭제 대상이 있으면 S3 삭제 후 새 이미지를 업로드한다</td>
+<td class="success">updatePost_deletesRemovedImagesAndUploadsNewImages()</td>
+<td class="success">0.010s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">게시글 수정은 내용이 없으면 예외가 발생한다</td>
+<td class="success">updatePost_throwsWhenContentInvalid()</td>
 <td class="success">0.007s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">게시글 수정은 S3 삭제 결과가 null이면 예외가 발생한다</td>
+<td class="success">updatePost_throwsWhenDeleteResultIsNull()</td>
+<td class="success">0.018s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">게시글 수정은 게시글 ID가 없으면 예외가 발생한다</td>
+<td class="success">updatePost_throwsWhenPostIdInvalid()</td>
+<td class="success">0.005s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">게시글 수정은 작성자와 관리자가 아니면 예외가 발생한다</td>
+<td class="success">updatePost_throwsWhenRequesterIsNotWriterOrAdmin()</td>
+<td class="success">0.005s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">게시글 수정은 제목이 없으면 예외가 발생한다</td>
+<td class="success">updatePost_throwsWhenTitleInvalid()</td>
+<td class="success">0.002s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">updatePost updates text only when images is empty</td>
+<td class="success">updatePost_updatesTextOnlyWhenImagesEmpty()</td>
+<td class="success">0.006s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">게시글 수정은 이미지가 없고 imageUrls가 null이어도 본문만 수정한다</td>
+<td class="success">updatePost_updatesTextOnlyWhenImagesNullAndImageUrlsNull()</td>
+<td class="success">0.003s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
 <td class="success">게시글 수정 시 삭제 대상이 없어도 새 이미지는 추가 업로드한다</td>
 <td class="success">updatePost_uploadsNewImagesEvenWhenNothingDeleted()</td>
-<td class="success">0.013s</td>
+<td class="success">0.011s</td>
 <td class="success">passed</td>
 </tr>
 </table>
@@ -155,27 +245,29 @@
 <div id="tab1" class="tab">
 <h2>Standard output</h2>
 <span class="code">
-<pre>20:39:11.520 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto -- posts size : 1
-20:39:11.522 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt : 2026-03-27T10:00
-20:39:11.523 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt is null? : false
-20:39:11.523 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt convert to LocalDate : 2026-03-27
-20:39:11.545 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto -- posts size : 1
-20:39:11.546 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt : 2026-03-27T10:00
-20:39:11.546 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt is null? : false
-20:39:11.546 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt convert to LocalDate : 2026-03-27
-20:39:11.564 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto -- posts size : 1
-20:39:11.565 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt : 2026-03-27T10:00
-20:39:11.571 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt is null? : false
-20:39:11.572 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt convert to LocalDate : 2026-03-27
-20:39:11.582 [Test worker] INFO com.project.ds_helper.domain.post.entity.Post -- addImage called: keep.png
-20:39:11.588 [Test worker] INFO com.project.ds_helper.domain.post.entity.Post -- addImage called: stored-new
-20:39:11.646 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto -- posts size : 1
-20:39:11.647 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt : 2026-03-27T10:00
-20:39:11.648 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt is null? : false
-20:39:11.649 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt convert to LocalDate : 2026-03-27
-20:39:11.670 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt : 2026-03-27T10:00
-20:39:11.671 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt is null? : false
-20:39:11.672 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt convert to LocalDate : 2026-03-27
+<pre>12:02:57.250 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto -- Posts is Empty
+12:02:57.265 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto -- posts size : 1
+12:02:57.265 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt : 2026-03-27T10:00
+12:02:57.266 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt convert to LocalDate : 2026-03-27
+12:02:57.280 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto -- posts size : 1
+12:02:57.280 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt : 2026-03-27T10:00
+12:02:57.280 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt convert to LocalDate : 2026-03-27
+12:02:57.311 [Test worker] INFO com.project.ds_helper.domain.post.entity.Post -- addImage called: stored
+12:02:57.327 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto -- posts size : 1
+12:02:57.329 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt : 2026-03-27T10:00
+12:02:57.329 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt convert to LocalDate : 2026-03-27
+12:02:57.337 [Test worker] INFO com.project.ds_helper.domain.post.entity.Post -- addImage called: keep.png
+12:02:57.340 [Test worker] INFO com.project.ds_helper.domain.post.entity.Post -- addImage called: stored-new
+12:02:57.375 [Test worker] INFO com.project.ds_helper.domain.post.entity.Post -- addImage called: remove.png
+12:02:57.381 [Test worker] INFO com.project.ds_helper.domain.post.entity.Post -- addImage called: stored-new
+12:02:57.403 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto -- posts size : 1
+12:02:57.404 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt : 2026-03-27T10:00
+12:02:57.404 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt convert to LocalDate : 2026-03-27
+12:02:57.409 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt : 2026-03-27T10:00
+12:02:57.411 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt convert to LocalDate : 2026-03-27
+12:02:57.430 [Test worker] INFO com.project.ds_helper.domain.post.entity.Post -- addImage called: remove.png
+12:02:57.433 [Test worker] INFO com.project.ds_helper.domain.post.entity.Post -- addImage called: stored-new
+12:02:57.459 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto -- Posts is Empty
 </pre>
 </span>
 </div>
@@ -187,7 +279,7 @@
 <input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
 </label>
 </div>Generated by 
-<a href="http://www.gradle.org">Gradle 8.10</a> at 2026. 5. 10. 오후 8:39:19</p>
+<a href="http://www.gradle.org">Gradle 8.10</a> at 2026. 5. 22. 오후 12:03:09</p>
 </div>
 </div>
 </body>

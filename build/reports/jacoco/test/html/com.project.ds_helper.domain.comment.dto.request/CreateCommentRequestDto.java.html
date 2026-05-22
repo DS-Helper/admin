@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CreateCommentRequestDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.comment.dto.request</a> &gt; <span class="el_source">CreateCommentRequestDto.java</span></div><h1>CreateCommentRequestDto.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.comment.dto.request;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Description;
+
+@Getter
+@NoArgsConstructor
+<span class="fc" id="L12">@Slf4j</span>
+public class CreateCommentRequestDto {
+
+
+    @Schema(
+            description = &quot;게시글 ID&quot;,
+            example = &quot;3f9c7c8e-4d5a-4b1e-9a2f-7c1d2e8f9a01&quot;
+    )
+    @NotBlank
+    private String boardId;
+
+    @Schema(
+            description = &quot;부모 댓글 ID (대댓글인 경우만 전달)&quot;,
+            example = &quot;b7a1d2e4-8f6c-4c3a-91ab-2e7f5d9c4b88&quot;,
+            nullable = true
+    )
+    private String parentId; // null이면 depth1 댓글
+
+    @Schema(
+            description = &quot;댓글 내용&quot;,
+            example = &quot;이 글 정말 도움이 많이 됐습니다. 추가로 관련 자료가 있다면 공유해주시면 감사하겠습니다!&quot;
+    )
+    @NotBlank
+    private String content;
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

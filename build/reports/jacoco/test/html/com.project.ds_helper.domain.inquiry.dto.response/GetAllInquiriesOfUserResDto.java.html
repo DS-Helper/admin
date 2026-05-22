@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GetAllInquiriesOfUserResDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.inquiry.dto.response</a> &gt; <span class="el_source">GetAllInquiriesOfUserResDto.java</span></div><h1>GetAllInquiriesOfUserResDto.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.inquiry.dto.response;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import com.project.ds_helper.common.dto.response.PageResponseDto;
+import com.project.ds_helper.domain.inquiry.entity.Inquiry;
+import com.project.ds_helper.domain.inquiry.entity.InquiryImage;
+import com.project.ds_helper.domain.reply.dto.response.ReplyDto;
+import com.project.ds_helper.domain.user.dto.response.UserDto;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+import org.springframework.data.domain.Page;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Builder
+@Schema(description = &quot;사용자 문의 목록 응답 DTO&quot;, example = &quot;{\&quot;inquiries\&quot;:[{\&quot;inquiryId\&quot;:\&quot;inquiry-001\&quot;,\&quot;content\&quot;:\&quot;서비스 이용 방법을 알고 싶어요.\&quot;,\&quot;type\&quot;:\&quot;기타\&quot;,\&quot;status\&quot;:\&quot;답변대기\&quot;,\&quot;user\&quot;:{\&quot;userId\&quot;:\&quot;user-001\&quot;,\&quot;email\&quot;:\&quot;user@test.com\&quot;,\&quot;role\&quot;:\&quot;USER\&quot;,\&quot;name\&quot;:\&quot;홍길동\&quot;,\&quot;gender\&quot;:\&quot;남성\&quot;},\&quot;imageUrls\&quot;:[\&quot;https://cdn.dshelper.kr/inquiry/1.png\&quot;],\&quot;createdAt\&quot;:\&quot;2026-03-23 14:00\&quot;,\&quot;replyCreatedAt\&quot;:null}],\&quot;page\&quot;:{\&quot;page\&quot;:0,\&quot;size\&quot;:10,\&quot;totalElements\&quot;:1,\&quot;totalPages\&quot;:1,\&quot;first\&quot;:true,\&quot;last\&quot;:true,\&quot;hasNext\&quot;:false,\&quot;hasPrevious\&quot;:false,\&quot;sort\&quot;:{\&quot;sorted\&quot;:true,\&quot;unsorted\&quot;:false,\&quot;empty\&quot;:false}}}&quot;)
+<span class="fc" id="L20">public record GetAllInquiriesOfUserResDto(</span>
+        List&lt;ThisInquiry&gt; inquiries,
+        PageResponseDto page
+) {
+
+
+    @Builder
+<span class="fc" id="L27">    public record ThisInquiry(</span>
+            String inquiryId,
+            String content,
+            String type,
+            String status,
+            UserDto user,
+            List&lt;String&gt; imageUrls,
+            @JsonSerialize(using = LocalDateTimeSerializer.class)
+            @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = &quot;yyyy-MM-dd HH:mm&quot;)
+            LocalDateTime createdAt,
+            @JsonSerialize(using = LocalDateTimeSerializer.class)
+            @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = &quot;yyyy-MM-dd HH:mm&quot;)
+            LocalDateTime updatedAt,
+            ReplyDto reply){
+
+        public static ThisInquiry toThisInquiry(Inquiry inquiry){
+<span class="fc" id="L43">            return ThisInquiry.builder()</span>
+<span class="fc" id="L44">                    .inquiryId(inquiry.getId())</span>
+<span class="fc" id="L45">                    .content(inquiry.getContent())</span>
+<span class="fc" id="L46">                    .type(inquiry.getType().getKorean())</span>
+<span class="fc" id="L47">                    .status(inquiry.getStatus().getKorean())</span>
+<span class="fc" id="L48">                    .user(UserDto.toDto(inquiry.getUser()))</span>
+<span class="fc" id="L49">                    .imageUrls(inquiry.getImages().stream().map(InquiryImage::getUrl).toList())</span>
+<span class="fc" id="L50">                    .createdAt(inquiry.getCreatedAt())</span>
+<span class="fc" id="L51">                    .updatedAt(inquiry.getUpdatedAt())</span>
+<span class="pc bpc" id="L52" title="1 of 2 branches missed.">                    .reply(inquiry.getReply() == null? null : com.project.ds_helper.domain.reply.dto.response.ReplyDto.toDto(inquiry.getReply())).build();</span>
+        }
+    }
+
+    public static GetAllInquiriesOfUserResDto toDto(Page&lt;Inquiry&gt; inquiries){
+<span class="fc" id="L57">        PageResponseDto page = new PageResponseDto(inquiries.getNumber(), inquiries.getSize(), inquiries.getTotalElements(), inquiries.getTotalPages(), inquiries.isFirst(), inquiries.isLast(), inquiries.hasNext(), inquiries.hasPrevious(), inquiries.getSort());</span>
+<span class="fc" id="L58">        return new GetAllInquiriesOfUserResDto(inquiries.stream().map(ThisInquiry::toThisInquiry ).toList(), page);</span>
+
+//        return GetAllInquiriesOfUserResDto.builder()
+//                .inquiryId(inquiry.getId())
+//                .content(inquiry.getContent())
+//                .type(inquiry.getType().getKorean())
+//                .status(inquiry.getStatus().getKorean())
+//                .user(UserDto.toDto(inquiry.getUser()))
+//                .reply(ReplyDto.toDto(inquiry.getReply()))
+//                .build();
+    }
+
+//    public static Map&lt;String, List&lt;GetAllInquiriesOfUserResDto&gt;&gt; toDtoList(List&lt;Inquiry&gt; inquiries){
+//        return inquiries.stream().map(GetAllInquiriesOfUserResDto::toDto).collect(Collectors.groupingBy(GetAllInquiriesOfUserResDto::getType));
+//    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

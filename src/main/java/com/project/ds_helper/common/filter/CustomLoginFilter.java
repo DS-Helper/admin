@@ -12,6 +12,7 @@ import com.project.ds_helper.domain.user.dto.CustomUserDetails;
 import com.project.ds_helper.domain.user.dto.request.OrganizationLoginReqDto;
 import com.project.ds_helper.domain.user.entity.User;
 import com.project.ds_helper.domain.user.repository.UserRepository;
+import com.project.ds_helper.domain.user.service.UserLoginHistoryService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,6 +43,7 @@ public class CustomLoginFilter extends AbstractAuthenticationProcessingFilter {
     private final BCryptPasswordEncoder encoder;
     private final RedisTemplate<String, String> redisTemplate;
     private final UserRepository userRepository;
+    private final UserLoginHistoryService userLoginHistoryService;
     private final ObjectMapper objectMapper;
 
     public CustomLoginFilter(
@@ -51,6 +53,7 @@ public class CustomLoginFilter extends AbstractAuthenticationProcessingFilter {
             BCryptPasswordEncoder encoder,
             @Qualifier(value = "CustomStringRedisTemplate") StringRedisTemplate redisTemplate,
             UserRepository userRepository,
+            UserLoginHistoryService userLoginHistoryService,
             ObjectMapper objectMapper
     ) {
         super("/auth/login/organization");
@@ -62,6 +65,7 @@ public class CustomLoginFilter extends AbstractAuthenticationProcessingFilter {
         this.encoder = encoder;
         this.redisTemplate = redisTemplate;
         this.userRepository = userRepository;
+        this.userLoginHistoryService = userLoginHistoryService;
         this.objectMapper = objectMapper;
     }
 
@@ -101,6 +105,7 @@ public class CustomLoginFilter extends AbstractAuthenticationProcessingFilter {
 
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User Not Found"));
         String type = user.getType().name();
+        userLoginHistoryService.recordSuccessfulLogin(user);
 
         String accessToken = jwtUtil.generateAccessToken(userId, role, type);
         String refreshToken = jwtUtil.generateRefreshToken(userId, role, type);

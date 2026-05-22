@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GetInquiryResDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.inquiry.dto.response</a> &gt; <span class="el_source">GetInquiryResDto.java</span></div><h1>GetInquiryResDto.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.inquiry.dto.response;
+
+import com.project.ds_helper.domain.inquiry.entity.Inquiry;
+import com.project.ds_helper.domain.reply.dto.response.ReplyDto;
+import com.project.ds_helper.domain.user.dto.response.UserDto;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Getter
+@Setter
+@Schema(description = &quot;문의 단건 조회 응답 DTO&quot;, example = &quot;{\&quot;inquiryId\&quot;:\&quot;inquiry-001\&quot;,\&quot;content\&quot;:\&quot;서비스 이용 방법을 알고 싶어요.\&quot;,\&quot;type\&quot;:\&quot;기타\&quot;,\&quot;status\&quot;:\&quot;답변완료\&quot;,\&quot;user\&quot;:{\&quot;userId\&quot;:\&quot;user-001\&quot;,\&quot;email\&quot;:\&quot;user@test.com\&quot;,\&quot;role\&quot;:\&quot;USER\&quot;,\&quot;name\&quot;:\&quot;홍길동\&quot;,\&quot;gender\&quot;:\&quot;남성\&quot;},\&quot;reply\&quot;:{\&quot;replyId\&quot;:\&quot;reply-001\&quot;,\&quot;content\&quot;:\&quot;안녕하세요. 이용 가이드를 안내드립니다.\&quot;,\&quot;user\&quot;:{\&quot;userId\&quot;:\&quot;admin-001\&quot;,\&quot;email\&quot;:\&quot;admin@test.com\&quot;,\&quot;role\&quot;:\&quot;ADMIN\&quot;,\&quot;name\&quot;:\&quot;관리자\&quot;,\&quot;gender\&quot;:\&quot;\&quot;}}}&quot;)
+public class GetInquiryResDto {
+
+    private String inquiryId;
+
+    private String content;
+
+    private String type;
+
+    private String status;
+
+    private UserDto user;
+
+    private ReplyDto reply;
+
+    public static GetInquiryResDto toDto(Inquiry inquiry){
+<span class="fc" id="L30">        return GetInquiryResDto.builder()</span>
+<span class="fc" id="L31">                .inquiryId(inquiry.getId())</span>
+<span class="fc" id="L32">                .content(inquiry.getContent())</span>
+<span class="fc" id="L33">                .type(inquiry.getType().getKorean())</span>
+<span class="fc" id="L34">                .status(inquiry.getStatus().getKorean())</span>
+<span class="fc" id="L35">                .user(UserDto.toDto(inquiry.getUser()))</span>
+<span class="pc bpc" id="L36" title="1 of 2 branches missed.">                .reply(inquiry.getReply() == null? null : ReplyDto.toDto(inquiry.getReply()))</span>
+<span class="fc" id="L37">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

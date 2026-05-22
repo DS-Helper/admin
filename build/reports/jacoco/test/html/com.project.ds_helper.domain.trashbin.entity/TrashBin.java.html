@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TrashBin.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.trashbin.entity</a> &gt; <span class="el_source">TrashBin.java</span></div><h1>TrashBin.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.trashbin.entity;
+
+import com.project.ds_helper.domain.base.entity.BaseTime;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@Entity
+@Table(
+        name = &quot;tb_trash_bin&quot;,
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = &quot;uk_trash_bin_latitude_longitude&quot;,
+                        columnNames = {&quot;latitude&quot;, &quot;longitude&quot;}
+                )
+        }
+)
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class TrashBin extends BaseTime {
+
+    @PrePersist
+    private void prePersistGenerateId() {
+<span class="fc" id="L40">        this.id = String.valueOf(UUID.randomUUID());</span>
+<span class="fc" id="L41">    }</span>
+
+    @Id
+    @Column(name = &quot;trash_bin_id&quot;)
+    private String id;
+
+    /**
+     * CSV의 시도명. 예: 대구광역시.
+     */
+    @Column(name = &quot;province_name&quot;)
+    private String provinceName;
+
+    /**
+     * CSV의 시군구명. 예: 달성군.
+     */
+    @Column(name = &quot;city_county_name&quot;)
+    private String cityCountyName;
+
+    /**
+     * 쓰레기통이 설치된 도로명/지번 주소.
+     */
+    @Column(name = &quot;address&quot;)
+    private String address;
+
+    /**
+     * 프론트 목록 응답에서 바로 사용할 대표 이미지 URL.
+     * 실제 이미지 메타데이터는 TrashBinImage와 연관관계로 관리한다.
+     */
+    @Column(name = &quot;photo_url&quot;, columnDefinition = &quot;TEXT&quot;)
+    private String photoUrl;
+
+    /**
+     * 사용자가 현장에서 위치를 찾을 수 있도록 설명하는 텍스트.
+     */
+    @Column(name = &quot;location_description&quot;, columnDefinition = &quot;TEXT&quot;)
+    private String locationDescription;
+
+    /**
+     * CSV의 설치지점 분류. 예: 아파트안, 시설물.
+     */
+    @Column(name = &quot;installation_point&quot;)
+    private String installationPoint;
+
+    /**
+     * 쓰레기통 종류. 예: 일반쓰레기/재활용.
+     */
+    @Column(name = &quot;bin_type&quot;)
+    private String binType;
+
+    /**
+     * 해당 쓰레기통 데이터를 관리하는 기관명.
+     */
+    @Column(name = &quot;management_agency_name&quot;)
+    private String managementAgencyName;
+
+    /**
+     * 관리기관 연락처.
+     */
+    @Column(name = &quot;management_agency_phone_number&quot;)
+    private String managementAgencyPhoneNumber;
+
+    /**
+     * 이미지 업로드 매핑 기준으로 사용하는 위도.
+     */
+    @Column(name = &quot;latitude&quot;)
+    private Double latitude;
+
+    /**
+     * 위치 조회와 중복 위도 보정에 사용하는 경도.
+     */
+    @Column(name = &quot;longitude&quot;)
+    private Double longitude;
+
+    /**
+     * CSV 데이터 기준일자.
+     */
+    @Column(name = &quot;data_reference_date&quot;)
+    private LocalDate dataReferenceDate;
+
+    /**
+     * 원본 CSV의 존재여부 값. 원본 데이터 추적을 위해 문자열 그대로 보관한다.
+     */
+    @Column(name = &quot;exists_yn&quot;)
+    private String existsYn;
+
+    /**
+     * S3에 업로드된 쓰레기통 이미지 목록.
+     */
+    @Builder.Default
+    @OneToMany(mappedBy = &quot;trashBin&quot;, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List&lt;TrashBinImage&gt; images = new ArrayList&lt;&gt;();
+
+    public void updatePhotoUrl(String photoUrl) {
+<span class="fc" id="L134">        this.photoUrl = photoUrl;</span>
+<span class="fc" id="L135">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

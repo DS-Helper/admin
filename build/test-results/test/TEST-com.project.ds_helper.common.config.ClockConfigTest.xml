@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.common.config.ClockConfigTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:02:40" hostname="아기" time="0.015">
+  <properties/>
+  <testcase name="Clock Bean은 Asia/Seoul 시간대를 사용한다" classname="com.project.ds_helper.common.config.ClockConfigTest" time="0.015"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.project.ds_helper.domain.admin.service.AdminReservationServiceTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:06" hostname="아기" time="0.048">
+<testsuite name="com.project.ds_helper.domain.admin.service.AdminReservationServiceTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:02:51" hostname="아기" time="0.02">
   <properties/>
-  <testcase name="요청 상태 개인/기관 예약 목록을 함께 반환한다" classname="com.project.ds_helper.domain.admin.service.AdminReservationServiceTest" time="0.024"/>
-  <testcase name="수락된(완료된) 예약 수의 합계를 반환한다" classname="com.project.ds_helper.domain.admin.service.AdminReservationServiceTest" time="0.022"/>
-  <system-out><![CDATA[20:39:06.919 [Test worker] INFO com.project.ds_helper.domain.reservation.dto.response.GetPersonalReservationsResDto -- content.size : 1, number : 0, size : 1, first : true, last : true. hasNext : false
-]]></system-out>
+  <testcase name="수락된(완료된) 예약 수의 합계를 반환한다" classname="com.project.ds_helper.domain.admin.service.AdminReservationServiceTest" time="0.005"/>
+  <testcase name="예약 목록 필터링 조회를 지원한다" classname="com.project.ds_helper.domain.admin.service.AdminReservationServiceTest" time="0.015"/>
+  <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

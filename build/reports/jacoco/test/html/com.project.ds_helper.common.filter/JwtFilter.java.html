@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JwtFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.common.filter</a> &gt; <span class="el_source">JwtFilter.java</span></div><h1>JwtFilter.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.common.filter;
+
+import com.project.ds_helper.common.util.JwtUtil;
+import io.jsonwebtoken.JwtException;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Collections;
+
+
+<span class="nc" id="L21">@Slf4j</span>
+public class JwtFilter extends OncePerRequestFilter {
+
+    /** 필드 **/
+    private final JwtUtil jwtUtil;
+
+    /** 생성자 **/
+<span class="nc" id="L28">    public JwtFilter(JwtUtil jwtUtil) {</span>
+<span class="nc" id="L29">        this.jwtUtil = jwtUtil;</span>
+<span class="nc" id="L30">    }</span>
+
+    /** 필더 검증 **/
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
+        // 공개 경로 여부 확인(추후 header만 검사하는 방식으로 수정)
+//        if(UrlFilter.checkIfPublicPath(request.getRequestURI()) || UrlFilter.checkIfPublicPathForPosts(request)){
+//            log.info(&quot;Is Public Endpoint&quot;);
+//            filterChain.doFilter(request, response);
+//            return ;
+//        }
+
+        // accessToken 검증
+<span class="nc" id="L44">        String authToken = jwtUtil.getAccessTokenFromRequestHeader(request);</span>
+
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        if(authToken == null){</span>
+<span class="nc" id="L47">            log.debug(&quot;[JwtFilter] bearerToken is Null&quot; ); // or bearerToken Not Start With Bearer</span>
+<span class="nc" id="L48">            filterChain.doFilter(request, response);</span>
+<span class="nc" id="L49">            return;</span>
+        }
+<span class="nc bnc" id="L51" title="All 2 branches missed.">        if(!jwtUtil.isAccessToken(authToken)){</span>
+<span class="nc" id="L52">            log.debug(&quot;[JwtFilter] token type is not accessToken&quot;);</span>
+<span class="nc" id="L53">            filterChain.doFilter(request, response);</span>
+<span class="nc" id="L54">            return;</span>
+        }
+<span class="nc bnc" id="L56" title="All 2 branches missed.">        if(jwtUtil.isExpired(authToken)){</span>
+<span class="nc" id="L57">            log.debug(&quot;[JwtFilter] JwtToken Is Expired&quot;);</span>
+<span class="nc" id="L58">            filterChain.doFilter(request, response);</span>
+<span class="nc" id="L59">            return;</span>
+        }
+
+        /** 인증 객체 저장 **/
+        try{
+<span class="nc" id="L64">            String email = jwtUtil.getId(authToken);</span>
+<span class="nc" id="L65">            log.debug(&quot;[JwtFilter] email : {}&quot;, email);</span>
+            // 추후 권한 추가
+<span class="nc" id="L67">            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(email, authToken, Collections.singletonList(new SimpleGrantedAuthority(jwtUtil.getRole(authToken))));</span>
+<span class="nc" id="L68">            log.debug(&quot;usernamePasswordAuthenticationToken built successfully&quot;);</span>
+
+            // IP 등 추가적인 세부 정보를 저장
+<span class="nc" id="L71">            usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));</span>
+<span class="nc" id="L72">            log.debug(&quot;usernamePasswordAuthenticationToken set Details successfully&quot;);</span>
+
+            // 컨텍스트에 인증정보 저장, 이후 필터들에서는 이미 인증된 객체로 인식
+<span class="nc bnc" id="L75" title="All 2 branches missed.">            if (SecurityContextHolder.getContext().getAuthentication() == null) {</span>
+<span class="nc" id="L76">                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);</span>
+            }
+<span class="nc" id="L78">            log.debug(&quot;securityHolder set authentication successfully&quot;);</span>
+
+<span class="nc" id="L80">        }catch (JwtException jwtException){</span>
+<span class="nc" id="L81">            log.debug(&quot;JwtException Caused&quot;);</span>
+<span class="nc" id="L82">            SecurityContextHolder.clearContext();</span>
+<span class="nc" id="L83">        }</span>
+
+        /** 다음 필터 호출 **/
+<span class="nc" id="L86">        log.debug(&quot;[JwtFilter] Next Filter&quot;);</span>
+<span class="nc" id="L87">        filterChain.doFilter(request, response);</span>
+<span class="nc" id="L88">    }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

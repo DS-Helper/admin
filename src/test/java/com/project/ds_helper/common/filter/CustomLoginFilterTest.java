@@ -11,6 +11,7 @@ import com.project.ds_helper.domain.user.entity.User;
 import com.project.ds_helper.domain.user.enums.UserRole;
 import com.project.ds_helper.domain.user.enums.UserType;
 import com.project.ds_helper.domain.user.repository.UserRepository;
+import com.project.ds_helper.domain.user.service.UserLoginHistoryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,6 +57,9 @@ class CustomLoginFilterTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private UserLoginHistoryService userLoginHistoryService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
@@ -68,6 +72,7 @@ class CustomLoginFilterTest {
                 encoder,
                 redisTemplate,
                 userRepository,
+                userLoginHistoryService,
                 objectMapper
         );
 
@@ -95,6 +100,7 @@ class CustomLoginFilterTest {
 
         filter.successfulAuthentication(request, response, null, authentication);
 
+        verify(userLoginHistoryService).recordSuccessfulLogin(user);
         verify(valueOperations).set("refresh:user-1", "refresh-token");
         assertThat(response.getHeader("Authorization")).isEqualTo("access-token");
         assertThat(response.getHeader(JwtTokenType.REFRESH_TOKEN_NAME.getTokenName())).isEqualTo("refresh-token");

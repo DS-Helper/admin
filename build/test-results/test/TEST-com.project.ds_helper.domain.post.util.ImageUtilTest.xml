@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.post.util.ImageUtilTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:02:59" hostname="아기" time="0.136">
+  <properties/>
+  <testcase name="빈 MultipartFile 목록은 빈 PostImage 목록을 반환한다" classname="com.project.ds_helper.domain.post.util.ImageUtilTest" time="0.104"/>
+  <testcase name="압축 이미지 DTO를 PostImage로 변환한다" classname="com.project.ds_helper.domain.post.util.ImageUtilTest" time="0.005"/>
+  <testcase name="raw content type에서 확장자를 추출한다" classname="com.project.ds_helper.domain.post.util.ImageUtilTest" time="0.007"/>
+  <testcase name="저장 파일명은 timestamp와 uuid 형식을 포함한다" classname="com.project.ds_helper.domain.post.util.ImageUtilTest" time="0.004"/>
+  <testcase name="MultipartFile 목록을 PostImage 목록으로 변환한다" classname="com.project.ds_helper.domain.post.util.ImageUtilTest" time="0.011"/>
+  <system-out><![CDATA[12:02:59.296 [Test worker] INFO com.project.ds_helper.domain.post.util.ImageUtil -- PostImage Successfully Built
+12:02:59.309 [Test worker] INFO com.project.ds_helper.domain.post.util.ImageUtil -- timeStamp : 20260522120259, uuid : 379b11cc-820a-4fb6-b766-3403c1105ffa
+12:02:59.310 [Test worker] INFO com.project.ds_helper.domain.post.util.ImageUtil -- storedFilename : 20260522120259_379b11cc-820a-4fb6-b766-3403c1105ffa
+12:02:59.322 [Test worker] INFO com.project.ds_helper.domain.post.util.ImageUtil -- originalFilename : image.png, storedFilename : stored.webp, s3Key : images/stored.webp
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

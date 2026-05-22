@@ -32,7 +32,7 @@ class MobileGoogleAuthControllerTest {
     @Test
     @DisplayName("모바일 구글 로그인은 JWT 응답을 반환한다")
     void mobileGoogleLogin_returnsJwtResponse() throws Exception {
-        MobileGoogleLoginRequestDto dto = new MobileGoogleLoginRequestDto(OauthType.GOOGLE, "token");
+        MobileGoogleLoginRequestDto dto = new MobileGoogleLoginRequestDto(OauthType.GOOGLE, "token", null);
         JwtResponse jwtResponse = new JwtResponse("access", "refresh");
         when(mobileGoogleOauthService.mobileGoogleLogin(dto, response)).thenReturn(jwtResponse);
 

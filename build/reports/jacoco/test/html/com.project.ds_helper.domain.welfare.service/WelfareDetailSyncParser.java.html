@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WelfareDetailSyncParser.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.welfare.service</a> &gt; <span class="el_source">WelfareDetailSyncParser.java</span></div><h1>WelfareDetailSyncParser.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.welfare.service;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+
+<span class="fc" id="L10">class WelfareDetailSyncParser {</span>
+
+<span class="fc" id="L12">    private final ObjectMapper objectMapper = new ObjectMapper();</span>
+<span class="fc" id="L13">    private final XmlMapper xmlMapper = new XmlMapper();</span>
+
+    DetailSyncPayload buildDetailSyncPayload(JsonNode root, LocalDateTime syncStartedAt) {
+<span class="fc" id="L16">        return DetailSyncPayload.success(</span>
+<span class="fc" id="L17">                findText(root, &quot;sprtTrgtCn&quot;, &quot;tgtrDtlCn&quot;, &quot;targetDetailContent&quot;),</span>
+<span class="fc" id="L18">                findText(root, &quot;alwServCn&quot;, &quot;benefitContent&quot;),</span>
+<span class="fc" id="L19">                findText(root, &quot;slctCritCn&quot;, &quot;selectionCriteriaContent&quot;),</span>
+<span class="fc" id="L20">                findText(root, &quot;aplyMtdCn&quot;, &quot;applmetList&quot;, &quot;applicationMethodList&quot;),</span>
+<span class="fc" id="L21">                findHomepageUrl(root),</span>
+<span class="fc" id="L22">                findRawJson(root, &quot;inqplCtadrList&quot;),</span>
+<span class="fc" id="L23">                findRawJson(root, &quot;inqplHmpgReldList&quot;),</span>
+<span class="fc" id="L24">                findRawJson(root, &quot;baslawList&quot;),</span>
+<span class="fc" id="L25">                findRawJson(root, &quot;basfrmList&quot;),</span>
+                syncStartedAt
+        );
+    }
+
+    JsonNode readJsonOrXmlTree(String body) throws IOException {
+<span class="fc" id="L31">        String trimmedBody = body.trim();</span>
+<span class="fc bfc" id="L32" title="All 2 branches covered.">        if (trimmedBody.startsWith(&quot;&lt;&quot;)) {</span>
+<span class="fc" id="L33">            return xmlMapper.readTree(trimmedBody);</span>
+        }
+<span class="fc" id="L35">        return objectMapper.readTree(trimmedBody);</span>
+    }
+
+    /**
+     * 공공데이터 응답 wrapper가 바뀌어도 필요한 필드를 찾을 수 있도록 JSON 트리를 재귀 탐색한다.
+     */
+    String findText(JsonNode node, String... fieldNames) {
+<span class="fc bfc" id="L42" title="All 4 branches covered.">        if (node == null || node.isNull()) {</span>
+<span class="fc" id="L43">            return null;</span>
+        }
+
+<span class="fc bfc" id="L46" title="All 2 branches covered.">        for (String fieldName : fieldNames) {</span>
+<span class="fc" id="L47">            JsonNode value = node.get(fieldName);</span>
+<span class="fc bfc" id="L48" title="All 4 branches covered.">            if (value != null &amp;&amp; !value.isNull()) {</span>
+<span class="fc bfc" id="L49" title="All 2 branches covered.">                if (value.isValueNode()) {</span>
+<span class="fc" id="L50">                    return value.asText();</span>
+                }
+<span class="fc" id="L52">                String nestedValue = findText(value, fieldNames);</span>
+<span class="fc bfc" id="L53" title="All 2 branches covered.">                if (nestedValue != null) {</span>
+<span class="fc" id="L54">                    return nestedValue;</span>
+                }
+            }
+        }
+
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        if (node.isObject()) {</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">            for (JsonNode child : node) {</span>
+<span class="fc" id="L61">                String found = findText(child, fieldNames);</span>
+<span class="fc bfc" id="L62" title="All 2 branches covered.">                if (found != null) {</span>
+<span class="fc" id="L63">                    return found;</span>
+                }
+<span class="fc" id="L65">            }</span>
+        }
+
+<span class="fc bfc" id="L68" title="All 2 branches covered.">        if (node.isArray()) {</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">            for (JsonNode child : node) {</span>
+<span class="fc" id="L70">                String found = findText(child, fieldNames);</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">                if (found != null) {</span>
+<span class="fc" id="L72">                    return found;</span>
+                }
+<span class="fc" id="L74">            }</span>
+        }
+
+<span class="fc" id="L77">        return null;</span>
+    }
+
+    /**
+     * 홈페이지 URL은 문의처 전화번호와 같은 필드명(wlfareInfoReldCn)을 공유할 수 있다.
+     * 따라서 전역 재귀 탐색이 아니라 홈페이지 전용 노드 안에서만 보조 URL을 찾는다.
+     */
+    String findHomepageUrl(JsonNode root) {
+<span class="fc" id="L85">        String directHomepageUrl = findText(root, &quot;hmpgUrl&quot;, &quot;homepageUrl&quot;);</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        if (directHomepageUrl != null) {</span>
+<span class="fc" id="L87">            return directHomepageUrl;</span>
+        }
+
+<span class="fc" id="L90">        JsonNode homepageNode = findNode(root, &quot;inqplHmpgReldList&quot;);</span>
+<span class="fc" id="L91">        return findText(homepageNode, &quot;wlfareInfoReldCn&quot;);</span>
+    }
+
+    JsonNode findNode(JsonNode node, String fieldName) {
+<span class="fc bfc" id="L95" title="All 4 branches covered.">        if (node == null || node.isNull()) {</span>
+<span class="fc" id="L96">            return null;</span>
+        }
+
+<span class="fc" id="L99">        JsonNode value = node.get(fieldName);</span>
+<span class="fc bfc" id="L100" title="All 4 branches covered.">        if (value != null &amp;&amp; !value.isNull()) {</span>
+<span class="fc" id="L101">            return value;</span>
+        }
+
+<span class="fc bfc" id="L104" title="All 4 branches covered.">        if (node.isObject() || node.isArray()) {</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">            for (JsonNode child : node) {</span>
+<span class="fc" id="L106">                JsonNode found = findNode(child, fieldName);</span>
+<span class="fc bfc" id="L107" title="All 2 branches covered.">                if (found != null) {</span>
+<span class="fc" id="L108">                    return found;</span>
+                }
+<span class="fc" id="L110">            }</span>
+        }
+
+<span class="fc" id="L113">        return null;</span>
+    }
+
+    String findRawJson(JsonNode node, String fieldName) {
+<span class="fc bfc" id="L117" title="All 4 branches covered.">        if (node == null || node.isNull()) {</span>
+<span class="fc" id="L118">            return null;</span>
+        }
+
+<span class="fc" id="L121">        JsonNode value = node.get(fieldName);</span>
+<span class="fc bfc" id="L122" title="All 4 branches covered.">        if (value != null &amp;&amp; !value.isNull()) {</span>
+<span class="fc" id="L123">            return value.toString();</span>
+        }
+
+<span class="fc bfc" id="L126" title="All 4 branches covered.">        if (node.isObject() || node.isArray()) {</span>
+<span class="fc bfc" id="L127" title="All 2 branches covered.">            for (JsonNode child : node) {</span>
+<span class="fc" id="L128">                String found = findRawJson(child, fieldName);</span>
+<span class="fc bfc" id="L129" title="All 2 branches covered.">                if (found != null) {</span>
+<span class="fc" id="L130">                    return found;</span>
+                }
+<span class="fc" id="L132">            }</span>
+        }
+
+<span class="fc" id="L135">        return null;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

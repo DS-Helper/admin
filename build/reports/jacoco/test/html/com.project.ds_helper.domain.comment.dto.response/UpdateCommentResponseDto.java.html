@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UpdateCommentResponseDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.comment.dto.response</a> &gt; <span class="el_source">UpdateCommentResponseDto.java</span></div><h1>UpdateCommentResponseDto.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.comment.dto.response;
+
+import com.project.ds_helper.domain.comment.entity.Comment;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+import lombok.Getter;
+
+@Getter
+@Builder
+public class UpdateCommentResponseDto {
+
+    @Schema(
+            description = &quot;댓글 ID&quot;,
+            example = &quot;3f9c7c8e-4d5a-4b1e-9a2f-7c1d2e8f9a01&quot;
+    )
+    private String commentId;
+
+    @Schema(
+            description = &quot;댓글 내용&quot;,
+            example = &quot;댓글 내용입니다.&quot;
+    )
+    private String content;
+
+    public static UpdateCommentResponseDto toDto(Comment comment){
+<span class="fc" id="L25">        return UpdateCommentResponseDto.builder()</span>
+<span class="fc" id="L26">                .commentId(comment.getId())</span>
+<span class="fc" id="L27">                .content(comment.getContent())</span>
+<span class="fc" id="L28">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

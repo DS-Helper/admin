@@ -1,0 +1,44 @@
+{
+  "resultCode": "00",
+  "resultMessage": "NORMAL SERVICE",
+  "servId": "SVC001",
+  "servNm": "창원 청년 생활지원",
+  "enfcBgngYmd": "20260101",
+  "enfcEndYmd": "20261231",
+  "bizChrDeptNm": "복지정책과",
+  "ctpvNm": "경상남도",
+  "sggNm": "창원시",
+  "servDgst": "창원시 복지 서비스 요약",
+  "lifeNmArray": "청년",
+  "trgterIndvdlNmArray": "청년",
+  "intrsThemaNmArray": "생활지원",
+  "sprtCycNm": "월",
+  "srvPvsnNm": "현금",
+  "aplyMtdNm": "온라인",
+  "sprtTrgtCn": "창원시에 거주하는 청년",
+  "slctCritCn": "소득 및 거주 요건 충족",
+  "alwServCn": "월 생활지원금 지급",
+  "aplyMtdCn": "온라인 신청",
+  "inqNum": "055-000-0000",
+  "lastModYmd": "20260515",
+  "inqplCtadrList": {
+    "wlfareInfoReldNm": "문의처",
+    "wlfareInfoReldCn": "055-000-0000",
+    "wlfareInfoDtlCd": "10"
+  },
+  "inqplHmpgReldList": {
+    "wlfareInfoDtlCd": "20",
+    "wlfareInfoReldNm": "홈페이지",
+    "wlfareInfoReldCn": "https://example.com/welfare"
+  },
+  "baslawList": {
+    "wlfareInfoDtlCd": "30",
+    "wlfareInfoReldNm": "근거법",
+    "wlfareInfoReldCn": "창원시 복지 조례"
+  },
+  "basfrmList": {
+    "wlfareInfoReldCn": "신청서",
+    "wlfareInfoDtlCd": "40",
+    "wlfareInfoReldNm": "서식"
+  }
+}

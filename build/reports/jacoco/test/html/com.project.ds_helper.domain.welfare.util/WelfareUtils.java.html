@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WelfareUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.welfare.util</a> &gt; <span class="el_source">WelfareUtils.java</span></div><h1>WelfareUtils.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.welfare.util;
+
+import lombok.experimental.UtilityClass;
+
+/**
+ * 복지 서비스 관련 유틸리티 클래스
+ */
+@UtilityClass
+public class WelfareUtils {
+
+    /**
+     * 사용자의 나이를 기반으로 공공데이터 생애주기(lifeArray) 코드로 변환합니다.
+     * 
+     * @param age 사용자 나이
+     * @return 생애주기 코드 (예: &quot;001&quot;, &quot;002&quot; 등)
+     */
+    public static String convertAgeToLifeCycleCode(int age) {
+        // 0 ~ 5세: 영유아 (001)
+<span class="nc bnc" id="L19" title="All 4 branches missed.">        if (age &gt;= 0 &amp;&amp; age &lt;= 5) {</span>
+<span class="nc" id="L20">            return &quot;001&quot;;</span>
+        }
+        // 6 ~ 12세: 아동 (002)
+<span class="nc bnc" id="L23" title="All 4 branches missed.">        else if (age &gt;= 6 &amp;&amp; age &lt;= 12) {</span>
+<span class="nc" id="L24">            return &quot;002&quot;;</span>
+        }
+        // 13 ~ 18세: 청소년 (003)
+<span class="nc bnc" id="L27" title="All 4 branches missed.">        else if (age &gt;= 13 &amp;&amp; age &lt;= 18) {</span>
+<span class="nc" id="L28">            return &quot;003&quot;;</span>
+        }
+        // 19 ~ 39세: 청년 (004)
+<span class="nc bnc" id="L31" title="All 4 branches missed.">        else if (age &gt;= 19 &amp;&amp; age &lt;= 39) {</span>
+<span class="nc" id="L32">            return &quot;004&quot;;</span>
+        }
+        // 40 ~ 64세: 중장년 (005)
+<span class="nc bnc" id="L35" title="All 4 branches missed.">        else if (age &gt;= 40 &amp;&amp; age &lt;= 64) {</span>
+<span class="nc" id="L36">            return &quot;005&quot;;</span>
+        }
+        // 65세 이상: 노년 (006)
+        else {
+<span class="nc" id="L40">            return &quot;006&quot;;</span>
+        }
+    }
+
+    /**
+     * 생애주기 코드에 대한 한글 명칭을 반환합니다. (디버깅/참고용)
+     */
+    public static String getLifeCycleName(String code) {
+<span class="nc bnc" id="L48" title="All 8 branches missed.">        return switch (code) {</span>
+<span class="nc" id="L49">            case &quot;001&quot; -&gt; &quot;영유아&quot;;</span>
+<span class="nc" id="L50">            case &quot;002&quot; -&gt; &quot;아동&quot;;</span>
+<span class="nc" id="L51">            case &quot;003&quot; -&gt; &quot;청소년&quot;;</span>
+<span class="nc" id="L52">            case &quot;004&quot; -&gt; &quot;청년&quot;;</span>
+<span class="nc" id="L53">            case &quot;005&quot; -&gt; &quot;중장년&quot;;</span>
+<span class="nc" id="L54">            case &quot;006&quot; -&gt; &quot;노년&quot;;</span>
+<span class="nc" id="L55">            case &quot;007&quot; -&gt; &quot;임신/출산&quot;;</span>
+<span class="nc" id="L56">            default -&gt; &quot;알 수 없음&quot;;</span>
+        };
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

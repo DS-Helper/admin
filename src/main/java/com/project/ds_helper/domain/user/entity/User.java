@@ -87,4 +87,16 @@ public class User extends BaseTime {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    @Column(name = "last_login_at", nullable = true)
+    private LocalDateTime lastLoginAt;
+
+    public void softDelete(LocalDateTime deletedAt) {
+        this.isDeleted = true;
+        this.deletedAt = deletedAt;
+    }
+
+    public void recordLogin(LocalDateTime lastLoginAt) {
+        this.lastLoginAt = lastLoginAt;
+    }
 }

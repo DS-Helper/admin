@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UpdateOrganizationReservationReqDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.reservation.dto.request</a> &gt; <span class="el_source">UpdateOrganizationReservationReqDto.java</span></div><h1>UpdateOrganizationReservationReqDto.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.reservation.dto.request;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
+import com.project.ds_helper.domain.reservation.entity.OrganizationReservation;
+import com.project.ds_helper.domain.reservation.enums.RecipientGenderType;
+import com.project.ds_helper.domain.reservation.enums.ReservationStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.*;
+import lombok.*;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Setter
+@Getter
+public class UpdateOrganizationReservationReqDto {
+
+
+    @NotBlank(message = &quot;예약 ID는 필수 항목입니다.&quot;)
+    @Schema(example = &quot;20949013-9cbe-44e0-9916-f4e919bcef64&quot;)
+    private String organizationReservationId;
+
+    @NotBlank(message = &quot;기관명은 필수 입력 사항입니다.&quot;)
+    @Schema(example = &quot;한빛 유치원&quot;)
+    private String organizationName;
+
+    @NotBlank(message = &quot;예약자 성명은 필수 입력 사항입니다.&quot;)
+    @Schema(example = &quot;유나얼&quot;)
+    private String name;
+
+    @NotBlank(message = &quot;연락처는 필수 입력 항목입니다.&quot;)
+    @Pattern(regexp = &quot;^01[016789]-\\d{3,4}-\\d{4}$&quot;) // 하이픈 있는 상태만 허용
+    @Schema(example = &quot;010-0000-0000&quot;)
+    private String phoneNumber;
+
+    @NotNull(message = &quot;방문 날짜는 필수 입력 항목입니다.&quot;)
+    @Schema(example = &quot;2025-12-31&quot;)
+    @JsonSerialize(using = LocalDateSerializer.class)
+    @JsonDeserialize(using = LocalDateDeserializer.class)
+    private LocalDate visitDate;
+
+    @NotNull(message = &quot;시작 시간은 필수 입력 항목입니다.&quot;)
+    @Schema(example = &quot;14:22&quot;)
+    @JsonSerialize(using = LocalTimeSerializer.class)
+    @JsonDeserialize(using = LocalTimeDeserializer.class)
+    @JsonFormat(pattern = &quot;HH:mm&quot;)
+    private LocalTime startTime;
+
+    @NotNull(message = &quot;종료 시간은 필수 입력 항목입니다.&quot;)
+    @JsonFormat(pattern = &quot;HH:mm&quot;)
+    @JsonSerialize(using = LocalTimeSerializer.class)
+    @JsonDeserialize(using = LocalTimeDeserializer.class)
+    @Schema(example = &quot;17:22&quot;)
+    private LocalTime endTime;
+
+    @NotBlank(message = &quot;주소는 필수 입력 항목입니다.&quot;)
+    @Schema(example = &quot;부산광역시 서래동 서래중앙로 181번길 92, 서래아파트 101동 1304호&quot;)
+    private String address;
+
+    @Schema(example = &quot;서류 작업 도와주세요.&quot;)
+    private String requirement;
+
+    @NotBlank(message = &quot;성별은 필수 입력 항목입니다.&quot;)
+    @Schema(example = &quot;모두&quot;)
+    private String recipientGenderType;
+
+    @JsonFormat
+    @NotNull
+    @Min(value = 1)
+    @Max(value = 100)
+    private int recipientNumber;
+    
+    @Schema(example = &quot;특이사항&quot;)
+    private String note;
+
+    // requirement null 체크 후 null이면 빈 문자열 반환
+    public String checkRequirementNullAndReturnValue(String requirement){
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        if(requirement == null){</span>
+<span class="nc" id="L88">            return &quot;&quot;;</span>
+        }
+<span class="nc" id="L90">        return requirement;</span>
+    }
+
+    public OrganizationReservation toOrganizationReservation(OrganizationReservation organizationReservation, UpdateOrganizationReservationReqDto dto){
+
+<span class="nc" id="L95">        organizationReservation.setName(dto.getName());</span>
+<span class="nc" id="L96">        organizationReservation.setPhoneNumber(dto.getPhoneNumber());</span>
+<span class="nc" id="L97">        organizationReservation.setAddress(dto.getAddress());</span>
+<span class="nc" id="L98">        organizationReservation.setRequirement(dto.checkRequirementNullAndReturnValue(dto.getRequirement()));</span>
+        // 기관 예약 자체의 예약 일시
+<span class="nc" id="L100">        organizationReservation.setVisitDate(dto.getVisitDate());</span>
+<span class="nc" id="L101">        organizationReservation.setStartTime(dto.getStartTime());</span>
+<span class="nc" id="L102">        organizationReservation.setEndTime(dto.getEndTime().plusHours(1));</span>
+        // 프론트 예약 제한을 위한 예약 일시 갱신
+<span class="nc" id="L104">        organizationReservation.getReservationSchedule().setVisitDate(dto.getVisitDate());</span>
+<span class="nc" id="L105">        organizationReservation.getReservationSchedule().setStartTime(dto.getStartTime());</span>
+<span class="nc" id="L106">        organizationReservation.getReservationSchedule().setEndTime(dto.getEndTime().plusHours(1));</span>
+        // 성별 체크
+<span class="nc" id="L108">        organizationReservation.setRecipientGender(RecipientGenderType.findTypeByKorean(dto.getRecipientGenderType()));</span>
+<span class="nc" id="L109">        organizationReservation.setRecipientNumber(dto.getRecipientNumber());</span>
+<span class="nc" id="L110">        organizationReservation.setReservationStatus(organizationReservation.getReservationStatus());</span>
+<span class="nc" id="L111">        organizationReservation.setNote(dto.getNote());</span>
+<span class="nc" id="L112">        return organizationReservation;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

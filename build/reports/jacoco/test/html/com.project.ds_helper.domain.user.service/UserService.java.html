@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.user.service</a> &gt; <span class="el_source">UserService.java</span></div><h1>UserService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.user.service;
+
+import com.project.ds_helper.common.dto.request.S3ImageUploadRequestDto;
+import com.project.ds_helper.common.enums.JwtTokenType;
+import com.project.ds_helper.common.util.CookieUtil;
+import com.project.ds_helper.common.util.JwtUtil;
+import com.project.ds_helper.common.util.PasswordUtil;
+import com.project.ds_helper.common.util.UserUtil;
+import com.project.ds_helper.domain.post.util.ImageCompressionUtil;
+import com.project.ds_helper.domain.post.util.ImageUtil;
+import com.project.ds_helper.domain.post.util.S3Util;
+import com.project.ds_helper.domain.user.dto.request.OrganizationJoinReqDto;
+import com.project.ds_helper.domain.user.dto.request.OrganizationLoginReqDto;
+import com.project.ds_helper.domain.user.dto.request.UpdateMyInfoRequestDto;
+import com.project.ds_helper.domain.user.dto.request.UserJoinReqDto;
+import com.project.ds_helper.domain.user.dto.response.UserIdentifierResponseDto;
+import com.project.ds_helper.domain.user.dto.response.UserGetSelfInfoAtMyPageResponseDto;
+import com.project.ds_helper.domain.user.entity.Organization;
+import com.project.ds_helper.domain.user.entity.User;
+import com.project.ds_helper.domain.user.enums.UserType;
+import com.project.ds_helper.domain.user.repository.OrganizationRepository;
+import com.project.ds_helper.domain.user.repository.UserRepository;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import java.io.IOException;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+<span class="fc" id="L42">@Slf4j</span>
+public class UserService {
+
+    private final UserRepository userRepository;
+    private final OrganizationRepository organizationRepository;
+    private final PasswordUtil passwordUtil;
+    private final S3Util s3Util;
+    private final JwtUtil jwtUtil;
+    private final CookieUtil cookieUtil;
+    private final ImageCompressionUtil imageCompressionUtil;
+    private final ImageUtil imageUtil;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final UserUtil userUtil;
+
+    /**
+     * 기관 회원가입
+     * **/
+    @Transactional
+    public void organizationJoin(OrganizationJoinReqDto dto, List&lt;MultipartFile&gt; certifications) throws IOException {
+
+<span class="fc" id="L63">        String email = dto.getEmail();</span>
+<span class="fc" id="L64">        String password = dto.getPassword();</span>
+<span class="fc" id="L65">        String passwordCheck = dto.getPasswordCheck();</span>
+<span class="fc" id="L66">        log.debug(&quot;&quot;);</span>
+
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">        if(!passwordUtil.isPasswordMatch(password, passwordCheck)){throw new IllegalArgumentException(&quot;Password Not Match&quot;);}</span>
+
+        // 로컬 회원가입 미가입 신규 회원가입 처리
+<span class="nc" id="L71">        User newUser = User.builder()</span>
+<span class="nc" id="L72">                .email(email)</span>
+<span class="nc" id="L73">                .password(bCryptPasswordEncoder.encode(password))</span>
+<span class="nc" id="L74">                .name(dto.getOrganizationName())</span>
+<span class="nc" id="L75">                .type(UserType.ORGANIZATION)</span>
+<span class="nc" id="L76">                .build();</span>
+<span class="nc" id="L77">        log.debug(&quot;newUser is built&quot;);</span>
+
+        // 신규 유저 저장
+<span class="nc" id="L80">        User user = userRepository.save(newUser);</span>
+<span class="nc" id="L81">        log.debug(&quot;user saved&quot;);</span>
+
+        // Organization 미리 세팅
+        Organization organization;
+        
+        // 이미지 업로드 후 url 반환
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        if(certifications != null) {</span>
+<span class="nc" id="L88">            List&lt;String&gt; imageUrls = s3Util.uploadImages(certifications.stream().map(certification -&gt; {</span>
+                try {
+<span class="nc" id="L90">                    return imageCompressionUtil.compressImage(certification, imageUtil.toStoredFilename());</span>
+<span class="nc" id="L91">                } catch (Exception e) {</span>
+<span class="nc" id="L92">                    throw new RuntimeException(e);</span>
+                }
+<span class="nc" id="L94">            }).toList());</span>
+
+            // 기관 엔티티 빌드
+<span class="nc" id="L97">            organization = Organization.builder()</span>
+<span class="nc" id="L98">                    .organizationName(dto.getOrganizationName())</span>
+<span class="nc" id="L99">                    .organizationPhoneNumber(dto.getOrganizationPhoneNumber())</span>
+<span class="nc" id="L100">                    .certificationUrl(imageUrls)</span>
+<span class="nc" id="L101">                    .userId(user.getId())</span>
+<span class="nc" id="L102">                    .build();</span>
+<span class="nc" id="L103">        }else{</span>
+            // 기관 엔티티 빌드
+<span class="nc" id="L105">            organization = Organization.builder()</span>
+<span class="nc" id="L106">                    .organizationName(dto.getOrganizationName())</span>
+<span class="nc" id="L107">                    .organizationPhoneNumber(dto.getOrganizationPhoneNumber())</span>
+<span class="nc" id="L108">                    .userId(user.getId())</span>
+<span class="nc" id="L109">                    .build();</span>
+        }
+
+<span class="nc" id="L112">        organizationRepository.save(organization);</span>
+<span class="nc" id="L113">        log.debug(&quot;Organization Saved Successfully&quot;);</span>
+<span class="nc" id="L114">    }</span>
+
+    /**
+     * 기관 로그인
+     * **/
+    @Transactional(readOnly = true)
+    public void organizationLogin(OrganizationLoginReqDto dto, HttpServletResponse httpServletResponse) {
+
+<span class="nc" id="L122">        log.debug(&quot;Organization Login Start&quot;);</span>
+
+<span class="nc" id="L124">        String email = dto.getEmail();</span>
+<span class="nc" id="L125">        String password = dto.getPassword();</span>
+<span class="nc" id="L126">        log.debug(&quot;email : {}, password : {}&quot;, email, password);</span>
+
+<span class="nc" id="L128">        User user = userRepository.findByEmail(email).orElseThrow(()-&gt; new RuntimeException(&quot;Organization Not Found&quot;));</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">        if (user.isDeleted()) {</span>
+<span class="nc" id="L130">            throw new RuntimeException(&quot;Deleted User&quot;);</span>
+        }
+<span class="nc bnc" id="L132" title="All 2 branches missed.">        if(user.getType() != UserType.ORGANIZATION){ throw new RuntimeException(&quot;Not Organization&quot;); }</span>
+
+<span class="nc bnc" id="L134" title="All 2 branches missed.">        if(!bCryptPasswordEncoder.matches(password, user.getPassword())){throw new IllegalArgumentException(&quot;Wrong Password&quot;);}</span>
+
+<span class="nc" id="L136">        String userId = user.getId();</span>
+<span class="nc" id="L137">        String role = user.getRole().name();</span>
+<span class="nc" id="L138">        String type = user.getType().name();</span>
+<span class="nc" id="L139">        log.debug(&quot;userId : {}, role : {}, type : {}&quot;, userId, role, type);</span>
+
+<span class="nc" id="L141">        generateJwtTokenAndPutInResponseHeader(httpServletResponse, userId, role, type);</span>
+<span class="nc" id="L142">    }</span>
+
+
+    /**
+     * 로그인 여부 확인
+     * **/
+    @Transactional(readOnly = true)
+    public Object checkIfUserLoggedIn(String refreshToken) {
+<span class="pc bpc" id="L150" title="1 of 4 branches missed.">        if(refreshToken == null || refreshToken.isBlank()) return false; // null 이거나 공백이면 false 반환</span>
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">        if(jwtUtil.isExpired(refreshToken)) return false;</span>
+<span class="fc" id="L152">        String userId = jwtUtil.getId(refreshToken);</span>
+<span class="fc" id="L153">        log.debug(&quot;userID : {}&quot;, userId);</span>
+
+<span class="fc" id="L155">        String refreshTokenFromRedis = stringRedisTemplate.opsForValue().get(jwtUtil.toRedisRefreshTokenKey(userId));</span>
+<span class="fc" id="L156">        log.debug(&quot;refreshTokenFromRedis : {}&quot;, refreshTokenFromRedis);</span>
+<span class="pc bpc" id="L157" title="3 of 6 branches missed.">        if(refreshTokenFromRedis == null || refreshTokenFromRedis.isBlank() || jwtUtil.isExpired(refreshTokenFromRedis)) {</span>
+<span class="nc" id="L158">            log.debug(&quot;refreshToken from redis is null or blank or expired&quot;);</span>
+<span class="nc" id="L159">            return false;</span>
+        }
+
+<span class="fc" id="L162">        return true;</span>
+    }
+    
+    /**
+     * 유저 회원가입
+     * **/
+    @Transactional
+    public void userJoin(@Valid UserJoinReqDto dto, HttpServletResponse httpServletResponse) throws BadRequestException {
+<span class="fc" id="L170">        String email = dto.getEmail();</span>
+<span class="fc" id="L171">        String password = dto.getPassword();</span>
+<span class="fc" id="L172">        String passwordCheck = dto.getPasswordCheck();</span>
+<span class="fc" id="L173">        log.debug(&quot;email : {}, password : {}, passwordCheck : {}&quot;, email, password, passwordCheck);</span>
+        
+        // email 중복 체크
+<span class="pc bpc" id="L176" title="1 of 2 branches missed.">        if(userUtil.existsByEmail(email)){throw new BadRequestException(&quot;Email Already Exist&quot;); }</span>
+        // passsword 일치 체크
+<span class="nc bnc" id="L178" title="All 2 branches missed.">        if(!password.equals(passwordCheck)){throw new BadRequestException(&quot;Password Not Matches&quot;);}</span>
+        // 회원가입
+<span class="nc" id="L180">        User user = User.builder()</span>
+<span class="nc" id="L181">                .email(email)</span>
+<span class="nc" id="L182">                .password(bCryptPasswordEncoder.encode(password))</span>
+<span class="nc" id="L183">                .build();</span>
+<span class="nc" id="L184">        User savedUser = userRepository.save(user);</span>
+        // 로그인까지 바로 진행
+
+        // jwt token 발급
+<span class="nc" id="L188">        String userId = user.getId();</span>
+<span class="nc" id="L189">        String userRole = user.getRole().name();</span>
+<span class="nc" id="L190">        String userType = user.getType().name();</span>
+<span class="nc" id="L191">        log.debug(&quot;userId : {}. userRole : {}, userType : {}&quot;, userId, userRole, userType);</span>
+
+        // jwt 토큰 발급 및 쿠키 저장
+<span class="nc" id="L194">        generateJwtTokenAndPutInResponseHeader(httpServletResponse, userId, userRole, userType);</span>
+
+
+
+<span class="nc" id="L198">    }</span>
+
+    /**
+     * jwt token 발급 후 쿠키에 저장하는 메소드
+     * **/
+    public void generateJwtTokenAndPutInResponseHeader(HttpServletResponse httpServletResponse, String userId, String userRole, String userType){
+        // jwt 토큰 생성
+<span class="fc" id="L205">        String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);</span>
+<span class="fc" id="L206">        String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);</span>
+<span class="fc" id="L207">        log.debug(&quot;accessToken : {}, refreshToken : {}&quot;, accessToken, refreshToken);</span>
+
+<span class="fc" id="L209">        stringRedisTemplate.opsForValue().set(jwtUtil.toRedisRefreshTokenKey(userId), refreshToken);</span>
+<span class="fc" id="L210">        log.debug(&quot;RefreshToken Saved. UserId : {}, key : {}&quot;, userId, jwtUtil.toRedisRefreshTokenKey(userId));</span>
+
+        // 쿠키에 토큰 추가
+<span class="fc" id="L213">        httpServletResponse.setHeader(JwtTokenType.ACCESS_TOKEN_NAME.getTokenName(), accessToken);</span>
+<span class="fc" id="L214">        httpServletResponse.setHeader(JwtTokenType.REFRESH_TOKEN_NAME.getTokenName(), refreshToken);</span>
+<span class="fc" id="L215">        log.debug(&quot;jwt token is put in header&quot;);</span>
+<span class="fc" id="L216">    }</span>
+
+    /** 유저가 마이페이지에서 자신의 정보를 조회하는 메소드 **/
+    public UserGetSelfInfoAtMyPageResponseDto getMyInfo(Authentication authentication) {
+<span class="fc" id="L220">        User user = userUtil.findUserById(userUtil.extractUserId(authentication));</span>
+<span class="fc" id="L221">        return UserGetSelfInfoAtMyPageResponseDto.toDto(user);</span>
+    }
+
+    public UserIdentifierResponseDto getMyIdentifier(Authentication authentication) {
+
+<span class="fc" id="L226">        return new UserIdentifierResponseDto(userUtil.extractUserId(authentication), getCurrentUserRole(authentication));</span>
+    }
+
+    @Transactional
+    public UserGetSelfInfoAtMyPageResponseDto updateMyInfo(Authentication authentication,
+                                                           UpdateMyInfoRequestDto dto,
+                                                           MultipartFile profileImage) throws Exception {
+<span class="fc" id="L233">        User user = userUtil.findUserById(userUtil.extractUserId(authentication));</span>
+
+<span class="fc" id="L235">        String email = dto.getEmail();</span>
+<span class="fc" id="L236">        log.debug(&quot;email : {}&quot;, email);</span>
+<span class="pc bpc" id="L237" title="5 of 8 branches missed.">        if (email != null &amp;&amp; !email.isBlank() &amp;&amp; !email.equals(user.getEmail()) &amp;&amp; userUtil.existsByEmail(email)) {</span>
+<span class="nc" id="L238">            throw new BadRequestException(&quot;Email Already Exist&quot;);</span>
+        }
+
+<span class="pc bpc" id="L241" title="1 of 6 branches missed.">        if (dto.isRemoveProfileImage() &amp;&amp; profileImage != null &amp;&amp; !profileImage.isEmpty()) {</span>
+<span class="fc" id="L242">            throw new BadRequestException(&quot;Profile image remove and upload cannot be requested together&quot;);</span>
+        }
+    
+        // set 작업
+<span class="fc" id="L246">        patchUserInfo(dto, user, profileImage);</span>
+
+<span class="fc" id="L248">        return UserGetSelfInfoAtMyPageResponseDto.toDto(user);</span>
+    }
+
+    private String resolveProfileImageUrl(User user, UpdateMyInfoRequestDto dto, MultipartFile profileImage) throws Exception {
+<span class="fc" id="L252">        String currentProfileImageUrl = user.getProfileImageUrl();</span>
+
+<span class="fc bfc" id="L254" title="All 2 branches covered.">        if (dto.isRemoveProfileImage()) {</span>
+<span class="fc" id="L255">            deleteManagedProfileImage(currentProfileImageUrl);</span>
+<span class="fc" id="L256">            return null;</span>
+        }
+
+<span class="pc bpc" id="L259" title="2 of 4 branches missed.">        if (profileImage == null || profileImage.isEmpty()) {</span>
+<span class="nc" id="L260">            return currentProfileImageUrl;</span>
+        }
+
+<span class="fc" id="L263">        String storedFilename = imageUtil.toStoredFilename();</span>
+<span class="fc" id="L264">        s3Util.uploadImage(imageCompressionUtil.compressImage(profileImage, storedFilename));</span>
+
+<span class="fc" id="L266">        String uploadedProfileImageUrl = s3Util.toS3UrlByStoredFilename(storedFilename);</span>
+<span class="fc" id="L267">        deleteManagedProfileImage(currentProfileImageUrl);</span>
+<span class="fc" id="L268">        return uploadedProfileImageUrl;</span>
+    }
+
+    private void deleteManagedProfileImage(String profileImageUrl) {
+<span class="pc bpc" id="L272" title="1 of 2 branches missed.">        if (!s3Util.isManagedS3Url(profileImageUrl)) {</span>
+<span class="nc" id="L273">            return;</span>
+        }
+
+<span class="fc" id="L276">        s3Util.deleteImagesByS3Key(List.of(s3Util.extractS3KeyFromS3Url(profileImageUrl)));</span>
+<span class="fc" id="L277">    }</span>
+
+    private void patchUserInfo(UpdateMyInfoRequestDto dto, User user, MultipartFile profileImage) throws Exception {
+<span class="pc bpc" id="L280" title="2 of 4 branches missed.">        if(dto.getName() != null &amp;&amp; !dto.getName().isBlank()){</span>
+<span class="fc" id="L281">            user.setName(dto.getName());</span>
+        }
+
+<span class="pc bpc" id="L284" title="2 of 4 branches missed.">        if(dto.getEmail() != null &amp;&amp; !dto.getEmail().isBlank()){</span>
+<span class="fc" id="L285">            user.setEmail(dto.getEmail());</span>
+        }
+
+<span class="pc bpc" id="L288" title="2 of 4 branches missed.">        if(dto.getBirthyear() != null &amp;&amp; !dto.getBirthyear().isBlank()){</span>
+<span class="fc" id="L289">            user.setBirthyear(dto.getBirthyear());</span>
+        }
+
+<span class="pc bpc" id="L292" title="2 of 4 branches missed.">        if(dto.getGender() != null &amp;&amp; !dto.getGender().isBlank()){</span>
+<span class="fc" id="L293">            user.setGender(dto.getGender());</span>
+        }
+
+<span class="pc bpc" id="L296" title="2 of 4 branches missed.">        if(dto.getPhoneNumber() != null &amp;&amp; !dto.getPhoneNumber().isBlank()){</span>
+<span class="fc" id="L297">            user.setPhoneNumber(dto.getPhoneNumber());</span>
+        }
+
+<span class="pc bpc" id="L300" title="1 of 6 branches missed.">        if(dto.isRemoveProfileImage() || (profileImage != null &amp;&amp; !profileImage.isEmpty())){</span>
+<span class="fc" id="L301">            user.setProfileImageUrl(resolveProfileImageUrl(user, dto, profileImage));</span>
+        }
+<span class="fc" id="L303">    }</span>
+
+    private String getCurrentUserRole(Authentication authentication) {
+        
+<span class="pc bpc" id="L307" title="2 of 4 branches missed.">        if (authentication == null || authentication.getAuthorities() == null) {</span>
+<span class="nc" id="L308">            return null;</span>
+        }
+
+<span class="fc" id="L311">        return authentication.getAuthorities().stream()</span>
+<span class="fc" id="L312">                .map(GrantedAuthority::getAuthority)</span>
+<span class="fc" id="L313">                .findFirst()</span>
+<span class="fc" id="L314">                .orElse(null);</span>
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

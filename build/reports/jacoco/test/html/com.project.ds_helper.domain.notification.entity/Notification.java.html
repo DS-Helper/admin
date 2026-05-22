@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Notification.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.notification.entity</a> &gt; <span class="el_source">Notification.java</span></div><h1>Notification.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.notification.entity;
+
+import com.project.ds_helper.domain.base.entity.BaseTime;
+import com.project.ds_helper.domain.notification.enums.NotificationType;
+import com.project.ds_helper.domain.user.entity.User;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.util.UUID;
+
+@Entity
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Table(
+        name = &quot;tb_notification&quot;,
+        indexes = {
+                @Index(name = &quot;idx_notification_user_created&quot;, columnList = &quot;user_id, created_at&quot;),
+                @Index(name = &quot;idx_notification_user_created_id&quot;, columnList = &quot;user_id, created_at, notification_id&quot;),
+                @Index(name = &quot;idx_notification_user_is_read&quot;, columnList = &quot;user_id, is_read&quot;)
+        }
+)
+public class Notification extends BaseTime {
+
+    @PrePersist
+    private void prePersistGenerateId() {
+<span class="nc" id="L41">        this.id = String.valueOf(UUID.randomUUID());</span>
+<span class="nc" id="L42">    }</span>
+
+    @Id
+    @Column(name = &quot;notification_id&quot;)
+    private String id; // 알림 자체를 식별하는 고유 ID
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;user_id&quot;, nullable = false)
+    private User user; // 알림을 수신하는 사용자
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;type&quot;, nullable = false)
+    private NotificationType type; // 알림 발생 유형
+
+    @Column(name = &quot;board_id&quot;, nullable = false)
+    private String boardId; // 알림이 연결된 게시글 ID
+
+    @Column(name = &quot;comment_id&quot;, nullable = false)
+    private String commentId; // 알림이 연결된 댓글 또는 대댓글 ID
+
+    @Column(name = &quot;content&quot;, nullable = false, columnDefinition = &quot;TEXT&quot;)
+    private String content; // 사용자에게 보여줄 알림 본문
+
+    @Builder.Default
+    @Column(name = &quot;is_read&quot;, nullable = false)
+    private boolean isRead = false; // 사용자의 알림 읽음 여부
+
+    public void markAsRead() {
+<span class="fc" id="L70">        this.isRead = true;</span>
+<span class="fc" id="L71">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

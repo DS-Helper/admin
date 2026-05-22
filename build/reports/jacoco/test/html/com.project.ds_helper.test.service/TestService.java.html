@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TestService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.test.service</a> &gt; <span class="el_source">TestService.java</span></div><h1>TestService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.test.service;
+
+import com.project.ds_helper.common.dto.request.S3ImageUploadRequestDto;
+import com.project.ds_helper.common.dto.response.JwtResponse;
+import com.project.ds_helper.common.exception.user.UserNotFoundException;
+import com.project.ds_helper.common.util.CookieUtil;
+import com.project.ds_helper.common.util.JwtUtil;
+import com.project.ds_helper.common.util.UserUtil;
+import com.project.ds_helper.domain.post.util.ImageCompressionUtil;
+import com.project.ds_helper.domain.user.entity.User;
+import com.project.ds_helper.domain.user.enums.UserRole;
+import com.project.ds_helper.domain.user.enums.UserType;
+import com.project.ds_helper.test.dto.TestImageCompressionPreviewResponseDto;
+import com.project.ds_helper.test.dto.TestUserInfo;
+import com.project.ds_helper.test.repository.TestUserRepository;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.Base64;
+
+<span class="fc" id="L30">@Slf4j</span>
+@Service
+public class TestService {
+
+    private final TestUserRepository testUserRepository;
+    private final UserUtil userUtil;
+    private final CookieUtil cookieUtil;
+    private final JwtUtil jwtUtil;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final ImageCompressionUtil imageCompressionUtil;
+
+<span class="fc" id="L42">    public TestService(TestUserRepository testUserRepository, UserUtil userUtil, CookieUtil cookieUtil, JwtUtil jwtUtil, @Qualifier(value = &quot;CustomStringRedisTemplate&quot;) StringRedisTemplate stringRedisTemplate, BCryptPasswordEncoder bCryptPasswordEncoder, ImageCompressionUtil imageCompressionUtil) {</span>
+<span class="fc" id="L43">        this.testUserRepository = testUserRepository;</span>
+<span class="fc" id="L44">        this.userUtil = userUtil;</span>
+<span class="fc" id="L45">        this.cookieUtil = cookieUtil;</span>
+<span class="fc" id="L46">        this.jwtUtil = jwtUtil;</span>
+<span class="fc" id="L47">        this.stringRedisTemplate = stringRedisTemplate;</span>
+<span class="fc" id="L48">        this.bCryptPasswordEncoder = bCryptPasswordEncoder;</span>
+<span class="fc" id="L49">        this.imageCompressionUtil = imageCompressionUtil;</span>
+<span class="fc" id="L50">    }</span>
+
+    /**
+     * 유저 정보 조회
+     * **/
+    public Object getUserInfo(Authentication authentication) {
+<span class="fc" id="L56">        return TestUserInfo.toDto(userUtil.findUserById(userUtil.extractUserId(authentication)));</span>
+    }
+
+    /**
+     * 개발용 임시 JWT 토큰 발급
+     *
+     * DB에서 ADMIN 게정을 조회하여 JWT 토큰 발급
+     * **/
+    public JwtResponse generateTempToken(HttpServletResponse response) {
+
+<span class="fc" id="L66">        String email = &quot;admin@dshelper.kr&quot;;</span>
+
+<span class="fc" id="L68">        User user = testUserRepository.findByEmail(email).orElseThrow( () -&gt; new UserNotFoundException(&quot;ADMIN is not found&quot;));</span>
+<span class="fc" id="L69">        String userId = user.getId();</span>
+<span class="fc" id="L70">        String role =  user.getRole().name();</span>
+<span class="fc" id="L71">        String type = user.getType().name();</span>
+<span class="fc" id="L72">        log.info(&quot;useId : {}, role : {}, type : {}&quot;, userId, role, type);</span>
+
+<span class="fc" id="L74">        String accessToken = jwtUtil.generateAccessToken(userId, role, type);</span>
+<span class="fc" id="L75">        String refreshToken = jwtUtil.generateRefreshToken(userId, role, type);</span>
+<span class="fc" id="L76">        log.info(&quot;accessToken : {}, refreshToken : {}&quot;, accessToken, refreshToken);</span>
+<span class="fc" id="L77">        stringRedisTemplate.opsForValue().set(jwtUtil.toRedisRefreshTokenKey(userId), refreshToken);</span>
+
+<span class="fc" id="L79">        return new JwtResponse(accessToken, refreshToken);</span>
+    }
+
+    /**
+     * 신규 관리자 게정 생성
+     *
+     * **/
+    public void createNewAdmin() throws BadRequestException {
+        
+<span class="fc" id="L88">        String email = &quot;admin@dshelper.kr&quot;;</span>
+        
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        if(testUserRepository.existsByEmail(email)) throw new BadRequestException(&quot;Already Exists : &quot; + email);</span>
+
+<span class="fc" id="L92">        User user = User.builder()</span>
+<span class="fc" id="L93">                .email(email)</span>
+<span class="fc" id="L94">                .role(UserRole.ADMIN)</span>
+<span class="fc" id="L95">                .type(UserType.PERSONAL)</span>
+<span class="fc" id="L96">                .name(&quot;ADMIN&quot;)</span>
+<span class="fc" id="L97">                .password(bCryptPasswordEncoder.encode(&quot;adminadmin&quot;))</span>
+<span class="fc" id="L98">                .build();</span>
+
+<span class="fc" id="L100">        testUserRepository.save(user);</span>
+<span class="fc" id="L101">    }</span>
+
+    /**
+     * 업로드한 원본 이미지와 WebP 압축 결과를 동시에 확인하는 테스트용 메서드
+     */
+    public TestImageCompressionPreviewResponseDto previewCompressedImage(MultipartFile image) throws IOException {
+<span class="fc" id="L107">        log.debug(&quot;TestService.previewCompressedImage started. originalFilename={}, contentType={}, size={}&quot;,</span>
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">                image == null ? null : image.getOriginalFilename(),</span>
+<span class="pc bpc" id="L109" title="1 of 2 branches missed.">                image == null ? null : image.getContentType(),</span>
+<span class="pc bpc" id="L110" title="1 of 2 branches missed.">                image == null ? null : image.getSize());</span>
+
+<span class="pc bpc" id="L112" title="2 of 4 branches missed.">        if (image == null || image.isEmpty()) {</span>
+<span class="nc" id="L113">            throw new IllegalArgumentException(&quot;Image file is empty&quot;);</span>
+        }
+
+        // 1. 실제 서비스와 동일한 압축 유틸을 사용해 WebP 결과를 만든다.
+<span class="fc" id="L117">        String storedFilename = &quot;test-preview&quot;;</span>
+<span class="fc" id="L118">        var compressedImage = imageCompressionUtil.compressImage(image, storedFilename);</span>
+
+        // 2. 원본/압축 이미지를 바로 확인할 수 있도록 둘 다 data URL로 변환한다.
+<span class="fc" id="L121">        String originalImageDataUrl = toDataUrl(image.getContentType(), image.getBytes());</span>
+<span class="fc" id="L122">        String compressedImageDataUrl = toDataUrl(compressedImage.getS3ContentType(), compressedImage.getBytes());</span>
+
+<span class="fc" id="L124">        TestImageCompressionPreviewResponseDto responseDto = TestImageCompressionPreviewResponseDto.builder()</span>
+<span class="fc" id="L125">                .originalFilename(image.getOriginalFilename())</span>
+<span class="fc" id="L126">                .originalContentType(image.getContentType())</span>
+<span class="fc" id="L127">                .originalSize(image.getSize())</span>
+<span class="fc" id="L128">                .originalImageDataUrl(originalImageDataUrl)</span>
+<span class="fc" id="L129">                .compressedStoredFilename(compressedImage.getStoredFilename())</span>
+<span class="fc" id="L130">                .compressedContentType(compressedImage.getS3ContentType())</span>
+<span class="fc" id="L131">                .compressedExtension(compressedImage.getFileExtension())</span>
+<span class="fc" id="L132">                .compressedSize(compressedImage.getSize())</span>
+<span class="fc" id="L133">                .compressedImageDataUrl(compressedImageDataUrl)</span>
+<span class="fc" id="L134">                .build();</span>
+
+<span class="fc" id="L136">        log.debug(&quot;TestService.previewCompressedImage completed. originalSize={}, compressedSize={}, compressedContentType={}&quot;,</span>
+<span class="fc" id="L137">                responseDto.originalSize(), responseDto.compressedSize(), responseDto.compressedContentType());</span>
+<span class="fc" id="L138">        return responseDto;</span>
+    }
+
+    /**
+     * 클라이언트가 실제 WebP 바이너리를 직접 내려받아 확인할 수 있도록 압축 결과 원본 바이트를 반환한다.
+     */
+    public S3ImageUploadRequestDto previewCompressedImageBinary(MultipartFile image) throws IOException {
+<span class="fc" id="L145">        log.debug(&quot;TestService.previewCompressedImageBinary started. originalFilename={}, contentType={}, size={}&quot;,</span>
+<span class="pc bpc" id="L146" title="1 of 2 branches missed.">                image == null ? null : image.getOriginalFilename(),</span>
+<span class="pc bpc" id="L147" title="1 of 2 branches missed.">                image == null ? null : image.getContentType(),</span>
+<span class="pc bpc" id="L148" title="1 of 2 branches missed.">                image == null ? null : image.getSize());</span>
+
+<span class="pc bpc" id="L150" title="2 of 4 branches missed.">        if (image == null || image.isEmpty()) {</span>
+<span class="nc" id="L151">            throw new IllegalArgumentException(&quot;Image file is empty&quot;);</span>
+        }
+
+<span class="fc" id="L154">        S3ImageUploadRequestDto compressedImage = imageCompressionUtil.compressImage(image, &quot;test-preview&quot;);</span>
+<span class="fc" id="L155">        log.debug(&quot;TestService.previewCompressedImageBinary completed. compressedSize={}, compressedContentType={}&quot;,</span>
+<span class="fc" id="L156">                compressedImage.getSize(), compressedImage.getS3ContentType());</span>
+<span class="fc" id="L157">        return compressedImage;</span>
+    }
+
+    private String toDataUrl(String contentType, byte[] bytes) {
+<span class="fc" id="L161">        return &quot;data:&quot; + contentType + &quot;;base64,&quot; + Base64.getEncoder().encodeToString(bytes);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

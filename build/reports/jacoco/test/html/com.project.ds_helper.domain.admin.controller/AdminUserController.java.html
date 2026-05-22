@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminUserController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.admin.controller</a> &gt; <span class="el_source">AdminUserController.java</span></div><h1>AdminUserController.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.admin.controller;
+
+import com.project.ds_helper.common.enums.SwaggerTagName;
+import com.project.ds_helper.domain.admin.service.AdminUserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping(&quot;/admin/users&quot;)
+@RequiredArgsConstructor
+<span class="fc" id="L19">@Slf4j</span>
+public class AdminUserController {
+
+    private final AdminUserService adminUserService;
+
+    @Tag(name = SwaggerTagName.ADMIN_DASHBOARD)
+    @Operation(summary = &quot;가입된 유저 수 조회 (JWT 인증 필요)&quot;, description = &quot;가입된 유저 수를 조회합니다.&quot;)
+    @GetMapping(&quot;/user-count&quot;)
+    public ResponseEntity&lt;?&gt; userCount(Authentication authentication) {
+<span class="fc" id="L28">        log.debug(&quot;AdminUserController.userCount called.&quot;);</span>
+<span class="fc" id="L29">        return ResponseEntity.ok(adminUserService.userCount(authentication));</span>
+    }
+
+    @Tag(name = SwaggerTagName.ADMIN_DASHBOARD)
+    @Operation(summary = &quot;이름 기반 유저 정보 조회 (JWT 인증 필요)&quot;, description = &quot;이름 기반으로 유저 정보를 조회합니다.&quot;)
+    @GetMapping(&quot;/user-info/{name}&quot;)
+    public ResponseEntity&lt;?&gt; getUserInfoByName(@RequestParam(value = &quot;name&quot;) String name, Authentication authentication) {
+<span class="fc" id="L36">        log.debug(&quot;AdminUserController.getUserInfoByName called. name={}&quot;, name);</span>
+<span class="fc" id="L37">        return ResponseEntity.ok(adminUserService.getUserInfoByName(name, authentication));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

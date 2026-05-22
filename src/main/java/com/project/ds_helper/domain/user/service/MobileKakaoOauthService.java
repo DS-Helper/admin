@@ -45,6 +45,7 @@ public class MobileKakaoOauthService {
     private final RestTemplate restTemplate;
     private final CookieUtil cookieUtil;
     private final StringRedisTemplate stringRedisTemplate;
+    private final UserLoginHistoryService userLoginHistoryService;
 
     public MobileKakaoOauthService(@Qualifier("kakaoOauthWebClient") WebClient kakaoOauthWebClient,
             @Qualifier("kakaoApiWebClient") WebClient kakaoApiWebClient,
@@ -52,7 +53,8 @@ public class MobileKakaoOauthService {
             JwtUtil jwtUtil, CookieUtil cookieUtil,
             KakaoOauthRepository kakaoOauthRepository,
             UserRepository userRepository,
-            @Qualifier("CustomStringRedisTemplate") StringRedisTemplate stringRedisTemplate){
+            @Qualifier("CustomStringRedisTemplate") StringRedisTemplate stringRedisTemplate,
+            UserLoginHistoryService userLoginHistoryService){
         this.kakaoOauthWebClient = kakaoOauthWebClient;
         this.kakaoApiWebClient = kakaoApiWebClient;
         this.restTemplate = restTemplate;
@@ -61,6 +63,7 @@ public class MobileKakaoOauthService {
         this.kakaoOauthRepository = kakaoOauthRepository;
         this.userRepository = userRepository;
         this.stringRedisTemplate = stringRedisTemplate;
+        this.userLoginHistoryService = userLoginHistoryService;
     }
 
 
@@ -115,6 +118,7 @@ public class MobileKakaoOauthService {
 
             // 토큰 발급을 위한 userId, userRole 획득
             KakaoOauth kakaoOauth = optionalKakaoOauth.get();
+            kakaoOauth.updateRefreshToken(dto.refreshToken());
             //if (kakaoOauth.getUser().isDeleted()) {
                 //throw new IllegalArgumentException("Deleted User");
             //}
@@ -125,6 +129,7 @@ public class MobileKakaoOauthService {
 
             String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);
             String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);
+            userLoginHistoryService.recordSuccessfulLogin(kakaoOauth.getUser());
             saveRefreshTokenWithTtl(userId, refreshToken);
             return new JwtResponse(accessToken, refreshToken);
 
@@ -160,6 +165,7 @@ public class MobileKakaoOauthService {
                     .user(user)
                     .socialOauthId(socialOauthId)
                     .oauthEmail(email)
+                    .refreshToken(dto.refreshToken())
                     .build();
             log.debug("kakaoOauth is built");
 
@@ -176,6 +182,7 @@ public class MobileKakaoOauthService {
             // jwt 토큰 발급 및 쿠키 저장
             String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);
             String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);
+            userLoginHistoryService.recordSuccessfulLogin(user);
             saveRefreshTokenWithTtl(userId, refreshToken);
             return new JwtResponse(accessToken, refreshToken);
         }

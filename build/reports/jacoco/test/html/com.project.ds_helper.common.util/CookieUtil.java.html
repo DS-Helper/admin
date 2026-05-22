@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CookieUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.common.util</a> &gt; <span class="el_source">CookieUtil.java</span></div><h1>CookieUtil.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.common.util;
+
+import com.project.ds_helper.common.enums.JwtTokenType;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.stereotype.Component;
+
+@Component
+<span class="fc" id="L14">@Slf4j</span>
+<span class="nc" id="L15">public class CookieUtil {</span>
+
+    public ResponseCookie addAccessTokenCookie(String accessToken) {
+<span class="nc" id="L18">        ResponseCookie cookie = ResponseCookie.from(&quot;accessToken&quot;, accessToken)</span>
+<span class="nc" id="L19">                .httpOnly(true)                    // JS에서 접근 불가</span>
+<span class="nc" id="L20">                .secure(true)                      // HTTPS에서만 전송</span>
+<span class="nc" id="L21">                .path(&quot;/&quot;)                         // 모든 경로에 적용</span>
+<span class="nc" id="L22">                .maxAge(3600 * 24)                 // 1일</span>
+<span class="nc" id="L23">                .sameSite(&quot;None&quot;)                  // ✅ 크로스도메인 허용</span>
+<span class="nc" id="L24">                .domain(&quot;.dshelper.kr&quot;)         // 서브도메인 공유 가능</span>
+<span class="nc" id="L25">                .build();</span>
+
+<span class="nc" id="L27">        return cookie;</span>
+    }
+
+    public ResponseCookie addRefreshTokenCookie(String refreshToken) {
+<span class="nc" id="L31">        ResponseCookie cookie = ResponseCookie.from(&quot;refreshToken&quot;, refreshToken)</span>
+<span class="nc" id="L32">                .httpOnly(true)                    // JS에서 접근 불가</span>
+<span class="nc" id="L33">                .secure(true)                      // HTTPS에서만 전송</span>
+<span class="nc" id="L34">                .path(&quot;/&quot;)                         // 모든 경로에 적용</span>
+<span class="nc" id="L35">                .maxAge(3600 * 24)                 // 1일</span>
+<span class="nc" id="L36">                .sameSite(&quot;None&quot;)                  // ✅ 크로스도메인 허용</span>
+<span class="nc" id="L37">                .domain(&quot;.dshelper.kr&quot;)         // 서브도메인 공유 가능</span>
+<span class="nc" id="L38">                .build();</span>
+
+<span class="nc" id="L40">        return cookie;</span>
+    }
+
+
+//    public Cookie generateAccessTokenCookie(String accessToken){
+//        Cookie cookie = new Cookie(JwtTokenType.ACCESS_TOKEN_NAME.getTokenName(), accessToken);
+//        cookie.setHttpOnly(true);
+//        cookie.setSecure(true);
+////        cookie.setSecure(false);
+//        cookie.setPath(&quot;/&quot;);
+//        cookie.setMaxAge(3600 * 24);
+//        cookie.setDomain(&quot;dshelper.kro.kr&quot;);
+//        return cookie;
+//    }
+//
+//    public Cookie generateRefreshTokenCookie(String refreshToken){
+//        Cookie cookie = new Cookie(JwtTokenType.REFRESH_TOKEN_NAME.getTokenName(), refreshToken);
+//        cookie.setHttpOnly(true);
+//        cookie.setSecure(true);
+//        cookie.setMaxAge(3600 * 24);
+//        //        cookie.setSecure(false);
+//        cookie.setPath(&quot;/&quot;);
+//        cookie.setDomain(&quot;dshelper.kro.kr&quot;);
+//        cookie.setAttribute(&quot;samesite&quot;, &quot;none&quot;);
+//        return cookie;
+//    }
+
+    public String getAuthToken(HttpServletRequest httpServletRequest){
+<span class="nc" id="L68">        Cookie[] cookies = httpServletRequest.getCookies();</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        if(cookies != null){</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">            for(Cookie cookie : cookies){</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">                if(cookie.getName().equals(JwtTokenType.ACCESS_TOKEN_NAME.getTokenName())){</span>
+<span class="nc" id="L72">                    log.info(&quot;accessToken : {}&quot;, cookie.getValue());</span>
+<span class="nc" id="L73">                    return cookie.getValue();</span>
+                }
+            }
+        }
+<span class="nc" id="L77">        log.info(&quot;accessToken is not in cookie&quot;);</span>
+<span class="nc" id="L78">        return null;</span>
+    }
+
+    /**
+     * @Param HttpServletRequest httpServletRequest
+     * **/
+    public String getRefreshTokenFromCookie(HttpServletRequest httpServletRequest){
+<span class="nc" id="L85">        Cookie[] cookies = httpServletRequest.getCookies();</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">        if(cookies != null){</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">            for(Cookie cookie : cookies){</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">                if(cookie.getName().equals(JwtTokenType.REFRESH_TOKEN_NAME.getTokenName())){</span>
+<span class="nc" id="L89">                    log.info(&quot;refreshToken : {}&quot;, cookie.getValue());</span>
+<span class="nc" id="L90">                    return cookie.getValue();</span>
+                }
+            }
+        }
+<span class="nc" id="L94">        log.info(&quot;refreshToken is not in cookie&quot;);</span>
+<span class="nc" id="L95">        return null;</span>
+    }
+
+    /**
+     * @Param String cookieName
+     * @Return Cookie (MaxAge = 0)
+     * **/
+    public ResponseCookie expireCookieByCookieName(String cookieName){
+<span class="nc" id="L103">         return ResponseCookie.from(cookieName, &quot;&quot;)</span>
+<span class="nc" id="L104">                .domain(&quot;.dshelper.kr&quot;)</span>
+<span class="nc" id="L105">                .path(&quot;/&quot;)</span>
+<span class="nc" id="L106">                .build();</span>
+    }
+
+
+    public ResponseCookie addAccessTokenCookieForLocalhost(String accessToken) {
+<span class="nc" id="L111">        ResponseCookie cookie = ResponseCookie.from(&quot;accessToken&quot;, accessToken)</span>
+<span class="nc" id="L112">                .httpOnly(false)                    // JS에서 접근 불가</span>
+<span class="nc" id="L113">                .secure(false)                      // HTTPS에서만 전송</span>
+<span class="nc" id="L114">                .path(&quot;/&quot;)                         // 모든 경로에 적용</span>
+<span class="nc" id="L115">                .maxAge(3600 * 24)                 // 1일</span>
+<span class="nc" id="L116">                .sameSite(&quot;None&quot;)                  // ✅ 크로스도메인 허용</span>
+<span class="nc" id="L117">                .domain(&quot;localhost&quot;)         // 서브도메인 공유 가능</span>
+<span class="nc" id="L118">                .build();</span>
+
+<span class="nc" id="L120">        return cookie;</span>
+    }
+
+    public ResponseCookie addRefreshTokenCookieForLocalhost(String refreshToken) {
+<span class="nc" id="L124">        ResponseCookie cookie = ResponseCookie.from(&quot;refreshToken&quot;, refreshToken)</span>
+<span class="nc" id="L125">                .httpOnly(false)                    // JS에서 접근 불가</span>
+<span class="nc" id="L126">                .secure(false)                      // HTTPS에서만 전송</span>
+<span class="nc" id="L127">                .path(&quot;/&quot;)                         // 모든 경로에 적용</span>
+<span class="nc" id="L128">                .maxAge(3600 * 24)                 // 1일</span>
+<span class="nc" id="L129">                .sameSite(&quot;None&quot;)                  // ✅ 크로스도메인 허용</span>
+<span class="nc" id="L130">                .domain(&quot;localhost&quot;)         // 서브도메인 공유 가능</span>
+<span class="nc" id="L131">                .build();</span>
+
+<span class="nc" id="L133">        return cookie;</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

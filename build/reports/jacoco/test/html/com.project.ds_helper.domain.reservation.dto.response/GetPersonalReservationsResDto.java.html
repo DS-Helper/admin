@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GetPersonalReservationsResDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.reservation.dto.response</a> &gt; <span class="el_source">GetPersonalReservationsResDto.java</span></div><h1>GetPersonalReservationsResDto.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.reservation.dto.response;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Slice;
+
+import java.util.List;
+
+<span class="fc" id="L9">@Slf4j</span>
+@Schema(
+        description = &quot;개인 예약 목록 슬라이스 DTO&quot;,
+        example = &quot;{\&quot;content\&quot;:[],\&quot;number\&quot;:0,\&quot;size\&quot;:10,\&quot;first\&quot;:true,\&quot;last\&quot;:false,\&quot;hasNext\&quot;:true}&quot;
+)
+<span class="fc" id="L14">public record GetPersonalReservationsResDto&lt;T&gt;(</span>
+        List&lt;T&gt; content,
+        int number,
+        int size,
+        boolean first,
+        boolean last,
+        boolean hasNext
+) {
+    public static &lt;T&gt; GetPersonalReservationsResDto&lt;T&gt; toDto(Slice&lt;T&gt; sliceObject) {
+<span class="fc" id="L23">        List&lt;T&gt; content = sliceObject.getContent();</span>
+<span class="fc" id="L24">        int number = Math.max(0, sliceObject.getNumber());</span>
+<span class="fc" id="L25">        int size = Math.max(0, sliceObject.getSize());</span>
+<span class="fc" id="L26">        boolean first = sliceObject.isFirst();</span>
+<span class="fc" id="L27">        boolean last = sliceObject.isLast();</span>
+<span class="fc" id="L28">        boolean hasNext = sliceObject.hasNext();</span>
+
+<span class="fc" id="L30">        log.info(</span>
+                &quot;content.size : {}, number : {}, size : {}, first : {}, last : {}. hasNext : {}&quot;,
+<span class="fc" id="L32">                content.size(),</span>
+<span class="fc" id="L33">                number,</span>
+<span class="fc" id="L34">                size,</span>
+<span class="fc" id="L35">                first,</span>
+<span class="fc" id="L36">                last,</span>
+<span class="fc" id="L37">                hasNext</span>
+        );
+
+<span class="fc" id="L40">        return new GetPersonalReservationsResDto&lt;&gt;(content, number, size, first, last, hasNext);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

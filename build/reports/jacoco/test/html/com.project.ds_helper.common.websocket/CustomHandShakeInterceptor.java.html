@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CustomHandShakeInterceptor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.common.websocket</a> &gt; <span class="el_source">CustomHandShakeInterceptor.java</span></div><h1>CustomHandShakeInterceptor.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.common.websocket;
+
+import com.project.ds_helper.domain.user.entity.User;
+import com.project.ds_helper.domain.user.enums.UserRole;
+import com.project.ds_helper.domain.user.repository.UserRepository;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.messaging.simp.user.SimpSubscription;
+import org.springframework.messaging.simp.user.SimpSubscriptionMatcher;
+import org.springframework.messaging.simp.user.SimpUser;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
+import org.springframework.stereotype.Component;
+import org.springframework.web.socket.WebSocketHandler;
+import org.springframework.web.socket.server.HandshakeInterceptor;
+
+import java.security.Principal;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+@RequiredArgsConstructor
+<span class="nc" id="L28">@Slf4j</span>
+@Component
+public class CustomHandShakeInterceptor implements HandshakeInterceptor {
+
+    private final UserRepository userRepository;
+
+    @Override
+    public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map&lt;String, Object&gt; attributes) throws Exception {
+        
+        // principal 획득
+<span class="nc" id="L38">        Principal principal = request.getPrincipal();</span>
+
+        // principal이 null 이거나 name이 없다면 false 반환
+<span class="nc bnc" id="L41" title="All 6 branches missed.">        if(principal == null || principal.getName().isEmpty() || principal.getName().isBlank()) {</span>
+<span class="nc" id="L42">            log.info(&quot;No Principal Or No Name&quot;);</span>
+<span class="nc" id="L43">            return false;</span>
+        }
+
+        // name 획득
+<span class="nc" id="L47">        String name = principal.getName();</span>
+<span class="nc" id="L48">        log.info(&quot;[BeforeHandShake] name : {}&quot;, name);</span>
+
+        // Optional 유저 획득
+<span class="nc" id="L51">        Optional&lt;User&gt; optionalUser = userRepository.findByEmail(name);</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        if(optionalUser.isEmpty()){</span>
+<span class="nc" id="L53">            log.info(&quot;[BeforeHandShake] optionalUser is Empty&quot;);</span>
+<span class="nc" id="L54">            return false;</span>
+        }
+<span class="nc" id="L56">        log.info(&quot;[BeforeHandShake] optionalUser get&quot;);</span>
+
+        // 유저 get
+<span class="nc" id="L59">        User user = optionalUser.get();</span>
+<span class="nc" id="L60">        log.info(&quot;[BeforeHandShake] user : {} get&quot;, user.getEmail());</span>
+
+        // email, role 저장
+<span class="nc" id="L63">        Object email = user.getEmail();</span>
+<span class="nc" id="L64">        Object role = user.getRole();</span>
+<span class="nc" id="L65">        attributes.putAll(Map.of(</span>
+                &quot;email&quot;, email,
+                &quot;role&quot;, role)
+        );
+<span class="nc" id="L69">        log.info(&quot;[BeforeHandShake] attributes email : {}, role : {} saved&quot;, email, role );</span>
+
+<span class="nc" id="L71">        return true; </span>
+    }
+
+    @Override
+    public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Exception exception) {
+<span class="nc" id="L76">        Map&lt;String, Object&gt; attributes = request.getAttributes();</span>
+<span class="nc" id="L77">        Object email = attributes.get(&quot;email&quot;);</span>
+<span class="nc" id="L78">        Object role = attributes.get(&quot;role&quot;);</span>
+<span class="nc" id="L79">        log.info(&quot;[AfterHandShake] email : {}, role : {}&quot;, email, role);</span>
+
+<span class="nc" id="L81">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

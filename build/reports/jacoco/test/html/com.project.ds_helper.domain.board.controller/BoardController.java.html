@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BoardController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.board.controller</a> &gt; <span class="el_source">BoardController.java</span></div><h1>BoardController.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.board.controller;
+
+import com.project.ds_helper.common.dto.response.CursorResponseDto;
+import com.project.ds_helper.common.dto.response.ResponseVo;
+import com.project.ds_helper.common.enums.SuccessCode;
+import com.project.ds_helper.common.enums.SwaggerTagName;
+import com.project.ds_helper.domain.board.dto.request.CreateBoardReqDto;
+import com.project.ds_helper.domain.board.dto.request.UpdateBoardRequestDto;
+import com.project.ds_helper.domain.board.dto.response.CreateBoardResponseDto;
+import com.project.ds_helper.domain.board.dto.response.GetBoardByIdResponseDto;
+import com.project.ds_helper.domain.board.dto.response.GetBoardsByCategoryResponseDto;
+import com.project.ds_helper.domain.board.dto.response.GetMyBoardsResponseDto;
+import com.project.ds_helper.domain.board.service.BoardService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@RestController
+<span class="fc" id="L44">@Slf4j</span>
+@RequiredArgsConstructor
+@RequestMapping()
+@Tag(name = SwaggerTagName.COMMUNITY_BOARD)
+public class BoardController {
+
+    private final BoardService boardService;
+
+    @Operation(summary = &quot;게시글 목록 조회&quot;, description = &quot;카테고리, 제목 검색어, 페이지, 정렬 조건을 기준으로 게시글 목록을 조회합니다.&quot;)
+    @GetMapping(value = &quot;/boards&quot;)
+    public ResponseEntity&lt;ResponseVo&lt;GetBoardsByCategoryResponseDto&gt;&gt; getBoardsByCategory(
+            Authentication authentication,
+            @RequestParam(defaultValue = &quot;전체&quot;, required = false) String category,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = &quot;0&quot;, required = false) int page,
+            @RequestParam(defaultValue = &quot;10&quot;, required = false) int size,
+            @RequestParam(defaultValue = &quot;desc&quot;, required = false) String sort,
+            @RequestParam(defaultValue = &quot;createdAt&quot;, required = false) String sortBy
+    ) {
+<span class="fc" id="L63">        log.debug(&quot;BoardController.getBoardsByCategory called. category={}, keyword={}, page={}, size={}, sort={}, sortBy={}&quot;,</span>
+<span class="fc" id="L64">                category, keyword, page, size, sort, sortBy);</span>
+<span class="fc" id="L65">        GetBoardsByCategoryResponseDto boards =</span>
+<span class="fc" id="L66">                boardService.getBoardsByCategory(authentication, category, keyword, page, size, sort, sortBy);</span>
+<span class="fc" id="L67">        ResponseVo&lt;GetBoardsByCategoryResponseDto&gt; responseVo =</span>
+<span class="fc" id="L68">                new ResponseVo&lt;&gt;(true, SuccessCode.OK, SuccessCode.OK.getMessage(), boards);</span>
+<span class="fc" id="L69">        return new ResponseEntity&lt;&gt;(responseVo, responseVo.getCode().httpStatus());</span>
+    }
+
+    @Operation(summary = &quot;게시글 단건 조회&quot;, description = &quot;게시글 ID를 기준으로 게시글 상세 정보를 조회합니다.&quot;)
+    @GetMapping(value = &quot;/board/{boardId}&quot;)
+    public ResponseEntity&lt;ResponseVo&lt;GetBoardByIdResponseDto&gt;&gt; getBoardById(
+            Authentication authentication,
+            @PathVariable(&quot;boardId&quot;) String boardId
+    ) {
+<span class="fc" id="L78">        log.debug(&quot;BoardController.getBoardById called. boardId={}&quot;, boardId);</span>
+<span class="fc" id="L79">        GetBoardByIdResponseDto board = boardService.getBoardById(authentication, boardId);</span>
+<span class="fc" id="L80">        ResponseVo&lt;GetBoardByIdResponseDto&gt; responseVo =</span>
+<span class="fc" id="L81">                new ResponseVo&lt;&gt;(true, SuccessCode.OK, SuccessCode.OK.getMessage(), board);</span>
+<span class="fc" id="L82">        return new ResponseEntity&lt;&gt;(responseVo, responseVo.getCode().httpStatus());</span>
+    }
+
+    @Operation(summary = &quot;내가 작성한 게시글 조회 (JWT 인증 필요)&quot;, description = &quot;내가 작성한 게시글을 커서 기반으로 무한 스크롤 조회합니다.&quot;)
+    @GetMapping(value = &quot;/boards/me&quot;)
+    public ResponseEntity&lt;ResponseVo&lt;CursorResponseDto&lt;GetMyBoardsResponseDto&gt;&gt;&gt; getMyBoards(
+            Authentication authentication,
+            @DateTimeFormat(pattern = &quot;yyyy-MM-dd HH:mm:ss&quot;)
+            @RequestParam(name = &quot;cursor-time&quot;, required = false) LocalDateTime cursorTime,
+            @RequestParam(name = &quot;cursor-id&quot;, required = false) String cursorId,
+            @RequestParam(name = &quot;size&quot;, defaultValue = &quot;10&quot;) int size
+    ) {
+<span class="fc" id="L94">        log.debug(&quot;BoardController.getMyBoards called. cursorTime={}, cursorId={}, size={}&quot;, cursorTime, cursorId, size);</span>
+<span class="fc" id="L95">        CursorResponseDto&lt;GetMyBoardsResponseDto&gt; responseDto =</span>
+<span class="fc" id="L96">                boardService.getMyBoards(authentication, cursorTime, cursorId, size);</span>
+<span class="fc" id="L97">        ResponseVo&lt;CursorResponseDto&lt;GetMyBoardsResponseDto&gt;&gt; responseVo =</span>
+<span class="fc" id="L98">                new ResponseVo&lt;&gt;(true, SuccessCode.OK, SuccessCode.OK.getMessage(), responseDto);</span>
+<span class="fc" id="L99">        return new ResponseEntity&lt;&gt;(responseVo, responseVo.getCode().httpStatus());</span>
+    }
+
+    @Operation(summary = &quot;게시글 생성 (JWT 인증 필요)&quot;, description = &quot;게시글 정보와 첨부 이미지를 받아 새 게시글을 생성합니다.&quot;)
+    @PostMapping(value = &quot;/boards&quot;, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity&lt;ResponseVo&lt;CreateBoardResponseDto&gt;&gt; createBoard(
+            Authentication authentication,
+            @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
+            @RequestPart(value = &quot;dto&quot;) @Valid CreateBoardReqDto dto,
+            @Parameter(
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            array = @ArraySchema(schema = @Schema(type = &quot;string&quot;, format = &quot;binary&quot;))
+                    )
+            )
+            @RequestPart(value = &quot;images&quot;, required = false) List&lt;MultipartFile&gt; images
+    ) throws IOException {
+<span class="fc" id="L116">        log.debug(&quot;BoardController.createBoard called. title={}, category={}, imageCount={}&quot;,</span>
+<span class="fc bfc" id="L117" title="All 2 branches covered.">                dto.getTitle(), dto.getCategory(), images == null ? 0 : images.size());</span>
+<span class="fc bfc" id="L118" title="All 4 branches covered.">        if (images == null || images.isEmpty()) {</span>
+<span class="fc" id="L119">            images = new ArrayList&lt;&gt;();</span>
+        }
+<span class="fc" id="L121">        CreateBoardResponseDto createdBoard = boardService.createBoard(authentication, dto, images);</span>
+<span class="fc" id="L122">        ResponseVo&lt;CreateBoardResponseDto&gt; responseVo =</span>
+<span class="fc" id="L123">                new ResponseVo&lt;&gt;(true, SuccessCode.CREATED, SuccessCode.CREATED.getMessage(), createdBoard);</span>
+<span class="fc" id="L124">        return new ResponseEntity&lt;&gt;(responseVo, responseVo.getCode().httpStatus());</span>
+    }
+
+    @Operation(summary = &quot;게시글 수정 (JWT 인증 필요)&quot;, description = &quot;게시글 정보와 첨부 이미지를 수정합니다.&quot;)
+    @PatchMapping(value = &quot;/boards&quot;)
+    public ResponseEntity&lt;ResponseVo&lt;Void&gt;&gt; updateBoard(
+            Authentication authentication,
+            @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
+            @RequestPart(value = &quot;dto&quot;) @Valid UpdateBoardRequestDto dto,
+            @Parameter(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
+            @RequestPart(value = &quot;images&quot;, required = false) List&lt;MultipartFile&gt; images
+    ) throws IOException {
+<span class="fc" id="L136">        log.debug(&quot;BoardController.updateBoard called. boardId={}, keepImageCount={}, newImageCount={}&quot;,</span>
+<span class="fc" id="L137">                dto.getBoardId(),</span>
+<span class="fc bfc" id="L138" title="All 2 branches covered.">                dto.getKeepImageUrls() == null ? 0 : dto.getKeepImageUrls().size(),</span>
+<span class="fc bfc" id="L139" title="All 2 branches covered.">                images == null ? 0 : images.size());</span>
+<span class="fc bfc" id="L140" title="All 4 branches covered.">        if (images == null || images.isEmpty()) {</span>
+<span class="fc" id="L141">            images = new ArrayList&lt;&gt;();</span>
+        }
+<span class="fc" id="L143">        boardService.updateBoard(authentication, dto, images);</span>
+<span class="fc" id="L144">        ResponseVo&lt;Void&gt; responseVo =</span>
+<span class="fc" id="L145">                new ResponseVo&lt;&gt;(true, SuccessCode.OK, SuccessCode.OK.getMessage(), null);</span>
+<span class="fc" id="L146">        return new ResponseEntity&lt;&gt;(responseVo, responseVo.getCode().httpStatus());</span>
+    }
+
+    @Operation(summary = &quot;게시글 삭제 (JWT 인증 필요)&quot;, description = &quot;게시글 ID를 기준으로 게시글을 삭제합니다.&quot;)
+    @DeleteMapping(&quot;/board/{boardId}&quot;)
+    public ResponseEntity&lt;ResponseVo&lt;Void&gt;&gt; deleteBoard(
+            Authentication authentication,
+            @PathVariable(&quot;boardId&quot;) String boardId
+    ) {
+<span class="fc" id="L155">        log.debug(&quot;BoardController.deleteBoard called. boardId={}&quot;, boardId);</span>
+<span class="fc" id="L156">        boardService.deleteBoard(authentication, boardId);</span>
+<span class="fc" id="L157">        ResponseVo&lt;Void&gt; responseVo =</span>
+<span class="fc" id="L158">                new ResponseVo&lt;&gt;(true, SuccessCode.NO_CONTENT, SuccessCode.NO_CONTENT.getMessage(), null);</span>
+<span class="fc" id="L159">        return new ResponseEntity&lt;&gt;(responseVo, responseVo.getCode().httpStatus());</span>
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

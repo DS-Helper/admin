@@ -5,6 +5,7 @@ import com.project.ds_helper.domain.user.dto.request.OauthWithdrawRequestDto;
 import com.project.ds_helper.domain.user.dto.request.UpdateMyInfoRequestDto;
 import com.project.ds_helper.domain.user.dto.response.UserGetSelfInfoAtMyPageResponseDto;
 import com.project.ds_helper.domain.user.dto.response.UserIdentifierResponseDto;
+import com.project.ds_helper.domain.user.dto.response.WithdrawUserResponseDto;
 import com.project.ds_helper.domain.user.service.GoogleOAuthService;
 import com.project.ds_helper.domain.user.service.KakaoOauthService;
 import com.project.ds_helper.domain.user.service.NaverOauthService;
@@ -74,31 +75,28 @@ public class UserController {
 
     @Operation(summary = "카카오 OAuth 회원 탈퇴 (JWT 인증 필요)")
     @DeleteMapping("/oauth/kakao")
-    public ResponseEntity<Void> withdrawKakaoOauthUser(
+    public ResponseEntity<WithdrawUserResponseDto> withdrawKakaoOauthUser(
             Authentication authentication,
-            @RequestBody @Valid OauthWithdrawRequestDto dto
+            @RequestBody(required = false) @Valid OauthWithdrawRequestDto dto
     ) {
-        kakaoOauthService.withdraw(authentication, dto);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(kakaoOauthService.withdraw(authentication, dto));
     }
 
     @Operation(summary = "구글 OAuth 회원 탈퇴 (JWT 인증 필요)")
     @DeleteMapping("/oauth/google")
-    public ResponseEntity<Void> withdrawGoogleOauthUser(
+    public ResponseEntity<WithdrawUserResponseDto> withdrawGoogleOauthUser(
             Authentication authentication,
-            @RequestBody @Valid OauthWithdrawRequestDto dto
+            @RequestBody(required = false) @Valid OauthWithdrawRequestDto dto
     ) {
-        googleOAuthService.withdraw(authentication, dto);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(googleOAuthService.withdraw(authentication, dto));
     }
 
     @Operation(summary = "네이버 OAuth 회원 탈퇴 (JWT 인증 필요)")
     @DeleteMapping("/oauth/naver")
-    public ResponseEntity<Void> withdrawNaverOauthUser(
+    public ResponseEntity<WithdrawUserResponseDto> withdrawNaverOauthUser(
             Authentication authentication,
-            @RequestBody @Valid OauthWithdrawRequestDto dto
+            @RequestBody(required = false) @Valid OauthWithdrawRequestDto dto
     ) {
-        naverOauthService.withdraw(authentication, dto);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(naverOauthService.withdraw(authentication, dto));
     }
 }

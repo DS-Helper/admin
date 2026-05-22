@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TrashBinImage.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.trashbin.entity</a> &gt; <span class="el_source">TrashBinImage.java</span></div><h1>TrashBinImage.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.trashbin.entity;
+
+import com.project.ds_helper.domain.base.entity.BaseTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.util.UUID;
+
+@Entity
+@Table(name = &quot;tb_trash_bin_image&quot;)
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class TrashBinImage extends BaseTime {
+
+    @PrePersist
+    private void prePersistGenerateId() {
+<span class="fc" id="L29">        this.id = String.valueOf(UUID.randomUUID());</span>
+<span class="fc" id="L30">    }</span>
+
+    /**
+     * 쓰레기통 이미지 식별자.
+     */
+    @Id
+    @Column(name = &quot;trash_bin_image_id&quot;)
+    private String id;
+
+    /**
+     * 사용자가 업로드한 원본 파일명.
+     */
+    @Column(name = &quot;original_name&quot;)
+    private String originalName;
+
+    /**
+     * S3 저장 시 충돌 방지를 위해 생성한 파일명.
+     */
+    @Column(name = &quot;stored_name&quot;)
+    private String storedName;
+
+    /**
+     * S3 bucket 내부 object key.
+     */
+    @Column(name = &quot;s3_key&quot;)
+    private String s3Key;
+
+    /**
+     * 프론트에서 이미지를 표시할 때 사용하는 공개 URL.
+     */
+    @Column(name = &quot;url&quot;, columnDefinition = &quot;TEXT&quot;)
+    private String url;
+
+    /**
+     * 압축 후 S3에 저장된 파일 크기.
+     */
+    @Column(name = &quot;size&quot;)
+    private Long size;
+
+    /**
+     * 압축 후 S3에 저장된 content type.
+     */
+    @Column(name = &quot;content_type&quot;)
+    private String contentType;
+
+    /**
+     * 이 이미지가 연결된 쓰레기통 데이터.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;trash_bin_id&quot;)
+    private TrashBin trashBin;
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

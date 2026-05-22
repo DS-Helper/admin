@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.project.ds_helper.domain.user.service.MobileKakaoOauthServiceTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:18" hostname="아기" time="0.02">
+<testsuite name="com.project.ds_helper.domain.user.service.MobileKakaoOauthServiceTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:03:05" hostname="아기" time="0.017">
   <properties/>
   <testcase name="모바일 카카오 로그인은 기존 회원에게 access token과 refresh token을 각각 발급한다" classname="com.project.ds_helper.domain.user.service.MobileKakaoOauthServiceTest" time="0.013"/>
-  <testcase name="모바일 카카오 신규 가입 시 동일 이메일이 있으면 가입을 거절한다" classname="com.project.ds_helper.domain.user.service.MobileKakaoOauthServiceTest" time="0.007"/>
+  <testcase name="모바일 카카오 신규 가입 시 동일 이메일이 있으면 가입을 거절한다" classname="com.project.ds_helper.domain.user.service.MobileKakaoOauthServiceTest" time="0.004"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

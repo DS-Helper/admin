@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BoardScrapController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.board.controller</a> &gt; <span class="el_source">BoardScrapController.java</span></div><h1>BoardScrapController.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.board.controller;
+
+import com.project.ds_helper.common.dto.response.ResponseVo;
+import com.project.ds_helper.common.enums.SuccessCode;
+import com.project.ds_helper.common.enums.SwaggerTagName;
+import com.project.ds_helper.domain.board.dto.response.GetScrappedBoardsResponseDto;
+import com.project.ds_helper.domain.board.service.BoardScrapService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping(&quot;&quot;)
+@RequiredArgsConstructor
+<span class="fc" id="L24">@Slf4j</span>
+@Tag(name = SwaggerTagName.COMMUNITY_SCRAP)
+public class BoardScrapController {
+
+    private final BoardScrapService boardScrapService;
+
+    @Tag(name = SwaggerTagName.COMMUNITY_SCRAP)
+    @Operation(summary = &quot;게시글 스크랩 수 조회 (JWT 인증 필요)&quot;, description = &quot;게시글 ID를 기준으로 해당 게시글의 스크랩 수를 조회합니다.&quot;)
+    @GetMapping(&quot;/{boardId}/scrap/count&quot;)
+    public ResponseEntity&lt;ResponseVo&lt;Long&gt;&gt; countScrap(@PathVariable String boardId) {
+<span class="fc" id="L34">        log.debug(&quot;BoardScrapController.countScrap called. boardId={}&quot;, boardId);</span>
+<span class="fc" id="L35">        long count = boardScrapService.countScrap(boardId);</span>
+<span class="fc" id="L36">        ResponseVo&lt;Long&gt; responseVo = new ResponseVo&lt;&gt;(true, SuccessCode.OK, SuccessCode.OK.getMessage(), count);</span>
+<span class="fc" id="L37">        return new ResponseEntity&lt;&gt;(responseVo, responseVo.getCode().httpStatus());</span>
+    }
+
+    @Tag(name = SwaggerTagName.MY_SCRAP)
+    @Operation(summary = &quot;내 스크랩 게시글 조회 (JWT 인증 필요)&quot;, description = &quot;로그인한 사용자가 스크랩한 게시글 목록을 페이지 조건에 맞게 조회합니다.&quot;)
+    @GetMapping(&quot;/boards/scrap&quot;)
+    public ResponseEntity&lt;ResponseVo&lt;GetScrappedBoardsResponseDto&gt;&gt; getMyScraps(
+            Authentication authentication,
+            @RequestParam(defaultValue = &quot;0&quot;) int page,
+            @RequestParam(defaultValue = &quot;10&quot;) int size,
+            @RequestParam(defaultValue = &quot;desc&quot;) String sort,
+            @RequestParam(defaultValue = &quot;createdAt&quot;) String sortBy
+    ) {
+<span class="fc" id="L50">        log.debug(&quot;BoardScrapController.getMyScraps called. page={}, size={}, sort={}, sortBy={}&quot;, page, size, sort, sortBy);</span>
+<span class="fc" id="L51">        GetScrappedBoardsResponseDto response =</span>
+<span class="fc" id="L52">                boardScrapService.getMyScrappedBoards(authentication, page, size, sort, sortBy);</span>
+
+<span class="fc" id="L54">        ResponseVo&lt;GetScrappedBoardsResponseDto&gt; responseVo =</span>
+<span class="fc" id="L55">                new ResponseVo&lt;&gt;(true, SuccessCode.OK, SuccessCode.OK.getMessage(), response);</span>
+<span class="fc" id="L56">        return new ResponseEntity&lt;&gt;(responseVo, responseVo.getCode().httpStatus());</span>
+    }
+
+    @Tag(name = SwaggerTagName.COMMUNITY_SCRAP)
+    @Operation(summary = &quot;게시글 스크랩 토글 (JWT 인증 필요)&quot;, description = &quot;게시글 스크랩 상태를 추가 또는 취소합니다.&quot;)
+    @PostMapping(&quot;/board/{boardId}/scrap&quot;)
+    public ResponseEntity&lt;ResponseVo&lt;Boolean&gt;&gt; toggleScrap(
+            Authentication authentication,
+            @PathVariable String boardId
+    ) {
+<span class="fc" id="L66">        log.debug(&quot;BoardScrapController.toggleScrap called. boardId={}&quot;, boardId);</span>
+<span class="fc" id="L67">        boolean result = boardScrapService.toggleBoardScrap(authentication, boardId);</span>
+<span class="fc" id="L68">        ResponseVo&lt;Boolean&gt; responseVo = new ResponseVo&lt;&gt;(true, SuccessCode.OK, SuccessCode.OK.getMessage(), result);</span>
+<span class="fc" id="L69">        return new ResponseEntity&lt;&gt;(responseVo, responseVo.getCode().httpStatus());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

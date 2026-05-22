@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.user.UserDtoEntityTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:03:02" hostname="아기" time="0.021">
+  <properties/>
+  <testcase name="User recordLogin은 마지막 로그인 일시를 저장한다" classname="com.project.ds_helper.domain.user.UserDtoEntityTest" time="0.001"/>
+  <testcase name="User 저장 전 UUID를 생성한다" classname="com.project.ds_helper.domain.user.UserDtoEntityTest" time="0.0"/>
+  <testcase name="GoogleOauth refreshToken은 값이 있을 때만 갱신한다" classname="com.project.ds_helper.domain.user.UserDtoEntityTest" time="0.004"/>
+  <testcase name="User softDelete는 삭제 여부와 삭제일시를 저장한다" classname="com.project.ds_helper.domain.user.UserDtoEntityTest" time="0.001"/>
+  <testcase name="OAuth 엔티티 저장 전 UUID를 생성한다" classname="com.project.ds_helper.domain.user.UserDtoEntityTest" time="0.01"/>
+  <testcase name="KakaoOauth refreshToken은 값이 있을 때만 갱신한다" classname="com.project.ds_helper.domain.user.UserDtoEntityTest" time="0.001"/>
+  <testcase name="NaverOauth refreshToken은 값이 있을 때만 갱신한다" classname="com.project.ds_helper.domain.user.UserDtoEntityTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

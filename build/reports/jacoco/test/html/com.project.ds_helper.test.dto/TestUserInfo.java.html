@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TestUserInfo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.test.dto</a> &gt; <span class="el_source">TestUserInfo.java</span></div><h1>TestUserInfo.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.test.dto;
+
+import com.project.ds_helper.domain.user.entity.User;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+
+@Builder
+@Schema(description = &quot;테스트용 사용자 정보 DTO&quot;, example = &quot;{\&quot;userId\&quot;:\&quot;user-001\&quot;,\&quot;email\&quot;:\&quot;user@test.com\&quot;,\&quot;role\&quot;:\&quot;USER\&quot;,\&quot;type\&quot;:\&quot;NORMAL\&quot;,\&quot;profileImageUrl\&quot;:\&quot;https://cdn.dshelper.kr/profile/user-001.png\&quot;,\&quot;gender\&quot;:\&quot;남성\&quot;,\&quot;ageRange\&quot;:\&quot;20~29\&quot;,\&quot;birthday\&quot;:\&quot;03-23\&quot;,\&quot;birthyear\&quot;:\&quot;1998\&quot;}&quot;)
+<span class="fc" id="L9">public record TestUserInfo(</span>
+        String userId,
+        String email,
+        String role,
+        String type,
+        String profileImageUrl,
+        String gender,
+        String ageRange,
+        String birthday,
+        String birthyear
+) {
+    public static TestUserInfo toDto(User user){
+<span class="fc" id="L21">        return TestUserInfo.builder()</span>
+<span class="fc" id="L22">                .userId(user.getId())</span>
+<span class="fc" id="L23">                .email(user.getEmail())</span>
+<span class="fc" id="L24">                .role(user.getRole().name())</span>
+<span class="fc" id="L25">                .type(user.getType().name())</span>
+<span class="fc" id="L26">                .profileImageUrl(user.getProfileImageUrl())</span>
+<span class="fc" id="L27">                .gender(user.getGender())</span>
+<span class="fc" id="L28">                .ageRange(user.getAgeRange())</span>
+<span class="fc" id="L29">                .birthday(user.getBirthday())</span>
+<span class="fc" id="L30">                .birthyear(user.getBirthyear())</span>
+<span class="fc" id="L31">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

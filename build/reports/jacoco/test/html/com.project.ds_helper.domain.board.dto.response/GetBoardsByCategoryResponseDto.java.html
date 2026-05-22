@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GetBoardsByCategoryResponseDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.board.dto.response</a> &gt; <span class="el_source">GetBoardsByCategoryResponseDto.java</span></div><h1>GetBoardsByCategoryResponseDto.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.board.dto.response;
+
+import com.project.ds_helper.common.dto.response.PageResponseDto;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+
+import java.util.List;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@Builder
+@Schema(
+        description = &quot;카테고리별 게시글 목록 조회 응답 DTO&quot;,
+        example = &quot;&quot;&quot;
+                {
+                  &quot;boards&quot;: [
+                    {
+                      &quot;id&quot;: &quot;3f9c7c8e-4d5a-4b1e-9a2f-7c1d2e8f9a01&quot;,
+                      &quot;title&quot;: &quot;복지관 프로그램 추천 부탁드려요&quot;,
+                      &quot;content&quot;: &quot;부모님과 함께 참여할 수 있는 프로그램이 있으면 추천 부탁드립니다.&quot;,
+                      &quot;writerName&quot;: &quot;김도움&quot;,
+                      &quot;writerProfileImageUrl&quot;: &quot;https://ds-helper-bucket.s3.ap-northeast-2.amazonaws.com/profile/user-001.jpg&quot;,
+                      &quot;likeCount&quot;: 14,
+                      &quot;commentCount&quot;: 15,
+                      &quot;thumbNailUrl&quot;: &quot;https://ds-helper-bucket.s3.ap-northeast-2.amazonaws.com/images/2026/02/21/uuid2.jpg&quot;
+                    }
+                  ],
+                  &quot;page&quot;: {
+                    &quot;page&quot;: 0,
+                    &quot;size&quot;: 10,
+                    &quot;totalElements&quot;: 1,
+                    &quot;totalPages&quot;: 1,
+                    &quot;first&quot;: true,
+                    &quot;last&quot;: true,
+                    &quot;hasNext&quot;: false,
+                    &quot;hasPrevious&quot;: false,
+                    &quot;sort&quot;: null
+                  }
+                }
+                &quot;&quot;&quot;
+)
+public class GetBoardsByCategoryResponseDto {
+
+    private List&lt;Board&gt; boards;
+    private PageResponseDto page;
+
+    @Builder
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Board{
+
+        @Schema(description = &quot;게시글 ID&quot;, example = &quot;3f9c7c8e-4d5a-4b1e-9a2f-7c1d2e8f9a01&quot;)
+        private String id;
+
+        @Schema(description = &quot;게시글 제목&quot;, example = &quot;복지관 프로그램 추천 부탁드려요&quot;)
+        private String title;
+
+        @Schema(description = &quot;게시글 내용&quot;, example = &quot;부모님과 함께 참여할 수 있는 프로그램이 있으면 추천 부탁드립니다.&quot;)
+        private String content;
+
+        @Schema(description = &quot;작성자 이름&quot;, example = &quot;김도움&quot;)
+        private String writerName;
+
+        @Schema(description = &quot;작성자 유저 ID&quot;, example = &quot;88fa8c94-ad1a-4351-9fd6-cdd002ecf167&quot;)
+        private String writerId;
+
+        @Schema(description = &quot;작성자 프로필 이미지 URL&quot;, example = &quot;https://ds-helper-bucket.s3.ap-northeast-2.amazonaws.com/profile/user-001.jpg&quot;)
+        private String writerProfileImageUrl;
+
+        @Schema(description = &quot;좋아요 수&quot;, example = &quot;14&quot;)
+        private int likeCount;
+
+        @Schema(description = &quot;댓글 수&quot;, example = &quot;15&quot;)
+        private int commentCount;
+
+        @Schema(description = &quot;좋아요 여부&quot;, example = &quot;true&quot;)
+        private boolean isLiked;
+
+        @Schema(description = &quot;썸네일 이미지 URL&quot;, example = &quot;https://ds-helper-bucket.s3.ap-northeast-2.amazonaws.com/images/2026/02/21/uuid2.jpg&quot;)
+        private String thumbNailUrl;
+
+        public static Board toBoard(
+                com.project.ds_helper.domain.board.entity.Board board,
+                int commentCount,
+                boolean isLiked,
+                String thumbNailUrl
+        ){
+<span class="fc" id="L92">            return Board.builder()</span>
+<span class="fc" id="L93">                    .id(board.getId())</span>
+<span class="fc" id="L94">                    .title(board.getTitle())</span>
+<span class="fc" id="L95">                    .content(board.getContent())</span>
+<span class="fc" id="L96">                    .writerName(board.getUser().getName())</span>
+<span class="fc" id="L97">                    .writerId(board.getUser().getId())</span>
+<span class="fc" id="L98">                    .writerProfileImageUrl(board.getUser().getProfileImageUrl())</span>
+<span class="fc" id="L99">                    .likeCount(board.getLikeCount())</span>
+<span class="fc" id="L100">                    .commentCount(commentCount)</span>
+<span class="fc" id="L101">                    .isLiked(isLiked)</span>
+<span class="fc" id="L102">                    .thumbNailUrl(thumbNailUrl)</span>
+<span class="fc" id="L103">                    .build();</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

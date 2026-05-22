@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminReservationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.admin.service</a> &gt; <span class="el_source">AdminReservationService.java</span></div><h1>AdminReservationService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.admin.service;
+
+import com.project.ds_helper.common.util.UserUtil;
+import com.project.ds_helper.domain.admin.repository.AdminOrganizationReservationRepository;
+import com.project.ds_helper.domain.admin.repository.AdminPersonalReservationRepository;
+import com.project.ds_helper.domain.reservation.dto.response.*;
+import com.project.ds_helper.domain.reservation.entity.OrganizationReservation;
+import com.project.ds_helper.domain.reservation.entity.PersonalReservation;
+import com.project.ds_helper.domain.reservation.enums.ReservationStatus;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+
+import jakarta.persistence.criteria.Predicate;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+@Service
+<span class="fc" id="L24">@Slf4j</span>
+@RequiredArgsConstructor
+public class AdminReservationService {
+
+    private final AdminPersonalReservationRepository adminPersonalReservationRepository;
+    private final AdminOrganizationReservationRepository adminOrganizationReservationRepository;
+
+    private final UserUtil userUtil;
+
+    public Object getRequestedReservations(
+            String requesterName, 
+            ReservationStatus reservationStatus, 
+            String applicantType, 
+            LocalDate startDate, 
+            LocalDate endDate, 
+            int page, 
+            int size, 
+            String sort, 
+            String sortBy
+    ) {
+<span class="fc" id="L44">        log.debug(&quot;AdminReservationService.getRequestedReservations started.&quot;);</span>
+<span class="fc" id="L45">        Pageable pageRequest = PageRequest.of(page, Math.min(size, 100), </span>
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">                sort.equalsIgnoreCase(&quot;desc&quot;) ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);</span>
+
+<span class="fc" id="L48">        HashMap&lt;String, Object&gt; responseDto = new HashMap&lt;&gt;();</span>
+
+        // 1. 개인 예약 필터링 및 조회
+<span class="pc bpc" id="L51" title="3 of 4 branches missed.">        if (applicantType == null || applicantType.equalsIgnoreCase(&quot;PERSONAL&quot;)) {</span>
+<span class="fc" id="L52">            Specification&lt;PersonalReservation&gt; spec = (root, query, cb) -&gt; {</span>
+<span class="nc" id="L53">                List&lt;Predicate&gt; predicates = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">                if (requesterName != null) predicates.add(cb.like(root.get(&quot;name&quot;), &quot;%&quot; + requesterName + &quot;%&quot;));</span>
+<span class="nc bnc" id="L55" title="All 2 branches missed.">                if (reservationStatus != null) predicates.add(cb.equal(root.get(&quot;reservationStatus&quot;), reservationStatus));</span>
+<span class="nc bnc" id="L56" title="All 2 branches missed.">                if (startDate != null) predicates.add(cb.greaterThanOrEqualTo(root.get(&quot;createdAt&quot;), startDate.atStartOfDay()));</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">                if (endDate != null) predicates.add(cb.lessThanOrEqualTo(root.get(&quot;createdAt&quot;), endDate.atTime(23, 59, 59)));</span>
+<span class="nc" id="L58">                return cb.and(predicates.toArray(new Predicate[0]));</span>
+            };
+<span class="fc" id="L60">            Page&lt;PersonalReservation&gt; personalReservations = adminPersonalReservationRepository.findAll(spec, pageRequest);</span>
+<span class="fc" id="L61">            Page&lt;GetPersonalReservationsByReservationStatusResDto&gt; convertedPersonalReservations = </span>
+<span class="fc" id="L62">                    personalReservations.map(GetPersonalReservationsByReservationStatusResDto::fromPersonalReservationToReservation);</span>
+<span class="fc" id="L63">            responseDto.put(&quot;personalReservations&quot;, convertedPersonalReservations);</span>
+        }
+
+        // 2. 기관 예약 필터링 및 조회
+<span class="pc bpc" id="L67" title="3 of 4 branches missed.">        if (applicantType == null || applicantType.equalsIgnoreCase(&quot;ORGANIZATION&quot;)) {</span>
+<span class="fc" id="L68">            Specification&lt;OrganizationReservation&gt; spec = (root, query, cb) -&gt; {</span>
+<span class="nc" id="L69">                List&lt;Predicate&gt; predicates = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">                if (requesterName != null) predicates.add(cb.like(root.get(&quot;name&quot;), &quot;%&quot; + requesterName + &quot;%&quot;));</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">                if (reservationStatus != null) predicates.add(cb.equal(root.get(&quot;reservationStatus&quot;), reservationStatus));</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">                if (startDate != null) predicates.add(cb.greaterThanOrEqualTo(root.get(&quot;createdAt&quot;), startDate.atStartOfDay()));</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed.">                if (endDate != null) predicates.add(cb.lessThanOrEqualTo(root.get(&quot;createdAt&quot;), endDate.atTime(23, 59, 59)));</span>
+<span class="nc" id="L74">                return cb.and(predicates.toArray(new Predicate[0]));</span>
+            };
+<span class="fc" id="L76">            Page&lt;OrganizationReservation&gt; organizationReservations = adminOrganizationReservationRepository.findAll(spec, pageRequest);</span>
+<span class="fc" id="L77">            Page&lt;GetOrganizationReservationsByReservationStatusResDto&gt; convertedOrganizationReservations = </span>
+<span class="fc" id="L78">                    organizationReservations.map(GetOrganizationReservationsByReservationStatusResDto::fromOrgReservationToReservation);</span>
+<span class="fc" id="L79">            responseDto.put(&quot;organizationReservations&quot;, convertedOrganizationReservations);</span>
+        }
+
+<span class="fc" id="L82">        return responseDto;</span>
+    }
+
+    public long getAcceptedReservationCount() {
+<span class="fc" id="L86">        log.debug(&quot;AdminReservationService.getAcceptedReservationCount started.&quot;);</span>
+<span class="fc" id="L87">        long personalCount = adminPersonalReservationRepository.countByReservationStatus(ReservationStatus.COMPLETED);</span>
+<span class="fc" id="L88">        long organizationCount = adminOrganizationReservationRepository.countByReservationStatus(ReservationStatus.COMPLETED);</span>
+<span class="fc" id="L89">        return personalCount + organizationCount;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

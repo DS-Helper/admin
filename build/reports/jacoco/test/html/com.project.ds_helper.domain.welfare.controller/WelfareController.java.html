@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WelfareController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.welfare.controller</a> &gt; <span class="el_source">WelfareController.java</span></div><h1>WelfareController.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.welfare.controller;
+
+import com.project.ds_helper.common.util.UserUtil;
+import com.project.ds_helper.domain.user.entity.User;
+import com.project.ds_helper.domain.welfare.dto.request.WelfareRecommendRequest;
+import com.project.ds_helper.domain.welfare.dto.response.WelfareDetailResponse;
+import com.project.ds_helper.domain.welfare.dto.response.WelfareListResponse;
+import com.project.ds_helper.domain.welfare.service.WelfareService;
+import com.project.ds_helper.common.enums.SwaggerTagName;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+/**
+ * 복지 서비스 추천 및 조회 컨트롤러
+ */
+<span class="nc" id="L24">@Slf4j</span>
+@RestController
+@RequiredArgsConstructor
+@RequestMapping(&quot;/api/v1/welfare&quot;)
+@Tag(name = SwaggerTagName.WELFARE, description = &quot;복지 서비스 추천 및 조회 API&quot;)
+public class WelfareController {
+
+    private final WelfareService welfareService;
+    private final UserUtil userUtil;
+
+    /**
+     * 사용자의 정보를 입력받아 맞춤 복지 혜택을 추천합니다.
+     * 
+     * @param authentication 인증 정보 (JWT)
+     * @param request 추천 요청 데이터
+     * @return 추천된 복지 혜택 목록
+     */
+    @Operation(summary = &quot;맞춤 복지 혜택 추천&quot;, description = &quot;사용자 입력을 기반으로 복지 혜택을 추천하고 프로필을 저장합니다.&quot;)
+    @PostMapping(&quot;/recommend&quot;)
+    public ResponseEntity&lt;List&lt;WelfareListResponse&gt;&gt; recommendWelfare(
+            Authentication authentication,
+            @Valid @RequestBody WelfareRecommendRequest request
+    ) {
+        // 1. 인증 정보에서 사용자 식별자 추출
+<span class="nc" id="L48">        String userId = userUtil.extractUserId(authentication);</span>
+        
+        // 2. 사용자 엔티티 조회
+<span class="nc" id="L51">        User user = userUtil.findUserById(userId);</span>
+        
+        // 3. 추천 로직 실행 및 결과 반환
+<span class="nc" id="L54">        List&lt;WelfareListResponse&gt; response = welfareService.recommendWelfare(user, request);</span>
+<span class="nc" id="L55">        return ResponseEntity.ok(response);</span>
+    }
+
+    /**
+     * 특정 복지 혜택의 상세 정보를 조회합니다.
+     * 
+     * @param serviceId 서비스 식별자
+     * @return 복지 혜택 상세 정보
+     */
+    @Operation(summary = &quot;복지 혜택 상세 조회&quot;, description = &quot;특정 복지 서비스의 상세 내용을 조회합니다.&quot;)
+    @GetMapping(&quot;/detail/{serviceId}&quot;)
+    public ResponseEntity&lt;WelfareDetailResponse&gt; getWelfareDetail(@PathVariable String serviceId) {
+<span class="nc" id="L67">        WelfareDetailResponse response = welfareService.getWelfareDetail(serviceId);</span>
+<span class="nc" id="L68">        return ResponseEntity.ok(response);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

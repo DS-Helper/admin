@@ -151,7 +151,9 @@ jacocoTestCoverageVerification {
 					'com.project.ds_helper.domain.trashbin.dto.response.UploadTrashBinsResponseDto',
 					'com.project.ds_helper.domain.trashbin.entity.TrashBin',
 					'com.project.ds_helper.domain.trashbin.entity.TrashBinImage',
-					'com.project.ds_helper.domain.trashbin.service.TrashBinService'
+					'com.project.ds_helper.domain.trashbin.service.TrashBinService',
+					'com.project.ds_helper.domain.user.entity.User',
+					'com.project.ds_helper.domain.user.service.UserLoginHistoryService'
 			]
 
 			limit {

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.project.ds_helper.test.controller.TestControllerTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:18" hostname="아기" time="0.13">
+<testsuite name="com.project.ds_helper.test.controller.TestControllerTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:03:08" hostname="아기" time="0.179">
   <properties/>
-  <testcase name="관리자 생성은 201을 반환한다" classname="com.project.ds_helper.test.controller.TestControllerTest" time="0.078"/>
-  <testcase name="압축 바이너리 미리보기는 WebP 응답 헤더와 바이트를 반환한다" classname="com.project.ds_helper.test.controller.TestControllerTest" time="0.017"/>
-  <testcase name="테스트 사용자 정보 조회는 서비스 결과를 반환한다" classname="com.project.ds_helper.test.controller.TestControllerTest" time="0.003"/>
-  <testcase name="이미지 압축 미리보기는 원본/압축 응답 DTO를 반환한다" classname="com.project.ds_helper.test.controller.TestControllerTest" time="0.019"/>
-  <testcase name="임시 토큰 발급은 JwtResponse를 반환한다" classname="com.project.ds_helper.test.controller.TestControllerTest" time="0.008"/>
+  <testcase name="관리자 생성은 201을 반환한다" classname="com.project.ds_helper.test.controller.TestControllerTest" time="0.077"/>
+  <testcase name="압축 바이너리 미리보기는 WebP 응답 헤더와 바이트를 반환한다" classname="com.project.ds_helper.test.controller.TestControllerTest" time="0.005"/>
+  <testcase name="테스트 사용자 정보 조회는 서비스 결과를 반환한다" classname="com.project.ds_helper.test.controller.TestControllerTest" time="0.002"/>
+  <testcase name="이미지 압축 미리보기는 원본/압축 응답 DTO를 반환한다" classname="com.project.ds_helper.test.controller.TestControllerTest" time="0.086"/>
+  <testcase name="임시 토큰 발급은 JwtResponse를 반환한다" classname="com.project.ds_helper.test.controller.TestControllerTest" time="0.006"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

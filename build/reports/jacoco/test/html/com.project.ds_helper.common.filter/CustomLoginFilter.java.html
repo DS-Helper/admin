@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CustomLoginFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.common.filter</a> &gt; <span class="el_source">CustomLoginFilter.java</span></div><h1>CustomLoginFilter.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.common.filter;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.ds_helper.common.dto.response.JwtResponse;
+import com.project.ds_helper.common.dto.response.ResponseVo;
+import com.project.ds_helper.common.enums.ErrorCode;
+import com.project.ds_helper.common.enums.JwtTokenType;
+import com.project.ds_helper.common.enums.SuccessCode;
+import com.project.ds_helper.common.util.CookieUtil;
+import com.project.ds_helper.common.util.JwtUtil;
+import com.project.ds_helper.domain.user.dto.CustomUserDetails;
+import com.project.ds_helper.domain.user.dto.request.OrganizationLoginReqDto;
+import com.project.ds_helper.domain.user.entity.User;
+import com.project.ds_helper.domain.user.repository.UserRepository;
+import com.project.ds_helper.domain.user.service.UserLoginHistoryService;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationServiceException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
+import java.io.IOException;
+
+<span class="fc" id="L36">@Slf4j</span>
+public class CustomLoginFilter extends AbstractAuthenticationProcessingFilter {
+
+<span class="fc" id="L39">    private boolean postOnly = true;</span>
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
+    private final CookieUtil cookieUtil;
+    private final BCryptPasswordEncoder encoder;
+    private final RedisTemplate&lt;String, String&gt; redisTemplate;
+    private final UserRepository userRepository;
+    private final UserLoginHistoryService userLoginHistoryService;
+    private final ObjectMapper objectMapper;
+
+    public CustomLoginFilter(
+            AuthenticationManager authenticationManager,
+            JwtUtil jwtUtil,
+            CookieUtil cookieUtil,
+            BCryptPasswordEncoder encoder,
+            @Qualifier(value = &quot;CustomStringRedisTemplate&quot;) StringRedisTemplate redisTemplate,
+            UserRepository userRepository,
+            UserLoginHistoryService userLoginHistoryService,
+            ObjectMapper objectMapper
+    ) {
+<span class="fc" id="L59">        super(&quot;/auth/login/organization&quot;);</span>
+<span class="fc" id="L60">        setAuthenticationManager(authenticationManager);</span>
+<span class="fc" id="L61">        this.setAuthenticationManager(authenticationManager);</span>
+<span class="fc" id="L62">        this.jwtUtil = jwtUtil;</span>
+<span class="fc" id="L63">        this.cookieUtil = cookieUtil;</span>
+<span class="fc" id="L64">        this.authenticationManager = authenticationManager;</span>
+<span class="fc" id="L65">        this.encoder = encoder;</span>
+<span class="fc" id="L66">        this.redisTemplate = redisTemplate;</span>
+<span class="fc" id="L67">        this.userRepository = userRepository;</span>
+<span class="fc" id="L68">        this.userLoginHistoryService = userLoginHistoryService;</span>
+<span class="fc" id="L69">        this.objectMapper = objectMapper;</span>
+<span class="fc" id="L70">    }</span>
+
+    @Override
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
+            throws AuthenticationException, IOException {
+<span class="nc bnc" id="L75" title="All 4 branches missed.">        if (this.postOnly &amp;&amp; !request.getMethod().equalsIgnoreCase(HttpMethod.POST.name())) {</span>
+<span class="nc" id="L76">            throw new AuthenticationServiceException(&quot;Unsupported Method : &quot; + request.getMethod());</span>
+        }
+
+        OrganizationLoginReqDto loginRequestDTO;
+        try {
+<span class="nc" id="L81">            loginRequestDTO = objectMapper.readValue(request.getInputStream(), OrganizationLoginReqDto.class);</span>
+<span class="nc" id="L82">            log.debug(&quot;loginRequestDTO successfully parsed&quot;);</span>
+<span class="nc" id="L83">        } catch (IOException e) {</span>
+<span class="nc" id="L84">            throw new RuntimeException(&quot;[Login Filter] Parsing Failed : &quot;, e);</span>
+<span class="nc" id="L85">        }</span>
+
+<span class="nc" id="L87">        String email = loginRequestDTO.getEmail();</span>
+<span class="nc" id="L88">        String password = loginRequestDTO.getPassword();</span>
+<span class="nc" id="L89">        log.debug(&quot;email : {}, password : {}&quot;, email, password);</span>
+
+<span class="nc" id="L91">        UsernamePasswordAuthenticationToken token =</span>
+<span class="nc" id="L92">                UsernamePasswordAuthenticationToken.unauthenticated(email, password);</span>
+<span class="nc" id="L93">        log.debug(&quot;Login Requested email : {}&quot;, email);</span>
+
+<span class="nc" id="L95">        return this.authenticationManager.authenticate(token);</span>
+    }
+
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult)
+            throws IOException, ServletException {
+<span class="fc" id="L100">        log.debug(&quot;Login Success Logic Start&quot;);</span>
+
+<span class="fc" id="L102">        CustomUserDetails customUserDetails = (CustomUserDetails) authResult.getPrincipal();</span>
+<span class="fc" id="L103">        String userId = customUserDetails.getId();</span>
+<span class="fc" id="L104">        String role = customUserDetails.getRole().name();</span>
+
+<span class="pc" id="L106">        User user = userRepository.findById(userId).orElseThrow(() -&gt; new RuntimeException(&quot;User Not Found&quot;));</span>
+<span class="fc" id="L107">        String type = user.getType().name();</span>
+<span class="fc" id="L108">        userLoginHistoryService.recordSuccessfulLogin(user);</span>
+
+<span class="fc" id="L110">        String accessToken = jwtUtil.generateAccessToken(userId, role, type);</span>
+<span class="fc" id="L111">        String refreshToken = jwtUtil.generateRefreshToken(userId, role, type);</span>
+
+<span class="fc" id="L113">        redisTemplate.opsForValue().set(jwtUtil.toRedisRefreshTokenKey(userId), refreshToken);</span>
+
+<span class="fc" id="L115">        response.setContentType(MediaType.APPLICATION_JSON_VALUE);</span>
+<span class="fc" id="L116">        response.setCharacterEncoding(&quot;UTF-8&quot;);</span>
+<span class="fc" id="L117">        response.addHeader(HttpHeaders.AUTHORIZATION, accessToken);</span>
+<span class="fc" id="L118">        response.addHeader(JwtTokenType.REFRESH_TOKEN_NAME.getTokenName(), refreshToken);</span>
+<span class="fc" id="L119">        response.setStatus(200);</span>
+
+<span class="fc" id="L121">        objectMapper.writeValue(</span>
+<span class="fc" id="L122">                response.getWriter(),</span>
+<span class="fc" id="L123">                new ResponseVo&lt;&gt;(true, SuccessCode.OK, SuccessCode.OK.getMessage(), new JwtResponse(accessToken, refreshToken))</span>
+        );
+<span class="fc" id="L125">    }</span>
+
+    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed)
+            throws IOException, ServletException {
+<span class="nc" id="L129">        log.debug(&quot;Login Fail Logic Start&quot;);</span>
+
+<span class="nc" id="L131">        response.setStatus(ErrorCode.UNAUTHORIZED.getHttpStatus().value());</span>
+<span class="nc" id="L132">        response.setContentType(MediaType.APPLICATION_JSON_VALUE);</span>
+<span class="nc" id="L133">        response.setCharacterEncoding(&quot;UTF-8&quot;);</span>
+<span class="nc" id="L134">        objectMapper.writeValue(</span>
+<span class="nc" id="L135">                response.getWriter(),</span>
+<span class="nc" id="L136">                ResponseVo.error(ErrorCode.UNAUTHORIZED, ErrorCode.UNAUTHORIZED.getMessage())</span>
+        );
+<span class="nc" id="L138">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

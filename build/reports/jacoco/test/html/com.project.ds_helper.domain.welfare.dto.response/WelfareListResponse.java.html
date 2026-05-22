@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WelfareListResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.welfare.dto.response</a> &gt; <span class="el_source">WelfareListResponse.java</span></div><h1>WelfareListResponse.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.welfare.dto.response;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+/**
+ * 복지 혜택 목록 응답 DTO (추천 결과용)
+ */
+@Schema(description = &quot;복지 혜택 목록 응답 DTO (추천 결과용)&quot;)
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class WelfareListResponse {
+
+    @Schema(description = &quot;서비스 ID&quot;, example = &quot;WLF00000001&quot;)
+    private String serviceId; // 서비스 ID
+
+    @Schema(description = &quot;혜택명&quot;, example = &quot;아동수당 지급&quot;)
+    private String serviceName; // 혜택명
+
+    @Schema(description = &quot;혜택 한 줄 요약&quot;, example = &quot;아동의 건강한 성장을 위해 매월 수당을 지급합니다.&quot;)
+    private String serviceSummary; // 혜택 한 줄 요약
+
+    @Schema(description = &quot;지원대상&quot;, example = &quot;만 8세 미만의 아동&quot;)
+    private String targetAudienceArray; // 지원대상 (분류 명칭 등으로 변환 가능)
+
+    @Schema(description = &quot;제공방식&quot;, example = &quot;현금&quot;)
+    private String serviceProvisionName; // 제공방식
+
+    @Schema(description = &quot;문의처&quot;, example = &quot;보건복지상담센터 129&quot;)
+    private String representativeContact; // 문의처
+
+    /**
+     * Entity를 Response DTO로 변환하는 정적 팩토리 메서드
+     */
+    public static WelfareListResponse from(com.project.ds_helper.domain.welfare.entity.WelfareServiceEntity entity) {
+<span class="nc" id="L41">        return WelfareListResponse.builder()</span>
+<span class="nc" id="L42">                .serviceId(entity.getServiceId())</span>
+<span class="nc" id="L43">                .serviceName(entity.getServiceName())</span>
+<span class="nc" id="L44">                .serviceSummary(entity.getServiceSummary())</span>
+<span class="nc" id="L45">                .targetAudienceArray(entity.getTargetAudienceArray())</span>
+<span class="nc" id="L46">                .serviceProvisionName(entity.getServiceProvisionName())</span>
+<span class="nc" id="L47">                .representativeContact(entity.getRepresentativeContact())</span>
+<span class="nc" id="L48">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

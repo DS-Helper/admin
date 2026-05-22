@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.project.ds_helper.domain.admin.controller.AdminUserControllerTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:06" hostname="아기" time="0.106">
+<testsuite name="com.project.ds_helper.domain.admin.controller.AdminUserControllerTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:02:50" hostname="아기" time="0.29">
   <properties/>
-  <testcase name="이름 기반 사용자 정보 조회는 서비스 결과를 반환한다" classname="com.project.ds_helper.domain.admin.controller.AdminUserControllerTest" time="0.097"/>
-  <testcase name="userCount는 서비스 결과를 반환한다" classname="com.project.ds_helper.domain.admin.controller.AdminUserControllerTest" time="0.007"/>
+  <testcase name="이름 기반 사용자 정보 조회는 서비스 결과를 반환한다" classname="com.project.ds_helper.domain.admin.controller.AdminUserControllerTest" time="0.283"/>
+  <testcase name="userCount는 서비스 결과를 반환한다" classname="com.project.ds_helper.domain.admin.controller.AdminUserControllerTest" time="0.005"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

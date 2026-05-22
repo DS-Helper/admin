@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BoardScrapService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.board.service</a> &gt; <span class="el_source">BoardScrapService.java</span></div><h1>BoardScrapService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.board.service;
+
+import com.project.ds_helper.common.dto.response.PageResponseDto;
+import com.project.ds_helper.common.util.UserUtil;
+import com.project.ds_helper.domain.board.dto.response.GetScrappedBoardsResponseDto;
+import com.project.ds_helper.domain.board.entity.Board;
+import com.project.ds_helper.domain.board.entity.BoardImage;
+import com.project.ds_helper.domain.board.entity.BoardScrap;
+import com.project.ds_helper.domain.board.repository.BoardImageRepository;
+import com.project.ds_helper.domain.board.repository.BoardRepository;
+import com.project.ds_helper.domain.board.repository.BoardScrapRepository;
+import com.project.ds_helper.domain.comment.repository.CommentRepository;
+import com.project.ds_helper.domain.post.util.S3Util;
+import com.project.ds_helper.domain.user.entity.User;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Service
+<span class="fc" id="L31">@Slf4j</span>
+@RequiredArgsConstructor
+public class BoardScrapService {
+
+    private final UserUtil userUtil;
+    private final BoardRepository boardRepository;
+    private final BoardScrapRepository boardScrapRepository;
+    private final BoardImageRepository boardImageRepository;
+    private final S3Util s3Util;
+    private final CommentRepository commentRepository;
+
+    @Transactional
+    public boolean toggleBoardScrap(Authentication authentication, String boardId) {
+<span class="fc" id="L44">        log.debug(&quot;BoardScrapService.toggleBoardScrap started. boardId={}&quot;, boardId);</span>
+<span class="fc" id="L45">        String userId = userUtil.extractUserId(authentication);</span>
+<span class="fc" id="L46">        User user = userUtil.findUserById(userId);</span>
+<span class="fc" id="L47">        Board board = findBoardById(boardId);</span>
+
+<span class="fc" id="L49">        validateBoardNotDeleted(board);</span>
+
+<span class="fc" id="L51">        return boardScrapRepository.findByUser_IdAndBoard_Id(userId, boardId)</span>
+<span class="fc" id="L52">                .map(existingScrap -&gt; {</span>
+<span class="fc" id="L53">                    log.debug(&quot;BoardScrapService.toggleBoardScrap removing scrap. boardId={}, userId={}&quot;, boardId, userId);</span>
+<span class="fc" id="L54">                    boardScrapRepository.delete(existingScrap);</span>
+<span class="fc" id="L55">                    return false;</span>
+                })
+<span class="fc" id="L57">                .orElseGet(() -&gt; {</span>
+<span class="fc" id="L58">                    log.debug(&quot;BoardScrapService.toggleBoardScrap creating scrap. boardId={}, userId={}&quot;, boardId, userId);</span>
+<span class="fc" id="L59">                    BoardScrap boardScrap = BoardScrap.builder()</span>
+<span class="fc" id="L60">                            .board(board)</span>
+<span class="fc" id="L61">                            .user(user)</span>
+<span class="fc" id="L62">                            .build();</span>
+
+<span class="fc" id="L64">                    boardScrapRepository.save(boardScrap);</span>
+<span class="fc" id="L65">                    return true;</span>
+                });
+    }
+
+    @Transactional(readOnly = true)
+    public GetScrappedBoardsResponseDto getMyScrappedBoards(
+            Authentication authentication,
+            int page,
+            int size,
+            String sort,
+            String sortBy
+    ) {
+<span class="fc" id="L77">        String userId = userUtil.extractUserId(authentication);</span>
+<span class="fc" id="L78">        log.debug(&quot;BoardScrapService.getMyScrappedBoards started. userId={}, page={}, size={}, sort={}, sortBy={}&quot;,</span>
+<span class="fc" id="L79">                userId, page, size, sort, sortBy);</span>
+
+<span class="fc" id="L81">        Pageable pageable = PageRequest.of(</span>
+                page,
+                size,
+<span class="fc bfc" id="L84" title="All 2 branches covered.">                Sort.by(sort.equalsIgnoreCase(&quot;desc&quot;) ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy)</span>
+        );
+
+<span class="fc" id="L87">        Page&lt;Board&gt; boardPage = boardScrapRepository.findScrappedBoards(userId, pageable);</span>
+<span class="fc" id="L88">        List&lt;Board&gt; boards = boardPage.getContent();</span>
+<span class="fc" id="L89">        log.debug(&quot;BoardScrapService.getMyScrappedBoards boards fetched. boardCount={}, totalElements={}&quot;,</span>
+<span class="fc" id="L90">                boards.size(), boardPage.getTotalElements());</span>
+
+<span class="fc bfc" id="L92" title="All 2 branches covered.">        if (boards.isEmpty()) {</span>
+<span class="fc" id="L93">            log.debug(&quot;BoardScrapService.getMyScrappedBoards completed with empty result. userId={}&quot;, userId);</span>
+<span class="fc" id="L94">            return GetScrappedBoardsResponseDto.builder()</span>
+<span class="fc" id="L95">                    .boards(List.of())</span>
+<span class="fc" id="L96">                    .page(PageResponseDto.toDto(boardPage))</span>
+<span class="fc" id="L97">                    .build();</span>
+        }
+
+<span class="fc" id="L100">        List&lt;String&gt; boardIds = boards.stream().map(Board::getId).toList();</span>
+<span class="fc" id="L101">        List&lt;BoardImage&gt; images = boardImageRepository.findBoardThumbnailsByBoardIds(boardIds);</span>
+
+<span class="fc" id="L103">        Map&lt;String, String&gt; thumbnailMap = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">        for (BoardImage image : images) {</span>
+<span class="fc" id="L105">            thumbnailMap.putIfAbsent(</span>
+<span class="fc" id="L106">                    image.getBoard().getId(),</span>
+<span class="fc" id="L107">                    s3Util.toS3UrlByS3Key(image.getS3Key())</span>
+            );
+<span class="fc" id="L109">        }</span>
+
+<span class="fc" id="L111">        List&lt;GetScrappedBoardsResponseDto.Board&gt; responseBoards = boards.stream()</span>
+<span class="fc" id="L112">                .map(board -&gt; GetScrappedBoardsResponseDto.Board.toBoard(</span>
+                        board,
+<span class="fc" id="L114">                        toVisibleCommentCount(board.getId()),</span>
+<span class="fc" id="L115">                        thumbnailMap.get(board.getId())</span>
+                ))
+<span class="fc" id="L117">                .toList();</span>
+<span class="fc" id="L118">        log.debug(&quot;BoardScrapService.getMyScrappedBoards completed. responseBoardCount={}, thumbnailCount={}&quot;,</span>
+<span class="fc" id="L119">                responseBoards.size(), thumbnailMap.size());</span>
+
+<span class="fc" id="L121">        return GetScrappedBoardsResponseDto.builder()</span>
+<span class="fc" id="L122">                .boards(responseBoards)</span>
+<span class="fc" id="L123">                .page(PageResponseDto.toDto(boardPage))</span>
+<span class="fc" id="L124">                .build();</span>
+    }
+
+    @Transactional(readOnly = true)
+    public long countScrap(String boardId) {
+<span class="fc" id="L129">        log.debug(&quot;BoardScrapService.countScrap called. boardId={}&quot;, boardId);</span>
+<span class="fc" id="L130">        return boardScrapRepository.countByBoard_Id(boardId);</span>
+    }
+
+    private void validateBoardNotDeleted(Board board) {
+<span class="fc bfc" id="L134" title="All 2 branches covered.">        if (board.isDeleted()) {</span>
+<span class="fc" id="L135">            log.debug(&quot;BoardScrapService.validateBoardNotDeleted found deleted board. boardId={}&quot;, board.getId());</span>
+<span class="fc" id="L136">            throw new IllegalStateException(&quot;Deleted Board&quot;);</span>
+        }
+<span class="fc" id="L138">    }</span>
+
+    private Board findBoardById(String boardId) {
+<span class="fc" id="L141">        log.debug(&quot;BoardScrapService.findBoardById called. boardId={}&quot;, boardId);</span>
+<span class="fc" id="L142">        return boardRepository.findById(boardId)</span>
+<span class="fc" id="L143">                .orElseThrow(() -&gt;</span>
+<span class="fc" id="L144">                        new EntityNotFoundException(String.format(&quot;Board Not Found : %s&quot;, boardId))</span>
+                );
+    }
+
+    private int toVisibleCommentCount(String boardId) {
+<span class="fc" id="L149">        return Math.toIntExact(commentRepository.countByBoard_IdAndIsDeletedFalse(boardId));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

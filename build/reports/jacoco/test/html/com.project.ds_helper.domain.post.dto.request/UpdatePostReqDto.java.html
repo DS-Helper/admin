@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UpdatePostReqDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.post.dto.request</a> &gt; <span class="el_source">UpdatePostReqDto.java</span></div><h1>UpdatePostReqDto.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.post.dto.request;
+
+import com.project.ds_helper.domain.post.entity.Post;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UpdatePostReqDto {
+
+    @NotBlank
+    @Schema(example = &quot;8f14e45f-ea9d-4c3b-b7c8-9f8c6a12d3f1\n&quot;)
+    private String postId;
+
+    @NotBlank
+    @Schema(example = &quot;정말 도움 많이 받았습니다 ㅎㅎ&quot;)
+    private String title;
+
+    @NotBlank
+    @Schema(example = &quot;도움을 잘 받아서 주변에 추천 중이에요!! ㅎㅎ 번창하세요&quot;)
+    private String content;
+
+    @Schema(description = &quot;게시글 수정 시 유지할 기존 이미지 URL 리스트&quot;)
+    private List&lt;String&gt; imageUrls;
+
+
+    public Post toUpdatedPost(UpdatePostReqDto dto, Post post){
+    // 수정 필요
+<span class="fc" id="L35">        post.setTitle(dto.getTitle());</span>
+<span class="fc" id="L36">        post.setContent(dto.getContent());</span>
+<span class="fc" id="L37">        return post;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

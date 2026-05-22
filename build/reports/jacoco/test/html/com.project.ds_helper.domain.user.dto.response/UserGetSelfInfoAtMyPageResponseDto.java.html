@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserGetSelfInfoAtMyPageResponseDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.user.dto.response</a> &gt; <span class="el_source">UserGetSelfInfoAtMyPageResponseDto.java</span></div><h1>UserGetSelfInfoAtMyPageResponseDto.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.user.dto.response;
+
+import com.project.ds_helper.domain.user.entity.User;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = &quot;마이페이지 내 정보 응답 DTO&quot;, example = &quot;{\&quot;name\&quot;:\&quot;홍길동\&quot;,\&quot;email\&quot;:\&quot;user@test.com\&quot;,\&quot;birthyear\&quot;:\&quot;1998\&quot;,\&quot;gender\&quot;:\&quot;남성\&quot;,\&quot;phoneNumber\&quot;:\&quot;010-1234-5678\&quot;,\&quot;profileImageUrl\&quot;:\&quot;https://cdn.dshelper.kr/profile/user-001.png\&quot;}&quot;)
+<span class="fc" id="L7">public record UserGetSelfInfoAtMyPageResponseDto(</span>
+        // 이름, 이메일, 연령대, 성별, 전화번호, 프로필 사진 경로
+        String name,
+        String email,
+        String birthyear,
+        String gender,
+        String phoneNumber,
+        String profileImageUrl
+) {
+    public static UserGetSelfInfoAtMyPageResponseDto toDto(User user){
+
+<span class="pc bpc" id="L18" title="1 of 2 branches missed.">        String name = user.getName() == null? null : user.getName();</span>
+<span class="pc bpc" id="L19" title="1 of 2 branches missed.">        String email = user.getEmail() == null? null : user.getEmail();</span>
+<span class="fc bfc" id="L20" title="All 2 branches covered.">        String birthyear = user.getBirthyear() == null? null : user.getBirthyear();</span>
+<span class="fc bfc" id="L21" title="All 2 branches covered.">        String gender = user.getGender() == null? null : user.getGender();</span>
+<span class="pc bpc" id="L22" title="1 of 2 branches missed.">        String phoneNumber = user.getPhoneNumber() == null? null : user.getPhoneNumber();</span>
+<span class="fc bfc" id="L23" title="All 2 branches covered.">        String profileImageUrl = user.getProfileImageUrl() == null? null : user.getProfileImageUrl();</span>
+
+<span class="fc" id="L25">        return new UserGetSelfInfoAtMyPageResponseDto(name, email, birthyear, gender, phoneNumber, profileImageUrl);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

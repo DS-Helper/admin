@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthTokenController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.user.controller</a> &gt; <span class="el_source">AuthTokenController.java</span></div><h1>AuthTokenController.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.user.controller;
+
+import com.project.ds_helper.common.dto.response.JwtResponse;
+import com.project.ds_helper.common.dto.response.ResponseCodeInfoDto;
+import com.project.ds_helper.common.dto.response.ResponseVo;
+import com.project.ds_helper.common.enums.ErrorCode;
+import com.project.ds_helper.common.enums.JwtTokenType;
+import com.project.ds_helper.common.enums.SuccessCode;
+import com.project.ds_helper.common.util.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpHeaders;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.time.Duration;
+
+@RestController
+<span class="fc" id="L25">@Slf4j</span>
+@RequestMapping(&quot;/auth-token&quot;)
+public class AuthTokenController {
+
+    private final JwtUtil jwtUtil;
+    private final StringRedisTemplate stringRedisTemplate;
+
+    public AuthTokenController(
+            JwtUtil jwtUtil,
+            @Qualifier(value = &quot;CustomStringRedisTemplate&quot;) StringRedisTemplate stringRedisTemplate
+<span class="fc" id="L35">    ){</span>
+<span class="fc" id="L36">        this.jwtUtil = jwtUtil;</span>
+<span class="fc" id="L37">        this.stringRedisTemplate = stringRedisTemplate;</span>
+<span class="fc" id="L38">    }</span>
+
+    /** refreshToken 재발급 **/
+    public ResponseEntity&lt;ResponseVo&gt; reGenerateJWT(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse){
+
+        // 기존 refreshToken 추출
+<span class="fc" id="L44">        String oldRefreshToken = jwtUtil.getRefreshTokenFromRequestHeader(httpServletRequest);</span>
+<span class="pc bpc" id="L45" title="1 of 4 branches missed.">        if(oldRefreshToken == null || oldRefreshToken.isBlank()){</span>
+<span class="fc" id="L46">            return tokenInvalidResponse();</span>
+        }
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">        if(!jwtUtil.isRefreshToken(oldRefreshToken)){</span>
+<span class="fc" id="L49">            return tokenInvalidResponse();</span>
+        }
+
+        // 무효한 토큰일 시 리턴
+<span class="nc bnc" id="L53" title="All 2 branches missed.">        if(jwtUtil.isExpired(oldRefreshToken)){</span>
+<span class="nc" id="L54">            return tokenInvalidResponse();</span>
+        }
+
+        // 유저 정보 추출
+<span class="nc" id="L58">        String userId = jwtUtil.getId(oldRefreshToken);</span>
+<span class="nc" id="L59">        String userRole = jwtUtil.getRole(oldRefreshToken);</span>
+<span class="nc" id="L60">        String userType = jwtUtil.getType(oldRefreshToken);</span>
+
+        // Redis에서 토큰 삭제
+<span class="nc bnc" id="L63" title="All 2 branches missed.">        if(stringRedisTemplate.delete(jwtUtil.toRedisRefreshTokenKey(userId))){</span>
+<span class="nc" id="L64">            return tokenInvalidResponse();</span>
+        }
+
+<span class="nc" id="L67">        String accessToken = generateAccessToken(userId, userRole, userType);</span>
+<span class="nc" id="L68">        String refreshToken = generateRefreshToken(userId, userRole, userType);</span>
+<span class="nc" id="L69">        stringRedisTemplate.opsForValue().set(jwtUtil.toRedisRefreshTokenKey(userId), refreshToken, redisRefreshTokenExpirationTime());</span>
+<span class="nc" id="L70">        JwtResponse jwtResponse = new JwtResponse(accessToken, refreshToken);</span>
+
+<span class="nc" id="L72">        ResponseVo responseVo = new ResponseVo(true, SuccessCode.OK, SuccessCode.OK.getMessage(), jwtResponse);</span>
+<span class="nc" id="L73">        return new ResponseEntity&lt;&gt;(responseVo, responseVo.getCode().httpStatus());</span>
+    }
+
+    /** 토큰 무효 시 응답 생성 **/
+    public ResponseEntity&lt;ResponseVo&gt; tokenInvalidResponse(){
+<span class="fc" id="L78">        ResponseVo responseVo = new ResponseVo();</span>
+<span class="fc" id="L79">        responseVo.setSuccess(false);</span>
+<span class="fc" id="L80">        responseVo.setCode(ResponseCodeInfoDto.from(ErrorCode.UNAUTHORIZED));</span>
+<span class="fc" id="L81">        responseVo.setMessage(ErrorCode.UNAUTHORIZED.getMessage());</span>
+<span class="fc" id="L82">        responseVo.setData(null);</span>
+<span class="fc" id="L83">        return new ResponseEntity&lt;&gt;(responseVo, responseVo.getCode().httpStatus());</span>
+    }
+
+    /** refresh token의 만료기한을 리턴 **/
+    public Duration redisRefreshTokenExpirationTime(){
+<span class="nc" id="L88">        return Duration.ofSeconds(jwtUtil.getRefreshTokenExpirationTime());</span>
+    }
+
+    /** access token 발급 **/
+    public String generateAccessToken(
+            String userId,
+            String userRole,
+            String userType
+    ){
+<span class="nc" id="L97">        return jwtUtil.generateAccessToken(userId, userRole, userType);</span>
+    }
+
+    /** refresh token 발급 **/
+    public String generateRefreshToken(
+            String userId,
+            String userRole,
+            String userType
+    ){
+<span class="nc" id="L106">        return jwtUtil.generateRefreshToken(userId, userRole, userType);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

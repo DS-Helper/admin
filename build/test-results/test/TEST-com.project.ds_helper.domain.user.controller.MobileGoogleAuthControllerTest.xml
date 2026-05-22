@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.project.ds_helper.domain.user.controller.MobileGoogleAuthControllerTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:15" hostname="아기" time="0.065">
+<testsuite name="com.project.ds_helper.domain.user.controller.MobileGoogleAuthControllerTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:03:03" hostname="아기" time="0.099">
   <properties/>
-  <testcase name="모바일 구글 로그인은 JWT 응답을 반환한다" classname="com.project.ds_helper.domain.user.controller.MobileGoogleAuthControllerTest" time="0.065"/>
+  <testcase name="모바일 구글 로그인은 JWT 응답을 반환한다" classname="com.project.ds_helper.domain.user.controller.MobileGoogleAuthControllerTest" time="0.099"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

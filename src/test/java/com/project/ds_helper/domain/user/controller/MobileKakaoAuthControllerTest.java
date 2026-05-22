@@ -32,7 +32,7 @@ class MobileKakaoAuthControllerTest {
     @Test
     @DisplayName("모바일 카카오 로그인은 JWT 응답을 반환한다")
     void mobileKakaoLogin_returnsJwtResponse() throws Exception {
-        MobileKakaoLoginRequestDto dto = new MobileKakaoLoginRequestDto(OauthType.KAKAO, "token");
+        MobileKakaoLoginRequestDto dto = new MobileKakaoLoginRequestDto(OauthType.KAKAO, "token", null);
         JwtResponse jwtResponse = new JwtResponse("access", "refresh");
         when(mobileKakaoOauthService.mobileKakaoLogin(dto, response)).thenReturn(jwtResponse);
 

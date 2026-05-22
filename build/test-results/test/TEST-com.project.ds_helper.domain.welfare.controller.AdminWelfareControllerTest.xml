@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.welfare.controller.AdminWelfareControllerTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:03:05" hostname="아기" time="0.076">
+  <properties/>
+  <testcase name="관리자 복지 상세 실패 재시도 요청 시 재시도 결과를 반환한다" classname="com.project.ds_helper.domain.welfare.controller.AdminWelfareControllerTest" time="0.074"/>
+  <testcase name="관리자 복지 수동 동기화 요청 시 동기화 결과를 반환한다" classname="com.project.ds_helper.domain.welfare.controller.AdminWelfareControllerTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

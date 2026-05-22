@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.project.ds_helper.domain.reservation.controller.OrganizationReservationControllerTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:13" hostname="아기" time="0.136">
+<testsuite name="com.project.ds_helper.domain.reservation.controller.OrganizationReservationControllerTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:03:01" hostname="아기" time="0.083">
   <properties/>
-  <testcase name="기관 예약 취소는 서비스 호출 후 204를 반환한다" classname="com.project.ds_helper.domain.reservation.controller.OrganizationReservationControllerTest" time="0.115"/>
-  <testcase name="상태별 기관 예약 조회는 서비스 결과를 반환한다" classname="com.project.ds_helper.domain.reservation.controller.OrganizationReservationControllerTest" time="0.013"/>
-  <testcase name="기관 예약 단건 조회는 서비스 결과를 반환한다" classname="com.project.ds_helper.domain.reservation.controller.OrganizationReservationControllerTest" time="0.007"/>
+  <testcase name="기관 예약 취소는 서비스 호출 후 204를 반환한다" classname="com.project.ds_helper.domain.reservation.controller.OrganizationReservationControllerTest" time="0.058"/>
+  <testcase name="상태별 기관 예약 조회는 서비스 결과를 반환한다" classname="com.project.ds_helper.domain.reservation.controller.OrganizationReservationControllerTest" time="0.014"/>
+  <testcase name="기관 예약 단건 조회는 서비스 결과를 반환한다" classname="com.project.ds_helper.domain.reservation.controller.OrganizationReservationControllerTest" time="0.009"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  # 관리자 애플리케이션
+  ds-helper-admin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ds-helper-admin
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - REDIS_HOST=ds-helper-admin-redis # 컨테이너 내부 네트워크의 레디스 호스트
+      - REDIS_PORT=6379
+    depends_on:
+      - ds-helper-admin-redis
+    restart: unless-stopped
+    networks:
+      - admin-network
+
+  # 세션 및 토큰(JWT) 관리를 위한 Redis 컨테이너
+  ds-helper-admin-redis:
+    image: redis:7-alpine
+    container_name: ds-helper-admin-redis
+    ports:
+      - "16379:6379" # 로컬 호스트의 레디스 포트 충돌 방지용 (필요시 수정)
+    restart: unless-stopped
+    networks:
+      - admin-network
+
+networks:
+  admin-network:
+    driver: bridge

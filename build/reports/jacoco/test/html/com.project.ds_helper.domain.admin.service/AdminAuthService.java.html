@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminAuthService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.admin.service</a> &gt; <span class="el_source">AdminAuthService.java</span></div><h1>AdminAuthService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.admin.service;
+
+import com.project.ds_helper.common.dto.response.JwtResponse;
+import com.project.ds_helper.common.util.JwtUtil;
+import com.project.ds_helper.domain.admin.dto.request.AdminLoginReqDto;
+import com.project.ds_helper.domain.admin.entity.Admin;
+import com.project.ds_helper.domain.admin.repository.AdminRepository;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+
+@Service
+<span class="fc" id="L19">@Slf4j</span>
+@RequiredArgsConstructor
+public class AdminAuthService {
+
+    private final AdminRepository adminRepository;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final JwtUtil jwtUtil;
+    private final StringRedisTemplate stringRedisTemplate;
+
+    @Transactional(readOnly = true)
+    public JwtResponse adminLogin(AdminLoginReqDto dto, HttpServletResponse response) {
+<span class="nc" id="L30">        log.debug(&quot;AdminAuthService.adminLogin started. username={}&quot;, dto.getUsername());</span>
+
+<span class="nc" id="L32">        Admin admin = adminRepository.findByUsername(dto.getUsername())</span>
+<span class="nc" id="L33">                .orElseThrow(() -&gt; new IllegalArgumentException(&quot;존재하지 않는 관리자 계정입니다.&quot;));</span>
+
+<span class="nc bnc" id="L35" title="All 2 branches missed.">        if (!bCryptPasswordEncoder.matches(dto.getPassword(), admin.getPassword())) {</span>
+<span class="nc" id="L36">            throw new IllegalArgumentException(&quot;비밀번호가 일치하지 않습니다.&quot;);</span>
+        }
+
+<span class="nc" id="L39">        String adminId = admin.getId();</span>
+<span class="nc" id="L40">        String role = &quot;ADMIN&quot;;</span>
+<span class="nc" id="L41">        String type = &quot;ADMIN&quot;;</span>
+
+<span class="nc" id="L43">        String accessToken = jwtUtil.generateAccessToken(adminId, role, type);</span>
+<span class="nc" id="L44">        String refreshToken = jwtUtil.generateRefreshToken(adminId, role, type);</span>
+
+<span class="nc" id="L46">        saveRefreshTokenWithTtl(adminId, refreshToken);</span>
+
+<span class="nc" id="L48">        log.debug(&quot;Admin Login Success. adminId={}&quot;, adminId);</span>
+<span class="nc" id="L49">        return new JwtResponse(accessToken, refreshToken);</span>
+    }
+
+    private void saveRefreshTokenWithTtl(String userId, String refreshToken) {
+<span class="nc" id="L53">        stringRedisTemplate.opsForValue().set(</span>
+<span class="nc" id="L54">                jwtUtil.toRedisRefreshTokenKey(userId),</span>
+                refreshToken,
+<span class="nc" id="L56">                Duration.ofMillis(jwtUtil.getRefreshTokenExpirationTime())</span>
+        );
+<span class="nc" id="L58">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

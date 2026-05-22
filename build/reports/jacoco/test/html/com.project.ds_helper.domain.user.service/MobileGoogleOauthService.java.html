@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MobileGoogleOauthService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.user.service</a> &gt; <span class="el_source">MobileGoogleOauthService.java</span></div><h1>MobileGoogleOauthService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.user.service;
+
+import com.project.ds_helper.common.dto.response.JwtResponse;
+import com.project.ds_helper.common.util.CookieUtil;
+import com.project.ds_helper.common.util.JwtUtil;
+import com.project.ds_helper.domain.user.dto.request.MobileGoogleLoginRequestDto;
+import com.project.ds_helper.domain.user.dto.response.GoogleTokenResponse;
+import com.project.ds_helper.domain.user.dto.response.GoogleUserInfoResponse;
+import com.project.ds_helper.domain.user.entity.GoogleOauth;
+import com.project.ds_helper.domain.user.entity.User;
+import com.project.ds_helper.domain.user.enums.UserRole;
+import com.project.ds_helper.domain.user.enums.UserType;
+import com.project.ds_helper.domain.user.repository.GoogleOauthRepository;
+import com.project.ds_helper.domain.user.repository.UserRepository;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.io.IOException;
+import java.time.Duration;
+import java.util.Objects;
+
+@Service
+<span class="fc" id="L32">@Slf4j</span>
+public class MobileGoogleOauthService {
+
+    @Value(&quot;${google.client.id}&quot;)
+    private String clientId;
+
+    @Value(&quot;${google.client.secret}&quot;)
+    private String clientSecret;
+
+    private final GoogleOauthRepository googleOauthRepository;
+    private final UserRepository userRepository;
+    private final RestTemplate restTemplate;
+    private final JwtUtil jwtUtil;
+    private final CookieUtil cookieUtil;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final UserLoginHistoryService userLoginHistoryService;
+
+    public MobileGoogleOauthService(GoogleOauthRepository googleOauthRepository, UserRepository userRepository,
+                                    @Qualifier(&quot;customRestTemplate&quot;) RestTemplate restTemplate,
+                                    JwtUtil jwtUtil, CookieUtil cookieUtil, @Qualifier(&quot;CustomStringRedisTemplate&quot;) StringRedisTemplate stringRedisTemplate,
+<span class="fc" id="L52">                                    UserLoginHistoryService userLoginHistoryService) {</span>
+<span class="fc" id="L53">        this.googleOauthRepository = googleOauthRepository;</span>
+<span class="fc" id="L54">        this.userRepository = userRepository;</span>
+<span class="fc" id="L55">        this.restTemplate = restTemplate;</span>
+<span class="fc" id="L56">        this.jwtUtil = jwtUtil;</span>
+<span class="fc" id="L57">        this.cookieUtil = cookieUtil;</span>
+<span class="fc" id="L58">        this.stringRedisTemplate = stringRedisTemplate;</span>
+<span class="fc" id="L59">        this.userLoginHistoryService = userLoginHistoryService;</span>
+<span class="fc" id="L60">    }</span>
+
+    /**
+     * 구글 로그인 API
+     *
+     * - 유저가 구글 로그인 창에서 아이디, 비밀번호를 입력하여 구글 로그인을 진행한 후 구글 측에서 본 EndPoint로 Redirect 해준다.
+     * - 본 EndPoint에서는 code를 param으로 받아 Google 측에 인가 코드를 요청하여 획득하여 유저의 정보를 받아 회원가입 or 로그인을 진행한다.
+     *
+     * [Business Login]
+     * 1. Google 측에서 받은 code를 사용하여 인가 코드 요청
+     * 2. 인가코드를 사용하여 UserInfo 요청
+     * 3-1. UserInfo를 바탕으로 기가입 된 유저면 로그인(AccessToken, RefreshToken 발급)
+     * 3-2. 마기입 유저면 회원가입 진행 후 로그인(AccessToken, RefreshToken 발급)
+     *
+     * - 해당 과정에서 필요한 것은
+     *      - GoogleTokenResponse(유저에 대한 Google 측의 API를 이용하기 위한 인가 코드를 받아오는 Dto)
+     *      - GoogleUserInfoResponse(GoogleTokenResponse에서 받은 인가 코드를 사용하여 유저의 정보를 받아오는 Dto)
+     *      - GoogleOauth(GoogleUserInfoResponse를 바탕으로 최종적으로 유저를 회원가입 할 때 DB에 저장하기 위한 Entity)
+     *
+     *
+     * [GoogleTokenResponse 실제 예시]
+     * === Google Token RAW Response ===
+     * {
+     *   &quot;access_token&quot;: &quot;REMOVED&quot;,
+     *   &quot;expires_in&quot;: 3599,
+     *   &quot;scope&quot;: &quot;https://www.googleapis.com/auth/userinfo.email openid&quot;,
+     *   &quot;token_type&quot;: &quot;Bearer&quot;,
+     *   &quot;id_token&quot;: &quot;REMOVED&quot;
+     * }
+     *
+     * [GoogleUserInfoResponse 실제 응답 예시]
+     * == Google User Info Response ===
+     * {
+     *   &quot;id&quot;: &quot;102031241579529998737&quot;,
+     *   &quot;email&quot;: &quot;dldbsgh00005@gmail.com&quot;,
+     *   &quot;verified_email&quot;: true,
+     *   &quot;picture&quot;: &quot;https://lh3.googleusercontent.com/a-/ALV-UjWKitq5DPyNejoy0PZlfpv55J4FSM5yXVqC-439-nQjII-WgA=s96-c&quot;
+     * }
+     * **/
+    public JwtResponse mobileGoogleLogin(MobileGoogleLoginRequestDto dto, HttpServletResponse httpServletResponse) throws IOException {
+
+<span class="fc" id="L101">        log.debug(&quot;GoogleTokenResponse.accessToken : {}&quot;, dto.accessToken());</span>
+
+<span class="fc" id="L103">        GoogleUserInfoResponse userInfo = getUserInfo(dto.accessToken());</span>
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">        if(userInfo == null){</span>
+<span class="nc" id="L105">            log.debug(&quot;GoogleUserInfo is null&quot;);</span>
+<span class="nc" id="L106">            throw new IOException(&quot;GoogleUserInfo is null&quot;);</span>
+        }
+//
+<span class="fc" id="L109">        log.debug(&quot;GoogleUserInfoResponse.email : {}&quot;, userInfo.getEmail());</span>
+
+        // GoogleUserInfoResponse를 사용하여 회원가잆 or 로그인 진행
+<span class="fc" id="L112">        String socialOauthId = userInfo.getId();</span>
+<span class="fc" id="L113">        String email = userInfo.getEmail();</span>
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">        if (email != null) {</span>
+<span class="fc" id="L115">            email = email.trim();</span>
+<span class="pc bpc" id="L116" title="1 of 2 branches missed.">            if (email.isEmpty()) {</span>
+<span class="nc" id="L117">                email = null;</span>
+            }
+        }
+<span class="fc" id="L120">        log.debug(&quot;socialOauthId : {}, email : {}&quot;, socialOauthId, email);</span>
+<span class="fc" id="L121">        GoogleOauth googleOauth = googleOauthRepository.findBySocialOauthIdAndOauthEmail(socialOauthId, email).orElse(null);</span>
+
+        // 이메일 기반으로 기가입 유저는 바로 로그인 진행, 미가입 유저는 회원가입 후 로그인 진행
+<span class="fc bfc" id="L124" title="All 2 branches covered.">        if(googleOauth == null){</span>
+            // provider와 무관하게 User 테이블 기준 이메일 중복 가입을 차단한다.
+<span class="pc bpc" id="L126" title="2 of 4 branches missed.">            if (email != null &amp;&amp; userRepository.existsByEmail(email)) {</span>
+<span class="fc" id="L127">                log.debug(&quot;mobile google signup rejected. duplicated email found in user table. email={}&quot;, email);</span>
+<span class="fc" id="L128">                throw new IllegalArgumentException(&quot;Email Already Exist&quot;);</span>
+            }
+
+            // 이메일, 유저타입, 유저롤, 구글SNS연결여부
+<span class="nc" id="L132">            User newUser = User.builder()</span>
+<span class="nc" id="L133">                    .email(email)</span>
+<span class="nc" id="L134">                    .type(UserType.PERSONAL)</span>
+<span class="nc" id="L135">                    .role(UserRole.USER)</span>
+<span class="nc" id="L136">                    .googleOauthConnected(true)</span>
+<span class="nc" id="L137">                    .build();</span>
+<span class="nc" id="L138">            User user = userRepository.save(newUser);</span>
+<span class="nc" id="L139">            log.debug(&quot;User Successfully Saved&quot;);</span>
+
+<span class="nc" id="L141">            GoogleOauth newGoogleOauth = GoogleOauth.builder()</span>
+<span class="nc" id="L142">                    .socialOauthId(socialOauthId)</span>
+<span class="nc" id="L143">                    .oauthEmail(email)</span>
+<span class="nc" id="L144">                    .user(user)</span>
+<span class="nc" id="L145">                    .refreshToken(dto.refreshToken())</span>
+<span class="nc" id="L146">                    .build();</span>
+<span class="nc" id="L147">            googleOauthRepository.save(newGoogleOauth);</span>
+<span class="nc" id="L148">            log.debug(&quot;GoogleOauth Successfully Saved&quot;);</span>
+
+            // jwt token 발급
+<span class="nc" id="L151">            String userId = user.getId();</span>
+<span class="nc" id="L152">            String userRole = user.getRole().name();</span>
+<span class="nc" id="L153">            String userType = user.getType().name();</span>
+<span class="nc" id="L154">            log.debug(&quot;userId : {}. userRole : {}, userType : {}&quot;, userId, userRole, userType);</span>
+
+<span class="nc" id="L156">            String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);</span>
+<span class="nc" id="L157">            String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);</span>
+<span class="nc" id="L158">            userLoginHistoryService.recordSuccessfulLogin(user);</span>
+<span class="nc" id="L159">            saveRefreshTokenWithTtl(userId, refreshToken);</span>
+<span class="nc" id="L160">            return new JwtResponse(accessToken, refreshToken);</span>
+        }else{
+
+<span class="fc" id="L163">            User user = googleOauth.getUser();</span>
+<span class="fc" id="L164">            googleOauth.updateRefreshToken(dto.refreshToken());</span>
+            //if (user.isDeleted()) {
+                //throw new IllegalArgumentException(&quot;Deleted User&quot;);
+            //}
+<span class="fc" id="L168">            log.debug(&quot;User is successfully selected : {}&quot;, user.getId());</span>
+
+            // jwt token 발급
+<span class="fc" id="L171">            String userId = user.getId();</span>
+<span class="fc" id="L172">            String userRole = user.getRole().name();</span>
+<span class="fc" id="L173">            String userType = user.getType().name();</span>
+<span class="fc" id="L174">            log.debug(&quot;userId : {}. userRole : {}, userType : {}&quot;, userId, userRole, userType);</span>
+
+<span class="fc" id="L176">            String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);</span>
+<span class="fc" id="L177">            String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);</span>
+<span class="fc" id="L178">            userLoginHistoryService.recordSuccessfulLogin(user);</span>
+<span class="fc" id="L179">            saveRefreshTokenWithTtl(userId, refreshToken);</span>
+<span class="fc" id="L180">            return new JwtResponse(accessToken, refreshToken);</span>
+        }
+    }
+
+    public GoogleUserInfoResponse getUserInfo(String accessToken) {
+<span class="nc" id="L185">        HttpHeaders headers = new HttpHeaders();</span>
+<span class="nc" id="L186">        headers.setBearerAuth(accessToken);</span>
+
+<span class="nc" id="L188">        HttpEntity&lt;?&gt; request = new HttpEntity&lt;&gt;(headers);</span>
+
+<span class="nc" id="L190">        ResponseEntity&lt;GoogleUserInfoResponse&gt; response =</span>
+<span class="nc" id="L191">                restTemplate.exchange(</span>
+                        &quot;https://www.googleapis.com/oauth2/v2/userinfo&quot;,
+                        HttpMethod.GET,
+                        request,
+                        GoogleUserInfoResponse.class
+                );
+<span class="nc" id="L197">        log.debug(&quot;Google User Info Successfully Get : {}&quot;, response.getBody());</span>
+
+<span class="nc" id="L199">        return response.getBody();</span>
+    }
+
+
+    /**
+     * jwt token 발급 후 쿠키에 저장하는 메소드
+     * **/
+    public void generateJwtTokenAndPutInCookie(HttpServletResponse httpServletResponse, String userId, String userRole, String userType){
+        // jwt 토큰 생성
+<span class="nc" id="L208">        String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);</span>
+<span class="nc" id="L209">        String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);</span>
+<span class="nc" id="L210">        log.debug(&quot;accessToken : {}, refreshToken : {}&quot;, accessToken, refreshToken);</span>
+
+<span class="nc" id="L212">        saveRefreshTokenWithTtl(userId, refreshToken);</span>
+
+        // 쿠키에 토큰 추가
+<span class="nc" id="L215">        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookieUtil.addAccessTokenCookie(accessToken).toString());</span>
+<span class="nc" id="L216">        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookieUtil.addRefreshTokenCookie(refreshToken).toString());</span>
+<span class="nc" id="L217">        log.debug(&quot;jwt token is put in cookie&quot;);</span>
+<span class="nc" id="L218">    }</span>
+
+    private void saveRefreshTokenWithTtl(String userId, String refreshToken) {
+<span class="fc" id="L221">        stringRedisTemplate.opsForValue().set(</span>
+<span class="fc" id="L222">                jwtUtil.toRedisRefreshTokenKey(userId),</span>
+                refreshToken,
+<span class="fc" id="L224">                Duration.ofMillis(jwtUtil.getRefreshTokenExpirationTime())</span>
+        );
+<span class="fc" id="L226">        log.debug(&quot;RefreshToken Saved. UserId : {}, key : {}&quot;, userId, jwtUtil.toRedisRefreshTokenKey(userId));</span>
+<span class="fc" id="L227">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>S3Util.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.post.util</a> &gt; <span class="el_source">S3Util.java</span></div><h1>S3Util.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.post.util;
+
+import com.amazonaws.services.cloudformation.model.OperationInProgressException;
+import com.project.ds_helper.common.dto.request.S3ImageUploadRequestDto;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.*;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+<span class="fc" id="L18">@Slf4j</span>
+@Component
+@RequiredArgsConstructor
+public class S3Util {
+
+    @Value(&quot;${spring.cloud.aws.credentials.access-key}&quot;)
+    private String accessKey;
+    @Value(&quot;${spring.cloud.aws.credentials.secret-key}&quot;)
+    private String secretKey;
+    @Value(&quot;${spring.cloud.aws.region.static}&quot;)
+    private String region;
+    @Value(&quot;${spring.cloud.aws.s3.bucket}&quot;)
+    private String bucket;
+
+    private final String ABSOLUTE_PATH_FOR_S3_IMAGE_KEY = &quot;images/&quot;;
+    private final String ABSOLUTE_PATH_FOR_S3_CERTIFICATION_KEY = &quot;certifications/&quot;;
+
+    private String ABSOLUTE_PATH_FOR_AWS_S3;
+
+    private final S3Client s3Client;
+
+    @PostConstruct
+    public void init() {
+<span class="fc" id="L41">        this.ABSOLUTE_PATH_FOR_AWS_S3 =</span>
+                &quot;https://&quot; + bucket + &quot;.s3.&quot; + region + &quot;.amazonaws.com/&quot;;
+<span class="fc" id="L43">        log.info(&quot;ABSOLUTE_PATH_FOR_AWS_S3 initialized: {}&quot;, ABSOLUTE_PATH_FOR_AWS_S3);</span>
+<span class="fc" id="L44">    }</span>
+
+    public void uploadImage(S3ImageUploadRequestDto dto) throws IOException {
+<span class="fc" id="L47">        String storedFilename = dto.getStoredFilename();</span>
+<span class="fc" id="L48">        log.info(&quot;S3Util.uploadImage started. storedFilename={}, s3ContentType={}, fileSize={}&quot;,</span>
+<span class="fc" id="L49">                storedFilename, dto.getS3ContentType(), dto.getSize());</span>
+
+<span class="fc" id="L51">        validateUploadDto(dto);</span>
+
+<span class="fc" id="L53">        String imageUrl = toS3UrlByStoredFilename(storedFilename);</span>
+<span class="fc" id="L54">        log.info(&quot;S3Util.uploadImage targetUrl={}&quot;, imageUrl);</span>
+
+<span class="fc" id="L56">        PutObjectRequest request = PutObjectRequest.builder()</span>
+<span class="fc" id="L57">                .bucket(bucket)</span>
+<span class="fc" id="L58">                .key(buildS3Key(storedFilename))</span>
+<span class="fc" id="L59">                .contentType(dto.getS3ContentType())</span>
+<span class="fc" id="L60">                .build();</span>
+
+<span class="fc" id="L62">        log.info(&quot;bucket : {}, region : {}, accessKey : {}, secretKey : {}&quot;, bucket, region, accessKey, secretKey);</span>
+
+<span class="fc" id="L64">        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(dto.getBytes())) {</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">            if (!s3Client.putObject(request, software.amazon.awssdk.core.sync.RequestBody.fromInputStream(inputStream, dto.getSize())).sdkHttpResponse().isSuccessful()) {</span>
+<span class="fc" id="L66">                throw new IOException(&quot;S3 image save failed&quot;);</span>
+            }
+        }
+
+<span class="fc" id="L70">        log.info(&quot;S3Util.uploadImage completed. storedFilename={}&quot;, storedFilename);</span>
+<span class="fc" id="L71">    }</span>
+
+    /**
+     * 복수개 이미지 업로드
+     */
+    public List&lt;String&gt; uploadImages(List&lt;S3ImageUploadRequestDto&gt; imageFiles) throws IOException {
+<span class="fc bfc" id="L77" title="All 2 branches covered.">        if (imageFiles.isEmpty()) {</span>
+<span class="fc" id="L78">            throw new IllegalArgumentException(&quot;no image files.&quot;);</span>
+        }
+
+<span class="fc" id="L81">        log.info(&quot;S3Util.uploadImages started. imageCount={}&quot;, imageFiles.size());</span>
+
+<span class="fc" id="L83">        List&lt;String&gt; urls = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">        for (S3ImageUploadRequestDto imageFile : imageFiles) {</span>
+<span class="fc" id="L85">            validateUploadDto(imageFile);</span>
+
+<span class="fc" id="L87">            PutObjectRequest request = PutObjectRequest.builder()</span>
+<span class="fc" id="L88">                    .bucket(bucket)</span>
+<span class="fc" id="L89">                    .key(buildS3Key(imageFile.getStoredFilename()))</span>
+<span class="fc" id="L90">                    .contentType(imageFile.getS3ContentType())</span>
+<span class="fc" id="L91">                    .build();</span>
+
+<span class="fc" id="L93">            try (ByteArrayInputStream inputStream = new ByteArrayInputStream(imageFile.getBytes())) {</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">                if (!s3Client.putObject(request, software.amazon.awssdk.core.sync.RequestBody.fromInputStream(inputStream, imageFile.getSize())).sdkHttpResponse().isSuccessful()) {</span>
+<span class="fc" id="L95">                    throw new IOException(&quot;S3 image save failed&quot;);</span>
+                }
+            }
+
+<span class="fc" id="L99">            urls.add(request.key());</span>
+<span class="fc" id="L100">        }</span>
+
+<span class="fc" id="L102">        log.info(&quot;S3Util.uploadImages completed. uploadedCount={}&quot;, urls.size());</span>
+<span class="fc" id="L103">        return urls;</span>
+    }
+
+    private void validateUploadDto(S3ImageUploadRequestDto dto) {
+<span class="fc bfc" id="L107" title="All 2 branches covered.">        if (dto == null</span>
+<span class="fc bfc" id="L108" title="All 4 branches covered.">                || dto.getStoredFilename() == null || dto.getStoredFilename().isBlank()</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">                || dto.getBytes() == null</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">                || dto.getSize() == null</span>
+<span class="fc bfc" id="L111" title="All 4 branches covered.">                || dto.getS3ContentType() == null || dto.getS3ContentType().isBlank()) {</span>
+<span class="fc" id="L112">            log.info(&quot;S3Util.validateUploadDto failed. dto={}&quot;, dto);</span>
+<span class="fc" id="L113">            throw new IllegalArgumentException(&quot;no files.&quot;);</span>
+        }
+<span class="fc" id="L115">    }</span>
+
+    public void deleteImage(String storedFilename) {
+<span class="fc bfc" id="L118" title="All 2 branches covered.">        if (storedFilename.isEmpty()) {</span>
+<span class="fc" id="L119">            log.info(&quot;No storedFilename to delete.&quot;);</span>
+<span class="fc" id="L120">            throw new IllegalArgumentException(&quot;No storedFilename to delete.&quot;);</span>
+        }
+
+<span class="fc" id="L123">        String builtS3Key = buildS3Key(storedFilename);</span>
+<span class="fc" id="L124">        log.info(&quot;builtS3Key to delete from s3 : {}&quot;, builtS3Key);</span>
+
+<span class="fc" id="L126">        DeleteObjectRequest request = DeleteObjectRequest.builder()</span>
+<span class="fc" id="L127">                .bucket(bucket)</span>
+<span class="fc" id="L128">                .key(builtS3Key)</span>
+<span class="fc" id="L129">                .build();</span>
+
+<span class="fc bfc" id="L131" title="All 2 branches covered.">        if (!s3Client.deleteObject(request).sdkHttpResponse().isSuccessful()) {</span>
+<span class="fc" id="L132">            throw new OperationInProgressException(&quot;Image Delete Failed. Image s3Key : &quot; + builtS3Key);</span>
+        }
+<span class="fc" id="L134">    }</span>
+
+    public Object deleteImages(List&lt;String&gt; storedFilenames) {
+<span class="fc bfc" id="L137" title="All 2 branches covered.">        if (storedFilenames.isEmpty()) {</span>
+<span class="fc" id="L138">            log.info(&quot;No storedFilenames to delete&quot;);</span>
+<span class="fc" id="L139">            return false;</span>
+        }
+
+<span class="fc" id="L142">        log.info(&quot;storedFilenames to delete from s3 is not empty. size : {}&quot;, storedFilenames.size());</span>
+
+        try {
+<span class="fc" id="L145">            List&lt;ObjectIdentifier&gt; objectIdentifiers = storedFilenames.stream()</span>
+<span class="fc" id="L146">                    .map(filename -&gt; {</span>
+<span class="fc" id="L147">                        String key = buildS3Key(filename);</span>
+<span class="fc" id="L148">                        return ObjectIdentifier.builder().key(key).build();</span>
+                    })
+<span class="fc" id="L150">                    .toList();</span>
+
+<span class="fc" id="L152">            Delete delete = Delete.builder().objects(objectIdentifiers).build();</span>
+
+<span class="fc" id="L154">            DeleteObjectsRequest request = DeleteObjectsRequest.builder()</span>
+<span class="fc" id="L155">                    .bucket(bucket)</span>
+<span class="fc" id="L156">                    .delete(delete)</span>
+<span class="fc" id="L157">                    .build();</span>
+
+<span class="fc" id="L159">            DeleteObjectsResponse response = s3Client.deleteObjects(request);</span>
+
+<span class="fc" id="L161">            List&lt;String&gt; errorKeys = response.errors().stream()</span>
+<span class="fc" id="L162">                    .map(S3Error::key)</span>
+<span class="fc" id="L163">                    .toList();</span>
+
+<span class="fc bfc" id="L165" title="All 2 branches covered.">            if (!errorKeys.isEmpty()) {</span>
+<span class="fc" id="L166">                log.error(&quot;S3 delete failed for keys: {}&quot;, errorKeys);</span>
+<span class="fc" id="L167">                return false;</span>
+            }
+
+<span class="fc bfc" id="L170" title="All 2 branches covered.">            if (response.deleted().size() != storedFilenames.size()) {</span>
+<span class="fc" id="L171">                log.error(&quot;Deleted count mismatch. request={}, deleted={}&quot;,</span>
+<span class="fc" id="L172">                        storedFilenames.size(), response.deleted().size());</span>
+<span class="fc" id="L173">                return false;</span>
+            }
+
+<span class="fc" id="L176">            return true;</span>
+
+<span class="fc" id="L178">        } catch (Exception e) {</span>
+<span class="fc" id="L179">            log.error(&quot;S3 delete error&quot;, e);</span>
+<span class="fc" id="L180">            return false;</span>
+        }
+    }
+
+    public Object deleteImagesByS3Key(List&lt;String&gt; s3Keys) {
+<span class="fc bfc" id="L185" title="All 2 branches covered.">        if (s3Keys.isEmpty()) {</span>
+<span class="fc" id="L186">            log.info(&quot;No s3Keys to delete&quot;);</span>
+<span class="fc" id="L187">            return false;</span>
+        }
+
+<span class="fc" id="L190">        log.info(&quot;s3Keys to delete from s3 is not empty. size : {}&quot;, s3Keys.size());</span>
+
+        try {
+<span class="fc" id="L193">            List&lt;ObjectIdentifier&gt; objectIdentifiers = s3Keys.stream()</span>
+<span class="fc" id="L194">                    .map(s3Key -&gt; ObjectIdentifier.builder().key(s3Key).build())</span>
+<span class="fc" id="L195">                    .toList();</span>
+
+<span class="fc" id="L197">            Delete delete = Delete.builder().objects(objectIdentifiers).build();</span>
+
+<span class="fc" id="L199">            DeleteObjectsRequest request = DeleteObjectsRequest.builder()</span>
+<span class="fc" id="L200">                    .bucket(bucket)</span>
+<span class="fc" id="L201">                    .delete(delete)</span>
+<span class="fc" id="L202">                    .build();</span>
+
+<span class="fc" id="L204">            DeleteObjectsResponse response = s3Client.deleteObjects(request);</span>
+
+<span class="fc" id="L206">            List&lt;String&gt; errorKeys = response.errors().stream()</span>
+<span class="fc" id="L207">                    .map(S3Error::key)</span>
+<span class="fc" id="L208">                    .toList();</span>
+
+<span class="fc bfc" id="L210" title="All 2 branches covered.">            if (!errorKeys.isEmpty()) {</span>
+<span class="fc" id="L211">                log.error(&quot;S3 delete failed for keys: {}&quot;, errorKeys);</span>
+<span class="fc" id="L212">                return false;</span>
+            }
+
+<span class="fc bfc" id="L215" title="All 2 branches covered.">            if (response.deleted().size() != s3Keys.size()) {</span>
+<span class="fc" id="L216">                log.error(&quot;Deleted count mismatch. request={}, deleted={}&quot;,</span>
+<span class="fc" id="L217">                        s3Keys.size(), response.deleted().size());</span>
+<span class="fc" id="L218">                return false;</span>
+            }
+
+<span class="fc" id="L221">            return true;</span>
+
+<span class="fc" id="L223">        } catch (Exception e) {</span>
+<span class="fc" id="L224">            log.error(&quot;S3 delete error&quot;, e);</span>
+<span class="fc" id="L225">            return false;</span>
+        }
+    }
+
+    public String toS3UrlByS3Key(String s3Key) {
+<span class="fc bfc" id="L230" title="All 2 branches covered.">        if (s3Key.isEmpty()) {</span>
+<span class="fc" id="L231">            throw new IllegalArgumentException(&quot;no s3Key to generate tos3url.&quot;);</span>
+        }
+<span class="fc" id="L233">        log.info(&quot;s3Key : {}&quot;, s3Key);</span>
+<span class="fc" id="L234">        String convertedS3Url = ABSOLUTE_PATH_FOR_AWS_S3 + s3Key;</span>
+<span class="fc" id="L235">        log.info(&quot;convertedS3Url : {}&quot;, convertedS3Url);</span>
+<span class="fc" id="L236">        return convertedS3Url;</span>
+    }
+
+    public String toS3UrlByStoredFilename(String storedFilename) {
+<span class="fc bfc" id="L240" title="All 2 branches covered.">        if (storedFilename.isEmpty()) {</span>
+<span class="fc" id="L241">            throw new IllegalArgumentException(&quot;no storedFilename to generate tos3url.&quot;);</span>
+        }
+<span class="fc" id="L243">        log.info(&quot;storedFilename : {}&quot;, storedFilename);</span>
+<span class="fc" id="L244">        String convertedS3Url = ABSOLUTE_PATH_FOR_AWS_S3 + buildS3Key(storedFilename);</span>
+<span class="fc" id="L245">        log.info(&quot;convertedS3Url : {}&quot;, convertedS3Url);</span>
+<span class="fc" id="L246">        return convertedS3Url;</span>
+    }
+
+    public String buildS3Key(String storedFilename) {
+<span class="fc" id="L250">        String s3Key = ABSOLUTE_PATH_FOR_S3_IMAGE_KEY + storedFilename;</span>
+<span class="fc" id="L251">        log.info(&quot;s3Key : {}&quot;, s3Key);</span>
+<span class="fc" id="L252">        return s3Key;</span>
+    }
+
+    public String extractStoredFilenameFromS3Key(String s3Key) {
+<span class="fc" id="L256">        String extractedStoredFilename = s3Key.split(ABSOLUTE_PATH_FOR_S3_IMAGE_KEY)[1];</span>
+<span class="fc" id="L257">        log.info(&quot;extractedStoredFilename : {}&quot;, extractedStoredFilename);</span>
+<span class="fc" id="L258">        return extractedStoredFilename;</span>
+    }
+
+    /**
+     * (Client로부터 S3Url을 받아 StoredFilename(S3Key)을 추출
+     */
+    public String extractFilenameFromS3Url(String imageUrl) {
+<span class="fc" id="L265">        String extractedS3Key = imageUrl.split(ABSOLUTE_PATH_FOR_AWS_S3)[1];</span>
+<span class="fc" id="L266">        log.info(&quot;extractedS3Key : {}&quot;, extractedS3Key);</span>
+<span class="fc" id="L267">        String extractedStoredFilename = extractedS3Key.split(ABSOLUTE_PATH_FOR_S3_IMAGE_KEY)[1];</span>
+<span class="fc" id="L268">        log.info(&quot;extractedStoredFilename : {}&quot;, extractedStoredFilename);</span>
+<span class="fc" id="L269">        return extractedStoredFilename;</span>
+    }
+
+    public boolean isManagedS3Url(String imageUrl) {
+<span class="fc bfc" id="L273" title="All 6 branches covered.">        return imageUrl != null &amp;&amp; !imageUrl.isBlank() &amp;&amp; imageUrl.startsWith(ABSOLUTE_PATH_FOR_AWS_S3);</span>
+    }
+
+    public String extractS3KeyFromS3Url(String imageUrl) {
+<span class="fc bfc" id="L277" title="All 2 branches covered.">        if (!isManagedS3Url(imageUrl)) {</span>
+<span class="fc" id="L278">            throw new IllegalArgumentException(&quot;invalid managed s3 url&quot;);</span>
+        }
+
+<span class="fc" id="L281">        return imageUrl.split(ABSOLUTE_PATH_FOR_AWS_S3)[1];</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

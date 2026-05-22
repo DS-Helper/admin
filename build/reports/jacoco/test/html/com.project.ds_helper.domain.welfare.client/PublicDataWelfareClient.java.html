@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PublicDataWelfareClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.welfare.client</a> &gt; <span class="el_source">PublicDataWelfareClient.java</span></div><h1>PublicDataWelfareClient.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.welfare.client;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.project.ds_helper.domain.welfare.dto.external.WelfareApiResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriBuilder;
+
+import java.time.Duration;
+
+/**
+ * 공공데이터포털 복지 서비스 API 통신 클라이언트.
+ */
+<span class="fc" id="L18">@Slf4j</span>
+@Component
+@RequiredArgsConstructor
+public class PublicDataWelfareClient {
+
+    private final WebClient publicDataWebClient;
+    private final String publicDataServiceKey;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final XmlMapper xmlMapper = new XmlMapper();
+
+    /**
+     * 지자체 복지 서비스 목록을 조회한다.
+     * 실제 공공데이터 응답은 XML(wantedList)로 내려올 수 있어 JSON/XML을 모두 파싱한다.
+     */
+    public WelfareApiResponse fetchWelfareList(int pageNumber, int numberOfRows, String cityProvinceName, String districtName) {
+<span class="nc" id="L33">        log.info(&quot;PublicDataWelfareClient.fetchWelfareList started. pageNumber={}, cityProvinceName={}, districtName={}&quot;,</span>
+<span class="nc" id="L34">                pageNumber, cityProvinceName, districtName);</span>
+
+<span class="nc" id="L36">        String responseBody = publicDataWebClient.get()</span>
+<span class="nc" id="L37">                .uri(uriBuilder -&gt; buildWelfareListUri(uriBuilder, pageNumber, numberOfRows, cityProvinceName, districtName))</span>
+<span class="nc" id="L38">                .retrieve()</span>
+<span class="nc" id="L39">                .bodyToMono(String.class)</span>
+<span class="nc" id="L40">                .timeout(Duration.ofSeconds(10))</span>
+<span class="nc" id="L41">                .block();</span>
+
+<span class="nc" id="L43">        return parseWelfareListResponse(responseBody);</span>
+    }
+
+    public WelfareApiResponse fetchWelfareList(int pageNumber, int numberOfRows) {
+<span class="nc" id="L47">        return fetchWelfareList(pageNumber, numberOfRows, null, null);</span>
+    }
+
+    /**
+     * 특정 복지 서비스의 상세 정보를 조회한다.
+     * 상세 응답은 원문 구조 보존이 필요하므로 String으로 반환하고 Service에서 필요한 필드를 추출한다.
+     */
+    public String fetchWelfareDetail(String serviceId) {
+<span class="nc" id="L55">        log.info(&quot;PublicDataWelfareClient.fetchWelfareDetail started. serviceId={}&quot;, serviceId);</span>
+
+<span class="nc" id="L57">        return publicDataWebClient.get()</span>
+<span class="nc" id="L58">                .uri(uriBuilder -&gt; uriBuilder</span>
+<span class="nc" id="L59">                        .path(&quot;/LcgvWelfaredetailed&quot;)</span>
+<span class="nc" id="L60">                        .queryParam(&quot;serviceKey&quot;, publicDataServiceKey)</span>
+<span class="nc" id="L61">                        .queryParam(&quot;servId&quot;, serviceId)</span>
+<span class="nc" id="L62">                        .build())</span>
+<span class="nc" id="L63">                .retrieve()</span>
+<span class="nc" id="L64">                .bodyToMono(String.class)</span>
+<span class="nc" id="L65">                .timeout(Duration.ofSeconds(10))</span>
+<span class="nc" id="L66">                .block();</span>
+    }
+
+    private WelfareApiResponse parseWelfareListResponse(String responseBody) {
+<span class="nc bnc" id="L70" title="All 4 branches missed.">        if (responseBody == null || responseBody.isBlank()) {</span>
+<span class="nc" id="L71">            return null;</span>
+        }
+
+        try {
+<span class="nc" id="L75">            String trimmedBody = responseBody.trim();</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">            if (trimmedBody.startsWith(&quot;&lt;&quot;)) {</span>
+<span class="nc" id="L77">                return xmlMapper.readValue(trimmedBody, WelfareApiResponse.class);</span>
+            }
+<span class="nc" id="L79">            return objectMapper.readValue(trimmedBody, WelfareApiResponse.class);</span>
+<span class="nc" id="L80">        } catch (Exception e) {</span>
+<span class="nc" id="L81">            log.error(&quot;PublicDataWelfareClient.parseWelfareListResponse failed. responsePrefix={}&quot;,</span>
+<span class="nc" id="L82">                    responseBody.substring(0, Math.min(responseBody.length(), 200)), e);</span>
+<span class="nc" id="L83">            throw new IllegalStateException(&quot;Failed to parse welfare list response&quot;, e);</span>
+        }
+    }
+
+    private java.net.URI buildWelfareListUri(UriBuilder uriBuilder, int pageNumber, int numberOfRows, String cityProvinceName, String districtName) {
+<span class="nc" id="L88">        UriBuilder builder = uriBuilder</span>
+<span class="nc" id="L89">                .path(&quot;/LcgvWelfarelist&quot;)</span>
+<span class="nc" id="L90">                .queryParam(&quot;serviceKey&quot;, publicDataServiceKey)</span>
+<span class="nc" id="L91">                .queryParam(&quot;pageNo&quot;, pageNumber)</span>
+<span class="nc" id="L92">                .queryParam(&quot;numOfRows&quot;, numberOfRows);</span>
+
+        // 전체 동기화 시에는 지역 파라미터를 보내지 않아야 공공데이터포털 전체 목록 기준으로 종료 서비스를 판단할 수 있다.
+<span class="nc bnc" id="L95" title="All 2 branches missed.">        if (StringUtils.hasText(cityProvinceName)) {</span>
+<span class="nc" id="L96">            builder.queryParam(&quot;ctpvNm&quot;, cityProvinceName);</span>
+        }
+<span class="nc bnc" id="L98" title="All 2 branches missed.">        if (StringUtils.hasText(districtName)) {</span>
+<span class="nc" id="L99">            builder.queryParam(&quot;sggNm&quot;, districtName);</span>
+        }
+
+<span class="nc" id="L102">        return builder.build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

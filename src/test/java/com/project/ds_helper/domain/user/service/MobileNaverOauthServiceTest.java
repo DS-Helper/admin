@@ -56,6 +56,8 @@ class MobileNaverOauthServiceTest {
     @Mock
     private NaverOauthRepository naverOauthRepository;
     @Mock
+    private UserLoginHistoryService userLoginHistoryService;
+    @Mock
     private HttpServletResponse response;
 
     @InjectMocks
@@ -65,7 +67,7 @@ class MobileNaverOauthServiceTest {
     @DisplayName("모바일 네이버 로그인은 gender가 없어도 신규 회원 가입과 토큰 발급이 가능하다")
     void mobileNaverLogin_allowsNullGenderAndReturnsDistinctTokens() {
         MobileNaverOauthService spyService = spy(service);
-        MobileNaverLoginRequestDto dto = new MobileNaverLoginRequestDto(OauthType.NAVER, "naver-access-token");
+        MobileNaverLoginRequestDto dto = new MobileNaverLoginRequestDto(OauthType.NAVER, "naver-access-token", "naver-provider-refresh-token");
         doReturn(createNaverUserInfo("social-id", "new@test.com", "신규", null))
                 .when(spyService).fetchUserInfoFromNaver("naver-access-token");
 
@@ -96,7 +98,7 @@ class MobileNaverOauthServiceTest {
     @DisplayName("모바일 네이버 로그인은 기존 회원에게 신규 저장 없이 토큰만 발급한다")
     void mobileNaverLogin_existingUser_returnsDistinctTokens() {
         MobileNaverOauthService spyService = spy(service);
-        MobileNaverLoginRequestDto dto = new MobileNaverLoginRequestDto(OauthType.NAVER, "naver-access-token");
+        MobileNaverLoginRequestDto dto = new MobileNaverLoginRequestDto(OauthType.NAVER, "naver-access-token", "naver-provider-refresh-token");
         doReturn(createNaverUserInfo("social-id", "user@test.com", "기존", "M"))
                 .when(spyService).fetchUserInfoFromNaver("naver-access-token");
 
@@ -118,6 +120,7 @@ class MobileNaverOauthServiceTest {
         assertThat(result.accessToken()).isEqualTo("access-token");
         assertThat(result.refreshToken()).isEqualTo("refresh-token");
         assertThat(result.refreshToken()).isNotEqualTo(result.accessToken());
+        assertThat(naverOauth.getRefreshToken()).isEqualTo("naver-provider-refresh-token");
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -125,7 +128,7 @@ class MobileNaverOauthServiceTest {
     @DisplayName("모바일 네이버 신규 가입 시 동일 이메일이 있으면 가입을 거절한다")
     void mobileNaverLogin_throwsWhenEmailExists() {
         MobileNaverOauthService spyService = spy(service);
-        MobileNaverLoginRequestDto dto = new MobileNaverLoginRequestDto(OauthType.NAVER, "naver-access-token");
+        MobileNaverLoginRequestDto dto = new MobileNaverLoginRequestDto(OauthType.NAVER, "naver-access-token", null);
         doReturn(createNaverUserInfo("social-id", "dup@test.com", "중복", "M"))
                 .when(spyService).fetchUserInfoFromNaver("naver-access-token");
 

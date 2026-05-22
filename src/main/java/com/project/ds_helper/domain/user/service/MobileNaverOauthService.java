@@ -44,9 +44,10 @@ public class MobileNaverOauthService {
     private final UserUtil userUtil;
     private final UserRepository userRepository;
     private final NaverOauthRepository naverOauthRepository;
+    private final UserLoginHistoryService userLoginHistoryService;
 
 
-    public MobileNaverOauthService(JwtUtil jwtUtil, StringRedisTemplate stringRedisTemplate, CookieUtil cookieUtil, @Qualifier(value = "customRestTemplate") RestTemplate restTemplate, UserUtil userUtil, UserRepository userRepository, NaverOauthRepository naverOauthRepository) {
+    public MobileNaverOauthService(JwtUtil jwtUtil, StringRedisTemplate stringRedisTemplate, CookieUtil cookieUtil, @Qualifier(value = "customRestTemplate") RestTemplate restTemplate, UserUtil userUtil, UserRepository userRepository, NaverOauthRepository naverOauthRepository, UserLoginHistoryService userLoginHistoryService) {
         this.jwtUtil = jwtUtil;
         this.stringRedisTemplate = stringRedisTemplate;
         this.cookieUtil = cookieUtil;
@@ -54,6 +55,7 @@ public class MobileNaverOauthService {
         this.userUtil = userUtil;
         this.userRepository = userRepository;
         this.naverOauthRepository = naverOauthRepository;
+        this.userLoginHistoryService = userLoginHistoryService;
     }
 
 
@@ -90,6 +92,7 @@ public class MobileNaverOauthService {
 
             // 토큰 발급을 위한 userId, userRole 획득
             NaverOauth naverOauth = optionalNaverOauth.get();
+            naverOauth.updateRefreshToken(dto.refreshToken());
             //if (naverOauth.getUser().isDeleted()) {
                 //throw new IllegalArgumentException("Deleted User");
             //}
@@ -101,6 +104,7 @@ public class MobileNaverOauthService {
 
             String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);
             String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);
+            userLoginHistoryService.recordSuccessfulLogin(naverOauth.getUser());
             saveRefreshTokenWithTtl(userId, refreshToken);
             return new JwtResponse(accessToken, refreshToken);
 
@@ -136,6 +140,7 @@ public class MobileNaverOauthService {
                     .user(user)
                     .socialOauthId(socialOauthId)
                     .oauthEmail(email)
+                    .refreshToken(dto.refreshToken())
                     .build();
             log.debug("naverOauth is built");
 
@@ -151,6 +156,7 @@ public class MobileNaverOauthService {
 
             String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);
             String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);
+            userLoginHistoryService.recordSuccessfulLogin(user);
             saveRefreshTokenWithTtl(userId, refreshToken);
             return new JwtResponse(accessToken, refreshToken);
         }

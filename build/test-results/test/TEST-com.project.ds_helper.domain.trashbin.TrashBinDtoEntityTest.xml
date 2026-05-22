@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.trashbin.TrashBinDtoEntityTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:03:01" hostname="아기" time="0.05">
+  <properties/>
+  <testcase name="복수 업로드 응답은 신규 업로드와 중복 개수를 계산한다" classname="com.project.ds_helper.domain.trashbin.TrashBinDtoEntityTest" time="0.018"/>
+  <testcase name="TrashBin 계열 엔티티는 PrePersist에서 ID를 생성한다" classname="com.project.ds_helper.domain.trashbin.TrashBinDtoEntityTest" time="0.031"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

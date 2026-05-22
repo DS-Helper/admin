@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PersonalReservationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.reservation.service</a> &gt; <span class="el_source">PersonalReservationService.java</span></div><h1>PersonalReservationService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.reservation.service;
+
+import com.project.ds_helper.common.util.JwtUtil;
+import com.project.ds_helper.common.util.UserUtil;
+import com.project.ds_helper.domain.reservation.dto.request.CreatePersonalReservationReqDto;
+import com.project.ds_helper.domain.reservation.dto.request.DeletePersonalReservationReqDto;
+import com.project.ds_helper.domain.reservation.dto.request.UpdatePersonalReservationReqDto;
+import com.project.ds_helper.domain.reservation.dto.response.*;
+import com.project.ds_helper.domain.reservation.entity.PersonalReservation;
+import com.project.ds_helper.domain.reservation.entity.ReservationSchedule;
+import com.project.ds_helper.domain.reservation.enums.ReservationStatus;
+import com.project.ds_helper.domain.reservation.repository.PersonalReservationRepository;
+import com.project.ds_helper.domain.user.entity.User;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Locale;
+
+@Service
+<span class="fc" id="L31">@Slf4j</span>
+@RequiredArgsConstructor
+public class PersonalReservationService {
+
+    private final PersonalReservationRepository personalReservationRepository;
+    private final UserUtil userUtil;
+    private final JwtUtil jwtUtil;
+
+
+    /**
+     * 유저의 개인 예약 전체 조회
+     * **/
+    public List&lt;GetPersonalReservationResDto&gt; getAllPersonalReservation(Authentication authentication) {
+<span class="nc" id="L44">        List&lt;PersonalReservation&gt; personalReservations = personalReservationRepository.findAllByUser_Id(userUtil.extractUserId(authentication));</span>
+<span class="nc" id="L45">        log.debug(&quot;personalReservations selected successfully&quot;);</span>
+
+<span class="nc" id="L47">        return GetPersonalReservationResDto.toDtoList(personalReservations);</span>
+    }
+
+    /**
+     * 단건 개인 예약 조회
+     * **/
+    public GetPersonalReservationResDto getOnePersonalReservation(Authentication authentication, String personalReservationId) {
+        
+<span class="nc" id="L55">        String userId = String.valueOf(authentication.getPrincipal());</span>
+<span class="nc" id="L56">        log.debug(&quot;userId : {}&quot;, userId);</span>
+
+<span class="nc" id="L58">        log.debug(&quot;personalReservationId : {}&quot;, personalReservationId);</span>
+    
+        // 개인 예약 조회 및 응답
+<span class="nc" id="L61">        PersonalReservation personalReservation = personalReservationRepository.findById(personalReservationId).</span>
+<span class="nc" id="L62">                orElseThrow(() -&gt; new IllegalArgumentException(&quot;없는 개인 예약 입니다. 예약 ID : &quot; + personalReservationId));</span>
+<span class="nc" id="L63">        return GetPersonalReservationResDto.toDto(personalReservation);</span>
+    }
+
+    /**
+     * 개인 에약 리스트를 상태별 조회
+     * @Param status
+     * @Return GetOrganizationReservationsResDto
+     *
+     * userId, status 기반 personalReservationRepository 조회
+     * **/
+    public GetPersonalReservationsResDto&lt;?&gt; getAllPersonalReservationByStatus(Authentication authentication, String reservationStatus, int page, int size) {
+<span class="nc" id="L74">            String userId = userUtil.extractUserId(authentication);</span>
+<span class="nc" id="L75">            log.debug(&quot;userId : {}, reservationStatus : {}&quot;, userId, reservationStatus);</span>
+
+            // 전체 개인 예약 리스트 조회 시
+<span class="nc bnc" id="L78" title="All 2 branches missed.">            if(reservationStatus.equals(&quot;all&quot;)){</span>
+<span class="nc" id="L79">                Pageable pageable = PageRequest.of(page, size);</span>
+<span class="nc" id="L80">                Slice&lt;PersonalReservation&gt; personalReservations = personalReservationRepository.findAllByUser_IdOrderByCreatedAtDesc(userId, pageable);</span>
+<span class="nc" id="L81">                Slice&lt;GetPersonalReservationsByReservationStatusResDto&gt; convertedPersonalReservations = personalReservations.map(GetPersonalReservationsByReservationStatusResDto::fromPersonalReservationToReservation);</span>
+<span class="nc" id="L82">                return GetPersonalReservationsResDto.toDto(convertedPersonalReservations);</span>
+            } else {
+<span class="nc" id="L84">                ReservationStatus _reservationStatus = ReservationStatus.findStatusByString(reservationStatus);</span>
+
+<span class="nc" id="L86">                Pageable pageable = PageRequest.of(page, size);</span>
+<span class="nc" id="L87">                Slice&lt;PersonalReservation&gt; personalReservations = personalReservationRepository.findAllByUser_IdAndReservationStatusOrderByCreatedAtDesc(userId, _reservationStatus, pageable);</span>
+<span class="nc" id="L88">                Slice&lt;GetPersonalReservationsByReservationStatusResDto&gt; convertedPersonalReservations = personalReservations.map(GetPersonalReservationsByReservationStatusResDto::fromPersonalReservationToReservation);</span>
+<span class="nc" id="L89">                return GetPersonalReservationsResDto.toDto(convertedPersonalReservations);</span>
+            }
+    }
+
+    /**
+     * 신규 개인 예약 생성
+     * **/
+    public void createPersonalReservation(Authentication authentication, CreatePersonalReservationReqDto dto) throws BadRequestException {
+    
+        // 다른 변수들 로그 추가 작성 필요
+<span class="nc" id="L99">        LocalDate visitDate = dto.getVisitDate();</span>
+<span class="nc" id="L100">        LocalTime startTime = dto.getStartTime();</span>
+<span class="nc" id="L101">        LocalTime endTime = dto.getEndTime();</span>
+<span class="nc" id="L102">        log.debug(&quot;visitDate : {}, startTime : {}, endTime : {}&quot;, visitDate, startTime, endTime);</span>
+        
+        // 뒷정리 시간 1시간 추가하여 저장(조회 시에는 -1시간 하여 리턴)
+<span class="nc" id="L105">        endTime = endTime.plusHours(1);</span>
+<span class="nc" id="L106">        log.debug(&quot;endTime : {}&quot;, endTime);</span>
+        
+        // 신청자 정보
+<span class="nc" id="L109">        String userId = userUtil.extractUserId(authentication);</span>
+<span class="nc" id="L110">        User user = userUtil.findUserById(userId);</span>
+<span class="nc" id="L111">        String userRole = user.getRole().name();</span>
+<span class="nc" id="L112">        String userType = user.getType().name();</span>
+<span class="nc" id="L113">        log.debug(&quot;userRole : {}, userType : {}&quot;, userRole, userType);</span>
+
+        // 이미 대기중인 예약이 있다면 예약 불가(1개만 예약 가능)
+<span class="nc bnc" id="L116" title="All 2 branches missed.">        if(personalReservationRepository.existsByUser_IdAndReservationStatus(userId, ReservationStatus.REQUESTED)){</span>
+<span class="nc" id="L117">            log.debug(&quot;Reservation Already Exists&quot;);</span>
+<span class="nc" id="L118">            throw new BadRequestException(&quot;Already Exists Requested Status Reservation&quot;);</span>
+        }
+
+        // 개인이 아니면 예외
+<span class="nc bnc" id="L122" title="All 2 branches missed.">        if(!userType.equalsIgnoreCase(&quot;PERSONAL&quot;)){</span>
+<span class="nc" id="L123">            log.debug(&quot;only USER, ADMIN can reserve personal reservation&quot;);</span>
+<span class="nc" id="L124">            throw new BadRequestException(&quot;Only Personal User May Reserve&quot;);}</span>
+        
+        // 수,금요일이 아니면 예외
+<span class="nc bnc" id="L127" title="All 4 branches missed.">        if(visitDate.getDayOfWeek().getValue() != 0 &amp;&amp; visitDate.getDayOfWeek().getValue() != 7){</span>
+<span class="nc" id="L128">            log.debug(&quot;Only Sunday Can Make a Reservation. visitDate : {}&quot;, visitDate);</span>
+<span class="nc" id="L129">            throw new IllegalArgumentException(&quot;Only Sunday Can Make a Reservation&quot;);</span>
+        }
+        
+        // 10시 ~ 18시가 아니면 예외
+<span class="nc bnc" id="L133" title="All 4 branches missed.">        if(startTime.getHour() &lt; 10 || endTime.getHour() &gt; 18){</span>
+<span class="nc" id="L134">            log.debug(&quot;Available Time Only Between 10 to 18. startTime : {}, endTime : {}&quot;, startTime, endTime);</span>
+<span class="nc" id="L135">            throw new IllegalArgumentException(&quot;Not Proper Time. Only Between 10 and 18&quot;);</span>
+        }
+
+        // 당일 예약 불가
+<span class="nc bnc" id="L139" title="All 2 branches missed.">        if(visitDate.isEqual(LocalDate.now(ZoneId.of(&quot;Asia/Seoul&quot;)))){</span>
+<span class="nc" id="L140">            log.debug(&quot;Not Available For Creating Today Reservation&quot;);</span>
+<span class="nc" id="L141">            throw new IllegalArgumentException(&quot;Same-day reservations are not allowed&quot;);</span>
+        }
+
+        // 개인 예약 / 시간 엔티티 빌드
+<span class="nc" id="L145">        PersonalReservation personalReservation = dto.toPersonalReservation(dto, userUtil.findUserById(userUtil.extractUserId(authentication)));</span>
+<span class="nc" id="L146">        log.debug(&quot;new personal reservation is successfully built&quot;);</span>
+        
+        // 예약 스케줄
+<span class="nc" id="L149">        ReservationSchedule reservationSchedule = ReservationSchedule.builder().visitDate(visitDate).startTime(startTime).endTime(endTime).build();</span>
+<span class="nc" id="L150">        log.debug(&quot;Reservation Schedule is Successfully Built&quot;);</span>
+<span class="nc" id="L151">        personalReservation.setReservationSchedule(reservationSchedule);</span>
+        // 저장
+<span class="nc" id="L153">        personalReservationRepository.save(personalReservation);</span>
+<span class="nc" id="L154">        log.debug(&quot;personalReservation is successfully saved&quot;);</span>
+<span class="nc" id="L155">    }</span>
+
+    /**
+     * 개인 예약 수정
+     * **/
+    public UpdatePersonalReservationResDto updatePersonalReservation(Authentication authentication, UpdatePersonalReservationReqDto dto) {
+
+        // 다른 변수들 로그 추가 작성 필요
+<span class="nc" id="L163">        LocalDate visitDate = dto.getVisitDate();</span>
+<span class="nc" id="L164">        LocalTime startTime = dto.getStartTime();</span>
+<span class="nc" id="L165">        LocalTime endTime = dto.getEndTime();</span>
+<span class="nc" id="L166">        log.debug(&quot;visitDate : {}, startTime : {}, endTime : {}&quot;, visitDate, startTime, endTime);</span>
+
+        // 유저 정보 획득
+<span class="nc" id="L169">        String userId = String.valueOf(authentication.getPrincipal());</span>
+<span class="nc" id="L170">        log.debug(&quot;userId : {}&quot;, userId);</span>
+        
+        // 예약 정보 획득
+<span class="nc" id="L173">        String personalReservationId = dto.getPersonalReservationId();</span>
+<span class="nc" id="L174">        log.debug(&quot;personalReservationId : {}&quot;, personalReservationId);</span>
+    
+        // 기존 개인 예약 조회
+<span class="nc" id="L177">        PersonalReservation personalReservation = personalReservationRepository.findById(personalReservationId).orElseThrow(() -&gt; new IllegalArgumentException(&quot;없는 예약 ID 입니다. : &quot; + personalReservationId));</span>
+<span class="nc bnc" id="L178" title="All 2 branches missed.">        if(!personalReservation.getUser().getId().equals(userId)){</span>
+<span class="nc" id="L179">            throw new IllegalArgumentException(&quot;예약자 본인만 예약 수정이 가능하니다. 예약자 ID : &quot; + personalReservationId + &quot;요청 유저 Id : &quot; + userId);</span>
+        }
+
+        // 방문 요일이 수, 금이 아닌 경우 예약 거절
+<span class="nc bnc" id="L183" title="All 4 branches missed.">        if(visitDate.getDayOfWeek().getValue() != 3 &amp;&amp; visitDate.getDayOfWeek().getValue() != 5){</span>
+<span class="nc" id="L184">            log.debug(&quot;only wen and fri. visitDate : {}&quot;, visitDate);</span>
+<span class="nc" id="L185">            throw new IllegalArgumentException(&quot;Not Proper Day, wen, fri only&quot;);</span>
+        }
+
+        // 예약 시간이 시작 10시, 끝 + 1시간이 18시 이후인 경우 예약 거절
+<span class="nc bnc" id="L189" title="All 4 branches missed.">        if(startTime.getHour() &lt; 10 || endTime.getHour() &gt; 18){</span>
+<span class="nc" id="L190">            log.debug(&quot;Available Time Only Between 10 to 18. startTime : {}, endTime : {}&quot;, startTime, endTime);</span>
+<span class="nc" id="L191">            throw new IllegalArgumentException(&quot;Not Proper Time. Only Between 10 and 18&quot;);</span>
+        }
+
+        // 수정
+<span class="nc" id="L195">        PersonalReservation updatedPersonalReservation = dto.toPersonalReservation(personalReservation, dto);</span>
+<span class="nc" id="L196">        log.debug(&quot;수정된 개인 예약 엔티티 빌드&quot;);</span>
+        
+        // JPA 에서 관리 해주지만 명시적인 저장 메소드 호출
+<span class="nc" id="L199">        personalReservationRepository.save(updatedPersonalReservation);</span>
+<span class="nc" id="L200">        log.debug(&quot;수정된 엔티티 저장 완료&quot;);</span>
+        
+        // 저장 후 응답 객체 생성 후 반환
+<span class="nc" id="L203">        UpdatePersonalReservationResDto responseDto = UpdatePersonalReservationResDto.toDto(updatedPersonalReservation);</span>
+<span class="nc" id="L204">        return responseDto;</span>
+    }
+    
+    /**
+     * 개인 예약 취소
+     * **/
+    public void cancelPersonalReservation(Authentication authentication, DeletePersonalReservationReqDto dto) {
+
+<span class="nc" id="L212">        String userId = String.valueOf(authentication.getPrincipal());</span>
+<span class="nc" id="L213">        log.debug(&quot;userId : {}&quot;, userId);</span>
+
+<span class="nc" id="L215">        String personalReservationId = dto.getPersonalReservationId();</span>
+<span class="nc" id="L216">        log.debug(&quot;personalReservationId : {}&quot;, personalReservationId);</span>
+
+<span class="nc" id="L218">        PersonalReservation personalReservation = personalReservationRepository.findById(personalReservationId).orElseThrow(() -&gt; new IllegalArgumentException(&quot;없는 개인 예약 입니다. 예약 ID : &quot; + personalReservationId));</span>
+<span class="nc" id="L219">        log.debug(&quot;개인 예약 조회 완료&quot;);</span>
+
+<span class="nc" id="L221">        personalReservation.setReservationStatus(ReservationStatus.CANCELED);</span>
+<span class="nc" id="L222">        personalReservation.cancelReservation();</span>
+<span class="nc" id="L223">        log.debug(&quot;status of reservation chagned to cancel&quot;);</span>
+        
+<span class="nc" id="L225">        personalReservationRepository.save(personalReservation);</span>
+<span class="nc" id="L226">        log.debug(&quot;개인 예약 삭제 완료&quot;);</span>
+<span class="nc" id="L227">    }</span>
+
+
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

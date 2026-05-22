@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PushToken.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.notification.entity</a> &gt; <span class="el_source">PushToken.java</span></div><h1>PushToken.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.notification.entity;
+
+import com.project.ds_helper.domain.base.entity.BaseTime;
+import com.project.ds_helper.domain.notification.enums.PushPlatform;
+import com.project.ds_helper.domain.notification.enums.PushTokenDeviceType;
+import com.project.ds_helper.domain.user.entity.User;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Table(
+        name = &quot;tb_push_token&quot;,
+        indexes = {
+                @Index(name = &quot;idx_push_token_user_active&quot;, columnList = &quot;user_id, is_active&quot;),
+                @Index(name = &quot;idx_push_token_token&quot;, columnList = &quot;token&quot;)
+        }
+)
+public class PushToken extends BaseTime {
+
+    @PrePersist
+    private void prePersistGenerateId() {
+<span class="nc" id="L42">        this.id = String.valueOf(UUID.randomUUID());</span>
+<span class="nc" id="L43">    }</span>
+
+    @Id
+    @Column(name = &quot;push_token_id&quot;)
+    private String id; // 푸시 토큰 자체를 식별하는 고유 ID
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;user_id&quot;, nullable = false)
+    private User user; // 해당 푸시 토큰을 소유한 사용자
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;platform&quot;, nullable = false)
+    private PushPlatform platform; // 토큰이 사용되는 플랫폼 구분(WEB, ANDROID, IOS)
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;device_type&quot;, nullable = false)
+    private PushTokenDeviceType deviceType; // 플랫폼 내부의 세부 디바이스 또는 브라우저 유형
+
+    @Column(name = &quot;token&quot;, nullable = false, unique = true, length = 512)
+    private String token; // 외부 Push Provider가 사용하는 실제 발송 토큰 값
+
+    @Builder.Default
+    @Column(name = &quot;is_active&quot;, nullable = false)
+    private boolean isActive = true; // 현재 이 토큰으로 발송 가능한 활성 상태 여부
+
+    @Column(name = &quot;last_seen_at&quot;)
+    private LocalDateTime lastSeenAt; // 마지막 등록 또는 갱신이 확인된 시점
+
+    public void refresh(PushPlatform platform, PushTokenDeviceType deviceType, String token, LocalDateTime lastSeenAt) {
+<span class="nc" id="L72">        this.platform = platform;</span>
+<span class="nc" id="L73">        this.deviceType = deviceType;</span>
+<span class="nc" id="L74">        this.token = token;</span>
+<span class="nc" id="L75">        this.isActive = true;</span>
+<span class="nc" id="L76">        this.lastSeenAt = lastSeenAt;</span>
+<span class="nc" id="L77">    }</span>
+
+    public void deactivate(LocalDateTime lastSeenAt) {
+<span class="fc" id="L80">        this.isActive = false;</span>
+<span class="fc" id="L81">        this.lastSeenAt = lastSeenAt;</span>
+<span class="fc" id="L82">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -7,6 +7,7 @@ import com.project.ds_helper.common.util.JwtUtil;
 import com.project.ds_helper.common.util.UserUtil;
 import com.project.ds_helper.domain.user.dto.request.MobileNaverLoginRequestDto;
 import com.project.ds_helper.domain.user.dto.request.OauthWithdrawRequestDto;
+import com.project.ds_helper.domain.user.dto.response.WithdrawUserResponseDto;
 import com.project.ds_helper.domain.user.entity.NaverOauth;
 import com.project.ds_helper.domain.user.entity.User;
 import com.project.ds_helper.domain.user.enums.UserType;
@@ -27,7 +28,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.nio.charset.StandardCharsets;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -55,9 +55,11 @@ public class NaverOauthService {
     private final UserUtil userUtil;
     private final UserRepository userRepository;
     private final NaverOauthRepository naverOauthRepository;
+    private final UserWithdrawalService userWithdrawalService;
+    private final UserLoginHistoryService userLoginHistoryService;
 
 
-    public NaverOauthService(JwtUtil jwtUtil, StringRedisTemplate stringRedisTemplate, CookieUtil cookieUtil, @Qualifier(value = "customRestTemplate") RestTemplate restTemplate, UserUtil userUtil, UserRepository userRepository, NaverOauthRepository naverOauthRepository) {
+    public NaverOauthService(JwtUtil jwtUtil, StringRedisTemplate stringRedisTemplate, CookieUtil cookieUtil, @Qualifier(value = "customRestTemplate") RestTemplate restTemplate, UserUtil userUtil, UserRepository userRepository, NaverOauthRepository naverOauthRepository, UserWithdrawalService userWithdrawalService, UserLoginHistoryService userLoginHistoryService) {
         this.jwtUtil = jwtUtil;
         this.stringRedisTemplate = stringRedisTemplate;
         this.cookieUtil = cookieUtil;
@@ -65,6 +67,8 @@ public class NaverOauthService {
         this.userUtil = userUtil;
         this.userRepository = userRepository;
         this.naverOauthRepository = naverOauthRepository;
+        this.userWithdrawalService = userWithdrawalService;
+        this.userLoginHistoryService = userLoginHistoryService;
     }
 
 
@@ -80,7 +84,9 @@ public class NaverOauthService {
     public JwtResponse naverLogin(String code, String state) {
         log.debug("naverLogin started");
         log.debug("naver auth code exists: {}, state exists: {}", code != null && !code.isBlank(), state != null && !state.isBlank());
-        String _accessToken = getNaverOauthToken(code, state, restTemplate);
+        Map<String, Object> tokenResponse = getNaverOauthTokenResponse(code, state, restTemplate);
+        String _accessToken = (String) tokenResponse.get("access_token");
+        String oauthRefreshToken = (String) tokenResponse.get("refresh_token");
         log.debug("accessToken : {}", _accessToken);
         log.debug("naver token fetched successfully");
 
@@ -119,6 +125,7 @@ public class NaverOauthService {
 
             // 토큰 발급을 위한 userId, userRole 획득
             NaverOauth naverOauth = optionalNaverOauth.get();
+            naverOauth.updateRefreshToken(oauthRefreshToken);
             //if (naverOauth.getUser().isDeleted()) {
                 //throw new IllegalArgumentException("Deleted User");
             //}
@@ -131,6 +138,7 @@ public class NaverOauthService {
             String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);
             String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);
             log.debug("jwt generated for existing naver user");
+            userLoginHistoryService.recordSuccessfulLogin(naverOauth.getUser());
             saveRefreshTokenWithTtl(userId, refreshToken);
 
             return new JwtResponse(accessToken, refreshToken);
@@ -168,6 +176,7 @@ public class NaverOauthService {
                     .user(user)
                     .socialOauthId(socialOauthId)
                     .oauthEmail(email)
+                    .refreshToken(oauthRefreshToken)
                     .build();
             log.debug("naverOauth is built");
 
@@ -185,6 +194,7 @@ public class NaverOauthService {
             String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);
             String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);
             log.debug("jwt generated for new naver user");
+            userLoginHistoryService.recordSuccessfulLogin(user);
             saveRefreshTokenWithTtl(userId, refreshToken);
 
             return new JwtResponse(accessToken, refreshToken);
@@ -226,6 +236,7 @@ public class NaverOauthService {
             log.debug("Already Joined Naver Oauth User");
 
             NaverOauth naverOauth = optionalNaverOauth.get();
+            naverOauth.updateRefreshToken(dto.refreshToken());
             //if (naverOauth.getUser().isDeleted()) {
                 //throw new IllegalArgumentException("Deleted User");
             //}
@@ -237,6 +248,7 @@ public class NaverOauthService {
             String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);
             String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);
             log.debug("jwt generated for existing naver user");
+            userLoginHistoryService.recordSuccessfulLogin(naverOauth.getUser());
             saveRefreshTokenWithTtl(userId, refreshToken);
             return new JwtResponse(accessToken, refreshToken);
         }
@@ -266,6 +278,7 @@ public class NaverOauthService {
                 .user(user)
                 .socialOauthId(socialOauthId)
                 .oauthEmail(email)
+                .refreshToken(dto.refreshToken())
                 .build();
         log.debug("naverOauth is built");
 
@@ -280,11 +293,16 @@ public class NaverOauthService {
         String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);
         String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);
         log.debug("jwt generated for new naver user");
+        userLoginHistoryService.recordSuccessfulLogin(user);
         saveRefreshTokenWithTtl(userId, refreshToken);
         return new JwtResponse(accessToken, refreshToken);
     }
 
     public String getNaverOauthToken(String code, String state, RestTemplate restTemplate){
+        return (String) getNaverOauthTokenResponse(code, state, restTemplate).get("access_token");
+    }
+
+    Map<String, Object> getNaverOauthTokenResponse(String code, String state, RestTemplate restTemplate){
         log.debug("naver get token started");
         log.debug("naver get token params. codeExists={}, stateExists={}, redirectUri={}",
                 code != null && !code.isBlank(),
@@ -299,7 +317,7 @@ public class NaverOauthService {
         ResponseEntity<Map> tokenResponse = restTemplate.getForEntity(tokenRequest, Map.class);
         log.debug("naver token response status: {}", tokenResponse.getStatusCode());
         log.debug("naver token body exists: {}", tokenResponse.getBody() != null);
-        return (String) tokenResponse.getBody().get("access_token");
+        return tokenResponse.getBody();
     }
 
     public Map<String, Object> fetchUserInfoFromNaver(String accessToken){
@@ -325,7 +343,7 @@ public class NaverOauthService {
     }
 
     @org.springframework.transaction.annotation.Transactional
-    public void withdraw(org.springframework.security.core.Authentication authentication, OauthWithdrawRequestDto dto) {
+    public WithdrawUserResponseDto withdraw(org.springframework.security.core.Authentication authentication, OauthWithdrawRequestDto dto) {
         String userId = userUtil.extractUserId(authentication);
         User user = userUtil.findUserById(userId);
 
@@ -336,9 +354,33 @@ public class NaverOauthService {
             throw new IllegalArgumentException("Naver OAuth Not Connected");
         }
 
-        revokeToken(dto.accessToken());
-        softDeleteUser(user);
-        stringRedisTemplate.delete(jwtUtil.toRedisRefreshTokenKey(userId));
+        String providerAccessToken = refreshAccessToken(naverOauth);
+        revokeToken(providerAccessToken);
+        return userWithdrawalService.softDeleteAndDeleteRefreshToken(user);
+    }
+
+    String refreshAccessToken(NaverOauth naverOauth) {
+        if (naverOauth.getRefreshToken() == null || naverOauth.getRefreshToken().isBlank()) {
+            throw new IllegalStateException("Naver OAuth Refresh Token Not Found");
+        }
+
+        String requestUrl = UriComponentsBuilder
+                .fromHttpUrl("https://nid.naver.com/oauth2.0/token")
+                .queryParam("grant_type", "refresh_token")
+                .queryParam("client_id", clientId)
+                .queryParam("client_secret", clientSecret)
+                .queryParam("refresh_token", naverOauth.getRefreshToken())
+                .encode(StandardCharsets.UTF_8)
+                .toUriString();
+
+        ResponseEntity<Map> response = restTemplate.getForEntity(requestUrl, Map.class);
+        Map body = response.getBody();
+        if (body == null || body.get("access_token") == null || String.valueOf(body.get("access_token")).isBlank()) {
+            throw new IllegalStateException("Naver Access Token Refresh Failed");
+        }
+
+        naverOauth.updateRefreshToken((String) body.get("refresh_token"));
+        return (String) body.get("access_token");
     }
 
     void revokeToken(String accessToken) {
@@ -392,9 +434,5 @@ public class NaverOauthService {
         log.debug("RefreshToken Saved. UserId : {}, key : {}", userId, jwtUtil.toRedisRefreshTokenKey(userId));
     }
 
-    private void softDeleteUser(User user) {
-        user.setDeleted(true);
-        user.setDeletedAt(LocalDateTime.now());
-    }
 }
 

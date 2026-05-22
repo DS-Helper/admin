@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BoardLikeService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.board.service</a> &gt; <span class="el_source">BoardLikeService.java</span></div><h1>BoardLikeService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.board.service;
+
+import com.project.ds_helper.common.util.UserUtil;
+import com.project.ds_helper.domain.board.entity.Board;
+import com.project.ds_helper.domain.board.entity.BoardLike;
+import com.project.ds_helper.domain.board.repository.BoardLikeRepository;
+import com.project.ds_helper.domain.board.repository.BoardRepository;
+import com.project.ds_helper.domain.user.entity.User;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+<span class="fc" id="L17">@Slf4j</span>
+@RequiredArgsConstructor
+public class BoardLikeService {
+
+    private final UserUtil userUtil;
+    private final BoardRepository boardRepository;
+    private final BoardLikeRepository boardLikeRepository;
+
+    @Transactional
+    public boolean toggleBoardLike(Authentication authentication, String boardId) {
+<span class="fc" id="L27">        log.debug(&quot;BoardLikeService.toggleBoardLike started. boardId={}&quot;, boardId);</span>
+
+<span class="fc" id="L29">        String userId = userUtil.extractUserId(authentication);</span>
+<span class="fc" id="L30">        User user = userUtil.findUserById(userId);</span>
+<span class="fc" id="L31">        Board board = findBoardById(boardId);</span>
+
+<span class="fc" id="L33">        checkIfBoardDeleted(board);</span>
+
+<span class="fc" id="L35">        return boardLikeRepository.findByUser_IdAndBoard_Id(userId, boardId)</span>
+<span class="fc" id="L36">                .map(existingLike -&gt; {</span>
+<span class="fc" id="L37">                    log.debug(&quot;BoardLikeService.toggleBoardLike removing like. boardId={}, userId={}&quot;, boardId, userId);</span>
+<span class="fc" id="L38">                    boardLikeRepository.delete(existingLike);</span>
+<span class="fc" id="L39">                    decreaseLikeCount(boardId);</span>
+<span class="fc" id="L40">                    return false;</span>
+                })
+<span class="fc" id="L42">                .orElseGet(() -&gt; {</span>
+<span class="fc" id="L43">                    log.debug(&quot;BoardLikeService.toggleBoardLike creating like. boardId={}, userId={}&quot;, boardId, userId);</span>
+<span class="fc" id="L44">                    BoardLike boardLike = BoardLike.builder()</span>
+<span class="fc" id="L45">                            .board(board)</span>
+<span class="fc" id="L46">                            .user(user)</span>
+<span class="fc" id="L47">                            .build();</span>
+
+<span class="fc" id="L49">                    boardLikeRepository.save(boardLike);</span>
+<span class="fc" id="L50">                    increaseLikeCount(boardId);</span>
+<span class="fc" id="L51">                    return true;</span>
+                });
+    }
+
+//    @Transactional(readOnly = true)
+//    public GetLikedBoardsResponseDto getMyLikedBoards(
+//            Authentication authentication,
+//            int page,
+//            int size,
+//            String sort,
+//            String sortBy
+//    ) {
+//        String userId = userUtil.extractUserId(authentication);
+//
+//        Pageable pageable = PageRequest.of(
+//                page,
+//                size,
+//                Sort.by(sort.equalsIgnoreCase(&quot;desc&quot;) ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy)
+//        );
+//
+//        Page&lt;Board&gt; boardPage = boardLikeRepository.findLikedBoards(userId, pageable);
+//        List&lt;Board&gt; boards = boardPage.getContent();
+//
+//        if (boards.isEmpty()) {
+//            return GetLikedBoardsResponseDto.builder()
+//                    .boards(List.of())
+//                    .page(PageResponseDto.toDto(boardPage))
+//                    .build();
+//        }
+//
+//        List&lt;String&gt; boardIds = boards.stream().map(Board::getId).toList();
+//        List&lt;BoardImage&gt; images = boardImageRepository.findBoardThumbnailsByBoardIds(boardIds);
+//
+//        Map&lt;String, String&gt; thumbnailMap = new HashMap&lt;&gt;();
+//        for (BoardImage image : images) {
+//            thumbnailMap.putIfAbsent(
+//                    image.getBoard().getId(),
+//                    s3Util.toS3UrlByS3Key(image.getS3Key())
+//            );
+//        }
+//
+//        List&lt;GetLikedBoardsResponseDto.Board&gt; responseBoards = boards.stream()
+//                .map(board -&gt; GetLikedBoardsResponseDto.Board.toBoard(
+//                        board,
+//                        thumbnailMap.get(board.getId())
+//                ))
+//                .toList();
+//
+//        return GetLikedBoardsResponseDto.builder()
+//                .boards(responseBoards)
+//                .page(PageResponseDto.toDto(boardPage))
+//                .build();
+//    }
+
+    @Transactional(readOnly = true)
+    public int countLike(String boardId) {
+<span class="fc" id="L107">        log.debug(&quot;BoardLikeService.countLike called. boardId={}&quot;, boardId);</span>
+<span class="fc" id="L108">        return boardLikeRepository.countByBoard_Id(boardId);</span>
+    }
+
+    private void checkIfBoardDeleted(Board board) {
+<span class="fc bfc" id="L112" title="All 2 branches covered.">        if (board.isDeleted()) {</span>
+<span class="fc" id="L113">            log.debug(&quot;BoardLikeService.checkIfBoardDeleted found deleted board. boardId={}&quot;, board.getId());</span>
+<span class="fc" id="L114">            throw new IllegalStateException(&quot;Deleted Board&quot;);</span>
+        }
+<span class="fc" id="L116">    }</span>
+
+    private void increaseLikeCount(String boardId) {
+<span class="fc" id="L119">        log.debug(&quot;BoardLikeService.increaseLikeCount called. boardId={}&quot;, boardId);</span>
+<span class="fc" id="L120">        int updatedRowCount = boardRepository.increaseLikeCount(boardId);</span>
+<span class="fc bfc" id="L121" title="All 2 branches covered.">        if (updatedRowCount == 0) {</span>
+<span class="fc" id="L122">            throw new EntityNotFoundException(String.format(&quot;Board Not Found : %s&quot;, boardId));</span>
+        }
+<span class="fc" id="L124">    }</span>
+
+    private void decreaseLikeCount(String boardId) {
+<span class="fc" id="L127">        log.debug(&quot;BoardLikeService.decreaseLikeCount called. boardId={}&quot;, boardId);</span>
+<span class="fc" id="L128">        int updatedRowCount = boardRepository.decreaseLikeCount(boardId);</span>
+<span class="fc bfc" id="L129" title="All 2 branches covered.">        if (updatedRowCount == 0) {</span>
+<span class="fc" id="L130">            throw new EntityNotFoundException(String.format(&quot;Board Not Found : %s&quot;, boardId));</span>
+        }
+<span class="fc" id="L132">    }</span>
+
+    private Board findBoardById(String boardId) {
+<span class="fc" id="L135">        log.debug(&quot;BoardLikeService.findBoardById called. boardId={}&quot;, boardId);</span>
+<span class="fc" id="L136">        return boardRepository.findById(boardId)</span>
+<span class="fc" id="L137">                .orElseThrow(() -&gt;</span>
+<span class="fc" id="L138">                        new EntityNotFoundException(String.format(&quot;Board Not Found : %s&quot;, boardId))</span>
+                );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

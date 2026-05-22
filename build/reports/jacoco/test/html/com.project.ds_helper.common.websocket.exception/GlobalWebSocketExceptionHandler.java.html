@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalWebSocketExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.common.websocket.exception</a> &gt; <span class="el_source">GlobalWebSocketExceptionHandler.java</span></div><h1>GlobalWebSocketExceptionHandler.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.common.websocket.exception;
+
+import io.netty.handler.codec.http.websocketx.WebSocketCloseStatus;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.MessagingException;
+import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+
+@ControllerAdvice
+<span class="nc" id="L12">@Slf4j</span>
+<span class="nc" id="L13">public class GlobalWebSocketExceptionHandler {</span>
+
+    @MessageExceptionHandler(MessagingException.class)
+    public ResponseEntity&lt;?&gt; messagingExceptionHandler(MessagingException messagingException){
+<span class="nc" id="L17">        String exceptionMessage = messagingException.getMessage();</span>
+<span class="nc" id="L18">        return new ResponseEntity&lt;&gt;(exceptionMessage, HttpStatus.BAD_REQUEST);</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

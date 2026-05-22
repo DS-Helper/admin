@@ -32,7 +32,7 @@ class MobileNaverAuthControllerTest {
     @Test
     @DisplayName("모바일 네이버 로그인은 JWT 응답을 반환한다")
     void mobileNaverLogin_returnsJwtResponse() throws Exception {
-        MobileNaverLoginRequestDto dto = new MobileNaverLoginRequestDto(OauthType.NAVER, "token");
+        MobileNaverLoginRequestDto dto = new MobileNaverLoginRequestDto(OauthType.NAVER, "token", null);
         JwtResponse jwtResponse = new JwtResponse("access", "refresh");
         when(mobileNaverOauthService.mobileNaverLogin(dto, response)).thenReturn(jwtResponse);
 

@@ -6,6 +6,7 @@ import com.project.ds_helper.common.util.JwtUtil;
 import com.project.ds_helper.common.util.UserUtil;
 import com.project.ds_helper.domain.user.dto.request.MobileNaverLoginRequestDto;
 import com.project.ds_helper.domain.user.dto.request.OauthWithdrawRequestDto;
+import com.project.ds_helper.domain.user.dto.response.WithdrawUserResponseDto;
 import com.project.ds_helper.domain.user.entity.NaverOauth;
 import com.project.ds_helper.domain.user.entity.User;
 import com.project.ds_helper.domain.user.enums.OauthType;
@@ -26,6 +27,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -48,6 +50,8 @@ class NaverOauthServiceTest {
     @Mock private CookieUtil cookieUtil;
     @Mock private RestTemplate restTemplate;
     @Mock private UserUtil userUtil;
+    @Mock private UserWithdrawalService userWithdrawalService;
+    @Mock private UserLoginHistoryService userLoginHistoryService;
     @Mock private UserRepository userRepository;
     @Mock private NaverOauthRepository naverOauthRepository;
     @Mock private ValueOperations<String, String> valueOperations;
@@ -91,7 +95,7 @@ class NaverOauthServiceTest {
     @DisplayName("access token 기반 네이버 로그인은 기존 회원이면 JWT를 반환한다")
     void naverLogin_withAccessToken_returnsJwtForExistingUser() {
         NaverOauthService spyService = spy(service);
-        MobileNaverLoginRequestDto dto = new MobileNaverLoginRequestDto(OauthType.NAVER, "naver-access-token");
+        MobileNaverLoginRequestDto dto = new MobileNaverLoginRequestDto(OauthType.NAVER, "naver-access-token", null);
         doReturn(createNaverUserInfo("social-id", "user@test.com", "홍길동", "M"))
                 .when(spyService).fetchUserInfoFromNaver("naver-access-token");
 
@@ -119,7 +123,7 @@ class NaverOauthServiceTest {
     @DisplayName("access token 기반 네이버 로그인은 gender가 없어도 신규 회원 가입 후 JWT를 반환한다")
     void naverLogin_withAccessToken_allowsNullGender() {
         NaverOauthService spyService = spy(service);
-        MobileNaverLoginRequestDto dto = new MobileNaverLoginRequestDto(OauthType.NAVER, "naver-access-token");
+        MobileNaverLoginRequestDto dto = new MobileNaverLoginRequestDto(OauthType.NAVER, "naver-access-token", null);
         doReturn(createNaverUserInfo("social-id", "new@test.com", "신규", null))
                 .when(spyService).fetchUserInfoFromNaver("naver-access-token");
 
@@ -155,19 +159,21 @@ class NaverOauthServiceTest {
                 .email("user@test.com")
                 .naverOauthConnected(true)
                 .build();
-        NaverOauth naverOauth = NaverOauth.builder().user(user).build();
+        NaverOauth naverOauth = NaverOauth.builder().user(user).refreshToken("naver-provider-refresh-token").build();
 
-        doNothing().when(spyService).revokeToken("naver-access-token");
+        doReturn("naver-refreshed-access-token").when(spyService).refreshAccessToken(naverOauth);
+        doNothing().when(spyService).revokeToken("naver-refreshed-access-token");
         when(userUtil.extractUserId(authentication)).thenReturn("user-1");
         when(userUtil.findUserById("user-1")).thenReturn(user);
         when(naverOauthRepository.findByUser_Id("user-1")).thenReturn(Optional.of(naverOauth));
-        when(jwtUtil.toRedisRefreshTokenKey("user-1")).thenReturn("refresh:user-1");
+        WithdrawUserResponseDto responseDto = new WithdrawUserResponseDto("user-1", LocalDateTime.of(2026, 5, 21, 14, 30));
+        when(userWithdrawalService.softDeleteAndDeleteRefreshToken(user)).thenReturn(responseDto);
 
-        spyService.withdraw(authentication, dto);
+        WithdrawUserResponseDto result = spyService.withdraw(authentication, dto);
 
-        verify(stringRedisTemplate).delete("refresh:user-1");
-        assertThat(user.isDeleted()).isTrue();
-        assertThat(user.getDeletedAt()).isNotNull();
+        verify(spyService).revokeToken("naver-refreshed-access-token");
+        verify(userWithdrawalService).softDeleteAndDeleteRefreshToken(user);
+        assertThat(result).isEqualTo(responseDto);
         assertThat(user.getEmail()).isEqualTo("user@test.com");
     }
 
@@ -175,7 +181,7 @@ class NaverOauthServiceTest {
     @DisplayName("네이버 신규 가입 시 동일 이메일이 있으면 가입을 거절한다")
     void naverLogin_withAccessToken_throwsWhenEmailExists() {
         NaverOauthService spyService = spy(service);
-        MobileNaverLoginRequestDto dto = new MobileNaverLoginRequestDto(OauthType.NAVER, "naver-access-token");
+        MobileNaverLoginRequestDto dto = new MobileNaverLoginRequestDto(OauthType.NAVER, "naver-access-token", null);
         doReturn(createNaverUserInfo("social-id", "dup@test.com", "중복", "M"))
                 .when(spyService).fetchUserInfoFromNaver("naver-access-token");
 

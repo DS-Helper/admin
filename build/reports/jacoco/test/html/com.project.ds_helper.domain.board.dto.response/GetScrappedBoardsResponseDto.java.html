@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GetScrappedBoardsResponseDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.board.dto.response</a> &gt; <span class="el_source">GetScrappedBoardsResponseDto.java</span></div><h1>GetScrappedBoardsResponseDto.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.board.dto.response;
+
+import com.project.ds_helper.common.dto.response.PageResponseDto;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+
+import java.util.List;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@Builder
+public class GetScrappedBoardsResponseDto {
+
+    private List&lt;Board&gt; boards;
+    private PageResponseDto page;
+
+    @Builder
+    @Getter
+    public static class Board{
+
+        @Schema(description = &quot;Board ID&quot;, example = &quot;3f9c7c8e-4d5a-4b1e-9a2f-7c1d2e8f9a01&quot;)
+        private String id;
+
+        @Schema(description = &quot;Board title&quot;, example = &quot;Example title&quot;)
+        private String title;
+
+        @Schema(description = &quot;Board content&quot;, example = &quot;Example content&quot;)
+        private String content;
+
+        @Schema(description = &quot;Like count&quot;, example = &quot;14&quot;)
+        private int likeCount;
+
+        @Schema(description = &quot;Comment count&quot;, example = &quot;15&quot;)
+        private int commentCount;
+
+        @Schema(description = &quot;Thumbnail URL&quot;, example = &quot;https://ds-helper-bucket.s3.ap-northeast-2.amazonaws.com/images/2026/02/21/uuid2.jpg&quot;)
+        private String thumbNailUrl;
+
+        public static Board toBoard(com.project.ds_helper.domain.board.entity.Board board, int commentCount, String thumbNailUrl){
+<span class="fc" id="L42">            return Board.builder()</span>
+<span class="fc" id="L43">                    .id(board.getId())</span>
+<span class="fc" id="L44">                    .title(board.getTitle())</span>
+<span class="fc" id="L45">                    .content(board.getContent())</span>
+<span class="fc" id="L46">                    .likeCount(board.getLikeCount())</span>
+<span class="fc" id="L47">                    .commentCount(commentCount)</span>
+<span class="fc" id="L48">                    .thumbNailUrl(thumbNailUrl)</span>
+<span class="fc" id="L49">                    .build();</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

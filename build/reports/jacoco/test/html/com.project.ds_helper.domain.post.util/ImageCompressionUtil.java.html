@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ImageCompressionUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.post.util</a> &gt; <span class="el_source">ImageCompressionUtil.java</span></div><h1>ImageCompressionUtil.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.post.util;
+
+import com.project.ds_helper.common.dto.request.S3ImageUploadRequestDto;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+@Component
+<span class="fc" id="L20">@Slf4j</span>
+public class ImageCompressionUtil {
+
+    private static final int MAX_LONG_EDGE = 1920;
+    private static final float WEBP_QUALITY = 0.8f;
+    private final WebpImageWriterProvider webpImageWriterProvider;
+    private final WebpImageWriteParamConfigurer webpImageWriteParamConfigurer;
+
+    public ImageCompressionUtil() {
+<span class="fc" id="L29">        this(new WebpImageWriterProvider(), new WebpImageWriteParamConfigurer());</span>
+<span class="fc" id="L30">    }</span>
+
+    ImageCompressionUtil(WebpImageWriterProvider webpImageWriterProvider,
+<span class="fc" id="L33">                         WebpImageWriteParamConfigurer webpImageWriteParamConfigurer) {</span>
+<span class="fc" id="L34">        this.webpImageWriterProvider = webpImageWriterProvider;</span>
+<span class="fc" id="L35">        this.webpImageWriteParamConfigurer = webpImageWriteParamConfigurer;</span>
+<span class="fc" id="L36">    }</span>
+
+    /**
+     * 모든 S3 업로드는 여기서 한 번 공통 압축을 거친다.
+     * 현재 정책은 포맷과 무관하게 항상 WebP 손실 압축으로 통일한다.
+     */
+    public S3ImageUploadRequestDto compressImage(MultipartFile multipartFile, String storedFilename) throws IOException {
+<span class="fc" id="L43">        log.debug(&quot;ImageCompressionUtil.compressImage started. originalFilename={}, storedFilename={}, rawContentType={}, rawSize={}&quot;,</span>
+<span class="fc bfc" id="L44" title="All 2 branches covered.">                multipartFile == null ? null : multipartFile.getOriginalFilename(),</span>
+                storedFilename,
+<span class="fc bfc" id="L46" title="All 2 branches covered.">                multipartFile == null ? null : multipartFile.getContentType(),</span>
+<span class="fc bfc" id="L47" title="All 2 branches covered.">                multipartFile == null ? null : multipartFile.getSize());</span>
+
+<span class="fc bfc" id="L49" title="All 4 branches covered.">        if (multipartFile == null || multipartFile.isEmpty()) {</span>
+<span class="fc" id="L50">            throw new IllegalArgumentException(&quot;Image file is empty&quot;);</span>
+        }
+
+<span class="fc" id="L53">        validateImageContentType(multipartFile.getContentType());</span>
+
+        // 1. 원본 이미지를 읽는다. 읽지 못하면 업로드 가능한 이미지가 아니다.
+<span class="fc" id="L56">        BufferedImage sourceImage = readSourceImage(multipartFile);</span>
+
+        // 2. 긴 변 기준으로 리사이즈해 과도한 원본 크기를 먼저 줄인다.
+<span class="fc" id="L59">        BufferedImage resizedImage = resizeIfNeeded(sourceImage);</span>
+
+        // 3. WebP 손실 압축으로 재인코딩한다.
+<span class="fc" id="L62">        byte[] compressedBytes = writeCompressedBytes(resizedImage);</span>
+
+<span class="fc" id="L64">        S3ImageUploadRequestDto dto = S3ImageUploadRequestDto.builder()</span>
+<span class="fc" id="L65">                .storedFilename(storedFilename)</span>
+<span class="fc" id="L66">                .originalFilename(multipartFile.getOriginalFilename())</span>
+<span class="fc" id="L67">                .bytes(compressedBytes)</span>
+<span class="fc" id="L68">                .size((long) compressedBytes.length)</span>
+<span class="fc" id="L69">                .s3ContentType(&quot;image/webp&quot;)</span>
+<span class="fc" id="L70">                .fileExtension(&quot;webp&quot;)</span>
+<span class="fc" id="L71">                .build();</span>
+
+<span class="fc" id="L73">        log.debug(&quot;ImageCompressionUtil.compressImage completed. originalFilename={}, storedFilename={}, compressedContentType={}, compressedSize={}&quot;,</span>
+<span class="fc" id="L74">                dto.getOriginalFilename(), dto.getStoredFilename(), dto.getS3ContentType(), dto.getSize());</span>
+<span class="fc" id="L75">        return dto;</span>
+    }
+
+    private void validateImageContentType(String rawContentType) {
+<span class="fc bfc" id="L79" title="All 4 branches covered.">        if (rawContentType == null || rawContentType.isBlank()) {</span>
+<span class="fc" id="L80">            throw new IllegalArgumentException(&quot;Image content type is missing&quot;);</span>
+        }
+
+<span class="fc" id="L83">        String normalizedContentType = rawContentType.toLowerCase();</span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">        if (!normalizedContentType.startsWith(&quot;image/&quot;)) {</span>
+<span class="fc" id="L85">            throw new IllegalArgumentException(&quot;Unsupported image content type: &quot; + rawContentType);</span>
+        }
+<span class="fc" id="L87">    }</span>
+
+    private BufferedImage readSourceImage(MultipartFile multipartFile) throws IOException {
+<span class="fc" id="L90">        try (InputStream inputStream = multipartFile.getInputStream()) {</span>
+<span class="fc" id="L91">            BufferedImage sourceImage = ImageIO.read(inputStream);</span>
+<span class="fc bfc" id="L92" title="All 2 branches covered.">            if (sourceImage == null) {</span>
+<span class="fc" id="L93">                throw new IllegalArgumentException(&quot;Unsupported image binary&quot;);</span>
+            }
+<span class="fc" id="L95">            return sourceImage;</span>
+        }
+    }
+
+    private BufferedImage resizeIfNeeded(BufferedImage sourceImage) {
+<span class="fc" id="L100">        int width = sourceImage.getWidth();</span>
+<span class="fc" id="L101">        int height = sourceImage.getHeight();</span>
+<span class="fc" id="L102">        int longEdge = Math.max(width, height);</span>
+
+<span class="fc" id="L104">        log.debug(&quot;ImageCompressionUtil.resizeIfNeeded started. width={}, height={}, longEdge={}&quot;, width, height, longEdge);</span>
+
+<span class="fc bfc" id="L106" title="All 2 branches covered.">        if (longEdge &lt;= MAX_LONG_EDGE) {</span>
+<span class="fc" id="L107">            log.debug(&quot;ImageCompressionUtil.resizeIfNeeded skipped. resize not required.&quot;);</span>
+<span class="fc" id="L108">            return copyToArgb(sourceImage);</span>
+        }
+
+<span class="fc" id="L111">        double scale = (double) MAX_LONG_EDGE / longEdge;</span>
+<span class="fc" id="L112">        int resizedWidth = Math.max(1, (int) Math.round(width * scale));</span>
+<span class="fc" id="L113">        int resizedHeight = Math.max(1, (int) Math.round(height * scale));</span>
+
+<span class="fc" id="L115">        BufferedImage resizedImage = new BufferedImage(</span>
+                resizedWidth,
+                resizedHeight,
+                BufferedImage.TYPE_INT_ARGB
+        );
+
+<span class="fc" id="L121">        Graphics2D graphics = resizedImage.createGraphics();</span>
+        try {
+<span class="fc" id="L123">            graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);</span>
+<span class="fc" id="L124">            graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);</span>
+<span class="fc" id="L125">            graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);</span>
+<span class="fc" id="L126">            graphics.drawImage(sourceImage, 0, 0, resizedWidth, resizedHeight, null);</span>
+        } finally {
+<span class="fc" id="L128">            graphics.dispose();</span>
+        }
+
+<span class="fc" id="L131">        log.debug(&quot;ImageCompressionUtil.resizeIfNeeded completed. resizedWidth={}, resizedHeight={}&quot;, resizedWidth, resizedHeight);</span>
+<span class="fc" id="L132">        return resizedImage;</span>
+    }
+
+    private BufferedImage copyToArgb(BufferedImage sourceImage) {
+<span class="fc" id="L136">        BufferedImage convertedImage = new BufferedImage(</span>
+<span class="fc" id="L137">                sourceImage.getWidth(),</span>
+<span class="fc" id="L138">                sourceImage.getHeight(),</span>
+                BufferedImage.TYPE_INT_ARGB
+        );
+
+<span class="fc" id="L142">        Graphics2D graphics = convertedImage.createGraphics();</span>
+        try {
+<span class="fc" id="L144">            graphics.drawImage(sourceImage, 0, 0, null);</span>
+        } finally {
+<span class="fc" id="L146">            graphics.dispose();</span>
+        }
+
+<span class="fc" id="L149">        return convertedImage;</span>
+    }
+
+    private byte[] writeCompressedBytes(BufferedImage image) throws IOException {
+<span class="fc" id="L153">        ImageWriter writer = webpImageWriterProvider.findWebpWriter();</span>
+<span class="fc" id="L154">        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();</span>
+<span class="fc" id="L155">             ImageOutputStream imageOutputStream = ImageIO.createImageOutputStream(outputStream)) {</span>
+
+<span class="fc" id="L157">            writer.setOutput(imageOutputStream);</span>
+
+<span class="fc" id="L159">            ImageWriteParam writeParam = writer.getDefaultWriteParam();</span>
+<span class="fc" id="L160">            webpImageWriteParamConfigurer.configure(writeParam, WEBP_QUALITY);</span>
+
+<span class="fc" id="L162">            writer.write(null, new IIOImage(image, null, null), writeParam);</span>
+<span class="fc" id="L163">            imageOutputStream.flush();</span>
+<span class="fc" id="L164">            outputStream.flush();</span>
+
+<span class="fc" id="L166">            byte[] bytes = outputStream.toByteArray();</span>
+<span class="fc" id="L167">            webpImageWriteParamConfigurer.verifyCompressedBytes(bytes);</span>
+<span class="fc" id="L168">            return bytes;</span>
+        } finally {
+<span class="fc" id="L170">            writer.dispose();</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

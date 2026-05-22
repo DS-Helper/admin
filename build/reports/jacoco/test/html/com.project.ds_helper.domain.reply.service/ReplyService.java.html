@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReplyService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.reply.service</a> &gt; <span class="el_source">ReplyService.java</span></div><h1>ReplyService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.reply.service;
+
+import com.project.ds_helper.common.util.JwtUtil;
+import com.project.ds_helper.common.util.UserUtil;
+import com.project.ds_helper.domain.inquiry.entity.Inquiry;
+import com.project.ds_helper.domain.inquiry.enums.InquiryStatus;
+import com.project.ds_helper.domain.inquiry.repository.InquiryRepository;
+import com.project.ds_helper.domain.reply.dto.request.CreateReplyReqDto;
+import com.project.ds_helper.domain.reply.dto.response.GetReplyByInquiryIdResDto;
+import com.project.ds_helper.domain.reply.entity.Reply;
+import com.project.ds_helper.domain.reply.repository.ReplyRepository;
+import com.project.ds_helper.domain.user.entity.User;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+<span class="fc" id="L21">@Slf4j</span>
+public class ReplyService {
+
+    private final ReplyRepository replyRepository;
+    private final InquiryRepository inquiryRepository;
+    private final UserUtil userUtil;
+    private final JwtUtil jwtUtil;
+    
+    /**
+     * 문의 답변글 조회
+     * **/
+    public Object getReplyByInquiryId(Authentication authentication, String inquiryId) {
+    
+        // 답변 조회
+<span class="fc" id="L35">        Reply reply = replyRepository.findByInquiry_Id(inquiryId).orElse(null);</span>
+        // 답변 글 부재 시 빈 문자열을 채운 dto 응답
+<span class="fc bfc" id="L37" title="All 2 branches covered.">        if(reply == null){ return GetReplyByInquiryIdResDto.toEmptyDto();}</span>
+<span class="fc" id="L38">        return GetReplyByInquiryIdResDto.toDto(reply);</span>
+    }
+    
+    /**
+     * 문의 답변글 생성
+     * **/
+    public void createReplyOfInquiry(Authentication authentication, CreateReplyReqDto dto) {
+
+        // check args
+<span class="fc" id="L47">        String userId = userUtil.extractUserId(authentication);</span>
+<span class="fc" id="L48">        String role = jwtUtil.getRole(String.valueOf(authentication.getCredentials()));</span>
+<span class="fc" id="L49">        String inquiryId = dto.getInquiryId();</span>
+<span class="fc" id="L50">        String content = dto.getContent();</span>
+<span class="pc bpc" id="L51" title="1 of 2 branches missed.">        log.debug(&quot;ReplyService.createReplyOfInquiry started. inquiryId={}, role={}, userId={}, contentLength={}&quot;, inquiryId, role, userId, content == null ? 0 : content.length());</span>
+
+        // check if reply of inquiry already exist
+//        if(replyRepository.findByInquiry_Id(inquiryId).isPresent()){ throw new IllegalArgumentException(&quot;Reply Already Exists&quot;);}
+
+        // get user, inquiry from db
+<span class="fc" id="L57">        User user = userUtil.findUserById(userId);</span>
+<span class="pc" id="L58">        Inquiry inquiry = inquiryRepository.findById(inquiryId).orElseThrow( () -&gt; new RuntimeException(&quot;Inquiry Not Found&quot;));</span>
+
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        if(inquiry.getReply() != null){throw new RuntimeException(&quot;This Inquiry Already Answered. InquiryId : &quot; + inquiryId);}</span>
+
+        // build reply
+<span class="fc" id="L63">        Reply reply = dto.toReply(dto, user);</span>
+
+        // change Inquiry status and add reply .. automatically save, but just for make sure
+<span class="fc" id="L66">        inquiry.setStatus(InquiryStatus.ANSWERED);</span>
+<span class="fc" id="L67">        inquiry.addReply(reply);</span>
+<span class="fc" id="L68">        inquiryRepository.save(inquiry);</span>
+<span class="fc" id="L69">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

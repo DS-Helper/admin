@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CommentService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.comment.service</a> &gt; <span class="el_source">CommentService.java</span></div><h1>CommentService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.comment.service;
+
+import com.project.ds_helper.common.dto.response.CursorResponseDto;
+import com.project.ds_helper.common.util.UserUtil;
+import com.project.ds_helper.domain.board.entity.Board;
+import com.project.ds_helper.domain.board.repository.BoardRepository;
+import com.project.ds_helper.domain.comment.dto.request.CreateCommentRequestDto;
+import com.project.ds_helper.domain.comment.dto.request.DeleteCommentRequestDto;
+import com.project.ds_helper.domain.comment.dto.request.UpdateCommentRequestDto;
+import com.project.ds_helper.domain.comment.dto.response.CreateCommentResponseDto;
+import com.project.ds_helper.domain.comment.dto.response.GetChildCommentsResponseDto;
+import com.project.ds_helper.domain.comment.dto.response.GetParentCommentsByBoardIdResponseDto;
+import com.project.ds_helper.domain.comment.dto.response.UpdateCommentResponseDto;
+import com.project.ds_helper.domain.comment.entity.Comment;
+import com.project.ds_helper.domain.comment.repository.CommentRepository;
+import com.project.ds_helper.domain.notification.service.NotificationFacade;
+import com.project.ds_helper.domain.user.entity.User;
+import com.project.ds_helper.domain.user.enums.UserRole;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+<span class="fc" id="L35">@Slf4j</span>
+public class CommentService {
+
+    private final CommentRepository commentRepository;
+    private final BoardRepository boardRepository;
+    private final UserUtil userUtil;
+    private final NotificationFacade notificationFacade;
+
+    @Transactional
+    public CreateCommentResponseDto createComment(
+            Authentication authentication,
+            CreateCommentRequestDto dto
+    ) {
+
+<span class="fc" id="L49">        String boardId = dto.getBoardId();</span>
+<span class="fc" id="L50">        String parentId = dto.getParentId();</span>
+<span class="fc" id="L51">        String content = dto.getContent();</span>
+<span class="pc bpc" id="L52" title="1 of 2 branches missed.">        log.debug(&quot;CommentService.createComment started. boardId={}, parentId={}, contentLength={}&quot;, boardId, parentId, content == null ? 0 : content.length());</span>
+
+        // 유저 조회
+<span class="fc" id="L55">        User user = userUtil.findUserById(userUtil.extractUserId(authentication));</span>
+
+        // 게시글 조회
+<span class="fc" id="L58">        Board board = findBoardById(boardId);</span>
+<span class="fc" id="L59">        checkIfDeletedBoard(board);</span>
+
+        // 부모 댓글 조회 (대댓글인 경우)
+<span class="fc" id="L62">        Comment parent = null;</span>
+<span class="fc bfc" id="L63" title="All 2 branches covered.">        if (parentId != null) {</span>
+<span class="fc" id="L64">            parent = findCommentById(parentId);</span>
+        }
+
+        // Depth가 2를 초과할 경우 예외 던짐
+<span class="pc bpc" id="L68" title="1 of 4 branches missed.">        if(parent != null &amp;&amp; parent.getParent() != null){</span>
+<span class="nc" id="L69">            throw new IllegalArgumentException(&quot;Depth of Comment Cannot Exceed 2&quot;);</span>
+        }
+    
+        // 부모 댓글의 게시글ID와 생성할 댓글의 게시글ID가 불일치 할 시 예외 던짐
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        if (parent != null) {</span>
+<span class="fc" id="L74">            String boardIdOfParentComment = parent.getBoard().getId();</span>
+<span class="fc" id="L75">            String boardIdOfNewComment = boardId;</span>
+<span class="fc bfc" id="L76" title="All 2 branches covered.">            if(!boardIdOfParentComment.equals(boardIdOfNewComment)){</span>
+<span class="fc" id="L77">                throw new IllegalArgumentException(String.format(&quot;boardIdOfParentComment and boardIdOfNewComment Not Equal.&quot; +</span>
+                        &quot; boardIdOfParentComment : %s, boardIdOfNewComment : %s&quot;, boardIdOfParentComment, boardIdOfNewComment));
+            }
+        }
+
+        // 댓글 생성
+<span class="fc" id="L83">        Comment comment = Comment.builder()</span>
+<span class="fc" id="L84">                .board(board)</span>
+<span class="fc" id="L85">                .user(user)</span>
+<span class="fc" id="L86">                .parent(parent)</span>
+<span class="fc" id="L87">                .content(content)</span>
+<span class="fc" id="L88">                .build();</span>
+
+<span class="fc" id="L90">        commentRepository.save(comment);</span>
+
+        // 게시글 commentCount 증가
+<span class="fc" id="L93">        boardRepository.increaseCommentCount(boardId);</span>
+        // 1. 댓글 저장이 완료된 뒤 인앱 알림 생성과 푸시 발송 오케스트레이션을 호출한다.
+<span class="fc" id="L95">        notificationFacade.createCommentNotifications(comment);</span>
+<span class="fc" id="L96">        return CreateCommentResponseDto.toDto(comment, parent, user);</span>
+    }
+    
+    /**
+     * 댓글 수정
+     * **/
+    @Transactional
+    public UpdateCommentResponseDto updateComment(Authentication authentication,
+                                                  UpdateCommentRequestDto dto) {
+
+<span class="fc" id="L106">        String commentId = dto.getCommentId();</span>
+<span class="fc" id="L107">        String content = dto.getContent();</span>
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">        log.debug(&quot;CommentService.updateComment started. commentId={}, contentLength={}&quot;, commentId, content == null ? 0 : content.length());</span>
+
+<span class="fc" id="L110">        String userId = userUtil.extractUserId(authentication);</span>
+
+        // 댓글 조회 및 작성자 여부 검증
+<span class="fc" id="L113">        Comment comment = findCommentByCommentIdAndUserId(commentId, userId);</span>
+
+        // 기존 내용과 다를 경우에만 update, Dirty Checking 활용 (save() 필요 없음)
+<span class="pc bpc" id="L116" title="1 of 2 branches missed.">        if(!comment.getContent().equals(content)){</span>
+<span class="fc" id="L117">            comment.updateContent(dto.getContent());</span>
+        }
+
+<span class="fc" id="L120">        return UpdateCommentResponseDto.toDto(comment);</span>
+    }
+
+    @Transactional
+    public void deleteComment(Authentication authentication, DeleteCommentRequestDto dto) {
+
+<span class="fc" id="L126">        String commentId = dto.getCommentId();</span>
+<span class="fc" id="L127">        log.debug(&quot;CommentService.deleteComment started. commentId={}&quot;, commentId);</span>
+
+<span class="fc" id="L129">        String userId = userUtil.extractUserId(authentication);</span>
+<span class="fc" id="L130">        User user = userUtil.findUserById(userId);</span>
+        
+        // 댓글 작성자 여부 검증 및 댓글(대댓글 포함) 조회
+<span class="fc" id="L133">        Comment comment = findCommentWithChildren(commentId, userId, user);</span>
+    
+        // 댓글 삭제
+<span class="fc" id="L136">        comment.softDeleteWithChildren();</span>
+<span class="fc" id="L137">    }</span>
+
+    @Transactional(readOnly = true)
+    public CursorResponseDto getParentComments(
+            String boardId,
+            LocalDateTime cursorTime,
+            String cursorId,
+            int size
+    ) {
+        // 페이징 size 검증
+<span class="fc" id="L147">        validateSize(size);</span>
+
+        // 커서 검증
+<span class="fc" id="L150">        validateCursor(cursorTime, cursorId);</span>
+
+<span class="fc" id="L152">        Pageable pageable = PageRequest.of(0, size + 1); // hasNext를 계산하기 위해 size + 1</span>
+
+<span class="fc" id="L154">        List&lt;Comment&gt; parentComments = commentRepository.findParentCommentsWithCursor(</span>
+                boardId,
+                cursorTime,
+                cursorId,
+                pageable
+        );
+
+        // cursor 데이터 빌드
+<span class="fc" id="L162">        String newCursorId = null;</span>
+<span class="fc" id="L163">        LocalDateTime newCursorTime = null;</span>
+
+        // hasNext 계산 후 마지막 1개 제거
+<span class="pc bpc" id="L166" title="1 of 2 branches missed.">        boolean hasNext = parentComments.size() &gt; size;</span>
+<span class="pc bpc" id="L167" title="1 of 2 branches missed.">        if (hasNext) {</span>
+<span class="fc" id="L168">            parentComments.remove(size);</span>
+        }
+        
+        // 마지막 커서 구하기
+<span class="pc bpc" id="L172" title="1 of 2 branches missed.">        if(!parentComments.isEmpty()){</span>
+<span class="fc" id="L173">            Comment lastParentComment = parentComments.getLast();</span>
+
+<span class="fc" id="L175">            newCursorId = lastParentComment.getId();</span>
+<span class="fc" id="L176">            newCursorTime = lastParentComment.getCreatedAt();</span>
+        }
+
+        // comment용 dto 빌드
+<span class="fc" id="L180">        List&lt;GetParentCommentsByBoardIdResponseDto&gt; content = parentComments</span>
+<span class="fc" id="L181">                .stream()</span>
+<span class="fc" id="L182">                .map(GetParentCommentsByBoardIdResponseDto::toDto)</span>
+<span class="fc" id="L183">                .toList();</span>
+
+<span class="fc" id="L185">        return CursorResponseDto.toDto(content,</span>
+                newCursorTime,
+                newCursorId,
+                hasNext);
+    }
+
+    /**
+     * 대댓글 조회
+     * **/
+    public CursorResponseDto&lt;GetChildCommentsResponseDto&gt; getChildComments(
+            String parentId,
+            LocalDateTime cursorTime,
+            String cursorId,
+            int size
+    ) {
+        // 부모 댓글 유무 검증
+<span class="fc bfc" id="L201" title="All 2 branches covered.">        if (!commentRepository.existsById(parentId)) {</span>
+<span class="fc" id="L202">            throw new EntityNotFoundException(&quot;Parent comment not found&quot;);</span>
+        }
+
+        // 페이징 size 검증
+<span class="fc" id="L206">        validateSize(size);</span>
+            
+        // 커서 검증
+<span class="fc" id="L209">        validateCursor(cursorTime, cursorId);</span>
+
+<span class="fc" id="L211">        Pageable pageable = PageRequest.of(0, size + 1);</span>
+
+<span class="fc" id="L213">        List&lt;Comment&gt; comments =</span>
+<span class="fc" id="L214">                commentRepository.findChildComments(</span>
+                        parentId,
+                        cursorTime,
+                        cursorId,
+                        pageable
+                );
+
+<span class="pc bpc" id="L221" title="1 of 2 branches missed.">        boolean hasNext = comments.size() &gt; size;</span>
+<span class="pc bpc" id="L222" title="1 of 2 branches missed.">        if (hasNext) {</span>
+<span class="nc" id="L223">            comments.remove(size);</span>
+        }
+
+<span class="fc" id="L226">        List&lt;GetChildCommentsResponseDto&gt; content =</span>
+<span class="fc" id="L227">                comments.stream()</span>
+<span class="fc" id="L228">                        .map(GetChildCommentsResponseDto::toDto)</span>
+<span class="fc" id="L229">                        .toList();</span>
+
+<span class="fc" id="L231">        LocalDateTime nextCursorTime = null;</span>
+<span class="fc" id="L232">        String nextCursorId = null;</span>
+
+<span class="pc bpc" id="L234" title="1 of 2 branches missed.">        if (!comments.isEmpty()) {</span>
+<span class="fc" id="L235">            Comment last = comments.getLast();</span>
+<span class="fc" id="L236">            nextCursorTime = last.getCreatedAt();</span>
+<span class="fc" id="L237">            nextCursorId = last.getId();</span>
+        }
+
+<span class="fc" id="L240">        return CursorResponseDto.toDto(</span>
+                content,
+                nextCursorTime,
+                nextCursorId,
+                hasNext
+        );
+    }
+
+
+    /**
+     * Util Method
+     * **/
+
+
+
+
+    // 게시글 조회 (boardId 기반)
+    private Board findBoardById(String boardId){
+<span class="pc" id="L258">        return boardRepository.findById(boardId).orElseThrow(()-&gt; new EntityNotFoundException(String.format(&quot;Board Not Found : %s&quot;, boardId)));</span>
+    }
+
+    // 댓글 조회 (commentId 기반)
+    private Comment findCommentById(String commentId){
+<span class="pc" id="L263">        return commentRepository.findById(commentId).orElseThrow(()-&gt; new EntityNotFoundException(String.format(&quot;Comment Not Found : %s&quot;, commentId)));</span>
+    }
+    
+    // 삭제된 게시글 여부 확인
+    private void checkIfDeletedBoard(Board board){
+<span class="pc bpc" id="L268" title="1 of 2 branches missed.">        if(board.isDeleted()){</span>
+<span class="nc" id="L269">            throw new IllegalArgumentException(String.format(&quot;Board Is Deleted : %s&quot;, board.getId()));</span>
+        }
+<span class="fc" id="L271">    }</span>
+    
+    // 댓글의 작성자인지 확인 및 댓글 조회
+    private Comment findCommentByCommentIdAndUserId(String commentId, String userId){
+<span class="fc" id="L275">        return commentRepository</span>
+<span class="fc" id="L276">                .findByIdAndUser_Id(commentId, userId)</span>
+<span class="fc" id="L277">                .orElseThrow(() -&gt;</span>
+<span class="nc" id="L278">                        new EntityNotFoundException(String.format(&quot;Comment Not Found or Not a Comment Writer. CommentId : %s, WriterId : %s&quot;, commentId, userId))</span>
+                );
+    }
+
+    // 댓글 작성자 여부 검증
+    private void validateOwner(Comment comment, User user) {
+<span class="nc bnc" id="L284" title="All 2 branches missed.">        if (!comment.getUser().getId().equals(user.getId())) {</span>
+<span class="nc" id="L285">            throw new AccessDeniedException(&quot;No Authority To Delete Comment&quot;);</span>
+        }
+<span class="nc" id="L287">    }</span>
+
+    private Comment findCommentWithChildren(String commentId, String userId, User user){
+<span class="fc bfc" id="L290" title="All 2 branches covered.">        if (user.getRole() == UserRole.ADMIN) {</span>
+<span class="fc" id="L291">            return commentRepository.findWithChildren(commentId)</span>
+<span class="pc" id="L292">                    .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Comment Not Found&quot;));</span>
+        }
+
+<span class="fc" id="L295">        return commentRepository.findWithChildren(commentId, userId)</span>
+<span class="pc" id="L296">                .orElseThrow(() -&gt; new EntityNotFoundException(&quot;Comment Not Found&quot;));</span>
+    }
+
+    private void validateCursor(LocalDateTime cursorTime, String cursorId){
+<span class="fc bfc" id="L300" title="All 6 branches covered.">        if ((cursorTime == null) != (cursorId == null)) {</span>
+<span class="fc" id="L301">            throw new IllegalArgumentException(&quot;cursorTime and cursorId must be provided together&quot;);</span>
+        }
+<span class="fc" id="L303">    }</span>
+
+    private void validateSize(int size){
+<span class="fc bfc" id="L306" title="All 2 branches covered.">        if (size &lt;= 0) {</span>
+<span class="fc" id="L307">            throw new IllegalArgumentException(&quot;size must be positive&quot;);</span>
+        }
+<span class="fc" id="L309">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

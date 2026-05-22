@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PushTokenController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.notification.controller</a> &gt; <span class="el_source">PushTokenController.java</span></div><h1>PushTokenController.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.notification.controller;
+
+import com.project.ds_helper.common.dto.response.ResponseVo;
+import com.project.ds_helper.common.enums.SuccessCode;
+import com.project.ds_helper.common.enums.SwaggerTagName;
+import com.project.ds_helper.domain.notification.dto.request.RegisterPushTokenRequestDto;
+import com.project.ds_helper.domain.notification.dto.response.PushTokenResponseDto;
+import com.project.ds_helper.domain.notification.service.PushTokenService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequiredArgsConstructor
+<span class="fc" id="L24">@Slf4j</span>
+@Tag(name = SwaggerTagName.NOTIFICATION)
+public class PushTokenController {
+
+    private final PushTokenService pushTokenService;
+
+    @Operation(summary = &quot;푸시 토큰 등록&quot;, description = &quot;웹 또는 앱에서 발급받은 푸시 토큰을 현재 사용자 기준으로 등록합니다.&quot;)
+    @PostMapping(&quot;/notification-tokens&quot;)
+    public ResponseEntity&lt;ResponseVo&lt;PushTokenResponseDto&gt;&gt; registerPushToken(
+            Authentication authentication,
+            @RequestBody @Valid RegisterPushTokenRequestDto dto
+    ) {
+        // 1. 클라이언트가 전달한 플랫폼/디바이스/토큰 정보를 현재 사용자 기준으로 등록한다.
+<span class="fc" id="L37">        log.debug(&quot;PushTokenController.registerPushToken called. platform={}, deviceType={}&quot;, dto.platform(), dto.deviceType());</span>
+<span class="fc" id="L38">        PushTokenResponseDto responseDto = pushTokenService.registerPushToken(authentication, dto);</span>
+
+        // 2. 등록된 토큰의 식별자와 활성 상태를 응답으로 반환한다.
+<span class="fc" id="L41">        ResponseVo&lt;PushTokenResponseDto&gt; responseVo =</span>
+<span class="fc" id="L42">                new ResponseVo&lt;&gt;(true, SuccessCode.CREATED, SuccessCode.CREATED.getMessage(), responseDto);</span>
+<span class="fc" id="L43">        return ResponseEntity.status(SuccessCode.CREATED.getHttpStatus()).body(responseVo);</span>
+    }
+
+    @Operation(summary = &quot;푸시 토큰 비활성화&quot;, description = &quot;로그아웃 또는 권한 철회 시 현재 사용자의 푸시 토큰을 비활성화합니다.&quot;)
+    @DeleteMapping(&quot;/notification-tokens/{pushTokenId}&quot;)
+    public ResponseEntity&lt;ResponseVo&lt;Void&gt;&gt; deactivatePushToken(
+            Authentication authentication,
+            @PathVariable String pushTokenId
+    ) {
+        // 1. 현재 로그인한 사용자의 토큰인지 검증한 뒤 발송 대상에서 제외한다.
+<span class="fc" id="L53">        log.debug(&quot;PushTokenController.deactivatePushToken called. pushTokenId={}&quot;, pushTokenId);</span>
+<span class="fc" id="L54">        pushTokenService.deactivatePushToken(authentication, pushTokenId);</span>
+
+        // 2. 비활성화 성공 후에는 별도 데이터 없이 공통 성공 응답만 반환한다.
+<span class="fc" id="L57">        ResponseVo&lt;Void&gt; responseVo =</span>
+<span class="fc" id="L58">                new ResponseVo&lt;&gt;(true, SuccessCode.NO_CONTENT, SuccessCode.NO_CONTENT.getMessage(), null);</span>
+<span class="fc" id="L59">        return ResponseEntity.status(SuccessCode.NO_CONTENT.getHttpStatus()).body(responseVo);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminInquiryController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.admin.controller</a> &gt; <span class="el_source">AdminInquiryController.java</span></div><h1>AdminInquiryController.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.admin.controller;
+
+import com.project.ds_helper.domain.admin.service.AdminInquiryService;
+import com.project.ds_helper.domain.inquiry.dto.response.GetAllInquiriesOfUserResDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+<span class="fc" id="L16">@Slf4j</span>
+@RequestMapping(&quot;/admin/inquires&quot;)
+@RequiredArgsConstructor
+public class AdminInquiryController {
+
+    private final AdminInquiryService adminInquiryService;
+
+    @Tag(name = &quot;관리자 &gt; 문의&quot;)
+    @Operation(summary = &quot;유저의 미응답 문의 조회 (JWT 인증 필요)&quot;)
+    @GetMapping(&quot;/un-replied&quot;)
+    public ResponseEntity&lt;GetAllInquiriesOfUserResDto&gt; getAllUnRepliedInquiriesOfUser(
+            @RequestParam(defaultValue = &quot;0&quot;) int page,
+            @RequestParam(defaultValue = &quot;10&quot;) int size,
+            @RequestParam(defaultValue = &quot;desc&quot;) String sort,
+            @RequestParam(defaultValue = &quot;createdAt&quot;) String sortBy
+    ) {
+<span class="fc" id="L32">        log.debug(&quot;AdminInquiryController.getAllUnRepliedInquiriesOfUser called. page={}, size={}, sort={}, sortBy={}&quot;, page, size, sort, sortBy);</span>
+<span class="fc" id="L33">        return ResponseEntity.ok(adminInquiryService.getAllUnRepliedInquiriesOfUser(page, size, sort, sortBy));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

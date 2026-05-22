@@ -7,6 +7,7 @@ import com.project.ds_helper.common.filter.JwtFilter;
 import com.project.ds_helper.common.util.CookieUtil;
 import com.project.ds_helper.common.util.JwtUtil;
 import com.project.ds_helper.domain.user.repository.UserRepository;
+import com.project.ds_helper.domain.user.service.UserLoginHistoryService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,6 +38,7 @@ public class SecurityConfig {
     private final ObjectMapper objectMapper;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final UserRepository userRepository;
+    private final UserLoginHistoryService userLoginHistoryService;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
@@ -48,6 +50,7 @@ public class SecurityConfig {
             @Qualifier("customObjectMapper") ObjectMapper objectMapper,
             BCryptPasswordEncoder bCryptPasswordEncoder,
             UserRepository userRepository,
+            UserLoginHistoryService userLoginHistoryService,
             CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
             CustomAccessDeniedHandler customAccessDeniedHandler
     ) {
@@ -58,6 +61,7 @@ public class SecurityConfig {
         this.objectMapper = objectMapper;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.userRepository = userRepository;
+        this.userLoginHistoryService = userLoginHistoryService;
         this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
         this.customAccessDeniedHandler = customAccessDeniedHandler;
     }
@@ -83,6 +87,7 @@ public class SecurityConfig {
                         bCryptPasswordEncoder,
                         stringRedisTemplate,
                         userRepository,
+                        userLoginHistoryService,
                         objectMapper
                 ),
                 UsernamePasswordAuthenticationFilter.class

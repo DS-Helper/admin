@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UrlFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.common.filter</a> &gt; <span class="el_source">UrlFilter.java</span></div><h1>UrlFilter.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.common.filter;
+
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
+
+<span class="nc" id="L8">@Slf4j</span>
+<span class="nc" id="L9">public class UrlFilter {</span>
+
+<span class="nc" id="L11">    private static final String[] SECURITY_FILTER_CHAIN_PASS_URL = {</span>
+           &quot;/auth/**&quot;,
+            &quot;/oauth/**&quot;,
+            &quot;/v3/api-docs/**&quot;,
+            &quot;/swagger-ui/**&quot;,
+            &quot;/swagger-ui.html&quot;,
+            &quot;/swagger/**&quot;,
+            &quot;/admin/inquires/un-replied/**&quot;,
+            &quot;/api/v1/mobile/oauth/**&quot;
+//            &quot;/admin/**&quot; // 임시 추가
+    };
+
+<span class="nc" id="L23">    private static final String[] JWT_FILTER_CHAIN_PASS_URL = {</span>
+            &quot;/oauth&quot;,
+            &quot;/auth&quot;,
+            &quot;/v3/api-docs&quot;,
+            &quot;/swagger&quot;,
+            &quot;/swagger-ui&quot;,
+            &quot;/auth/join/organization&quot;,
+            &quot;/auth/login/organization&quot;, // 추후 삭제 2개
+            &quot;/admin/inquires/un-replied&quot;,
+            &quot;/api/v1/mobile/oauth&quot;
+
+//            &quot;/admin&quot; // 임시 추가
+    };
+
+<span class="nc" id="L37">    private static final String[] JWT_FILTER_CHAIN_PASS_GET_URL = {</span>
+        &quot;/posts&quot;
+    };
+
+<span class="nc" id="L41">    private static final String[] LOGIN_URL = {&quot;/auth/login/organization&quot;};</span>
+
+    /**
+     * JWT FILTER PASS 경로 확인
+     * **/
+    public static boolean isPublicPath(String requestUri){
+<span class="nc bnc" id="L47" title="All 2 branches missed.">        for(String url : JWT_FILTER_CHAIN_PASS_URL){</span>
+<span class="nc bnc" id="L48" title="All 2 branches missed.">            if(url.equals(requestUri)){</span>
+<span class="nc" id="L49">                return true;</span>
+            }
+        }
+<span class="nc" id="L52">        return false;</span>
+    }
+
+
+
+    public static String[] getSecurityFilterPassPath(){
+<span class="nc" id="L58">        return SECURITY_FILTER_CHAIN_PASS_URL;</span>
+    }
+
+    public static boolean checkIfPublicPath(String requestUri){
+<span class="nc" id="L62">        log.info(&quot;requestUri : {}&quot;, requestUri);</span>
+<span class="nc bnc" id="L63" title="All 2 branches missed.">        for(String path : JWT_FILTER_CHAIN_PASS_URL){</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">            if(requestUri.startsWith(path)){</span>
+<span class="nc" id="L65">                return true;</span>
+            }
+        }
+<span class="nc" id="L68">        return false;</span>
+    }
+
+    /**
+     * [POST] /posts 는 JwtFilter Pass
+     * **/
+    public static boolean checkIfPublicPathForPosts(HttpServletRequest httpServletRequest){
+<span class="nc" id="L75">        String httpMethod = httpServletRequest.getMethod();</span>
+<span class="nc" id="L76">        String requestUri = httpServletRequest.getRequestURI();</span>
+<span class="nc" id="L77">        log.info(&quot;httpMethod : {}, requestUri : {}&quot;, httpMethod, requestUri);</span>
+<span class="nc bnc" id="L78" title="All 4 branches missed.">        return httpMethod.equalsIgnoreCase(&quot;GET&quot;) &amp;&amp; requestUri.startsWith(&quot;/posts&quot;);</span>
+    }
+
+
+    private static final String LOG_OUT_PATH = &quot;/logout&quot;;
+    public static boolean checkIfLogoutPath(String requestUri){
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        if(LOG_OUT_PATH.equals(requestUri)){log.info(&quot;Is Logout Path. RequestUri : {}&quot;, requestUri); return true;};</span>
+<span class="nc" id="L85">        log.info(&quot;RequestUri : {}&quot;, requestUri);</span>
+<span class="nc" id="L86">        return false;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

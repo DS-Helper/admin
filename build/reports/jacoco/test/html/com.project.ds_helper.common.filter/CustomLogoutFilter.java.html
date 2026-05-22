@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CustomLogoutFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.common.filter</a> &gt; <span class="el_source">CustomLogoutFilter.java</span></div><h1>CustomLogoutFilter.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.common.filter;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.ds_helper.common.dto.response.ResponseVo;
+import com.project.ds_helper.common.enums.ErrorCode;
+import com.project.ds_helper.common.enums.SuccessCode;
+import com.project.ds_helper.common.util.CookieUtil;
+import com.project.ds_helper.common.util.JwtUtil;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+
+<span class="nc" id="L23">@Slf4j</span>
+public class CustomLogoutFilter extends OncePerRequestFilter {
+
+    private final RedisTemplate&lt;String, String&gt; redisTemplate;
+    private final JwtUtil jwtUtil;
+    private final CookieUtil cookieUtil;
+    private final ObjectMapper objectMapper;
+
+    @Value(&quot;${client.url}&quot;)
+    private String clientUrl;
+
+    public CustomLogoutFilter(
+            @Qualifier(&quot;CustomStringRedisTemplate&quot;) RedisTemplate&lt;String, String&gt; redisTemplate,
+            JwtUtil jwtUtil,
+            CookieUtil cookieUtil,
+            ObjectMapper objectMapper
+<span class="nc" id="L39">    ) {</span>
+<span class="nc" id="L40">        this.redisTemplate = redisTemplate;</span>
+<span class="nc" id="L41">        this.jwtUtil = jwtUtil;</span>
+<span class="nc" id="L42">        this.cookieUtil = cookieUtil;</span>
+<span class="nc" id="L43">        this.objectMapper = objectMapper;</span>
+<span class="nc" id="L44">    }</span>
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+<span class="nc" id="L49">        doFilter(request, response, filterChain);</span>
+<span class="nc" id="L50">    }</span>
+
+    public void doFilter(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, FilterChain filterChain)
+            throws ServletException, IOException {
+
+<span class="nc bnc" id="L55" title="All 2 branches missed.">        if (!UrlFilter.checkIfLogoutPath(httpServletRequest.getRequestURI())) {</span>
+<span class="nc" id="L56">            filterChain.doFilter(httpServletRequest, httpServletResponse);</span>
+<span class="nc" id="L57">            return;</span>
+        }
+<span class="nc" id="L59">        log.debug(&quot;Is Logout URL&quot;);</span>
+
+<span class="nc" id="L61">        String refreshToken = jwtUtil.getRefreshTokenFromRequestHeader(httpServletRequest);</span>
+
+<span class="nc bnc" id="L63" title="All 6 branches missed.">        if (refreshToken == null || refreshToken.isBlank() || jwtUtil.isExpired(refreshToken)) {</span>
+<span class="nc" id="L64">            writeUnauthorizedResponse(httpServletResponse);</span>
+<span class="nc" id="L65">            return;</span>
+        }
+<span class="nc bnc" id="L67" title="All 2 branches missed.">        if (!jwtUtil.isRefreshToken(refreshToken)) {</span>
+<span class="nc" id="L68">            writeUnauthorizedResponse(httpServletResponse);</span>
+<span class="nc" id="L69">            return;</span>
+        }
+
+<span class="nc" id="L72">        String userId = jwtUtil.getId(refreshToken);</span>
+<span class="nc" id="L73">        log.debug(&quot;logout userId : {}&quot;, userId);</span>
+
+<span class="nc" id="L75">        String refreshTokenRedisKey = jwtUtil.toRedisRefreshTokenKey(userId);</span>
+<span class="nc" id="L76">        String refreshTokenInRedis = redisTemplate.opsForValue().get(refreshTokenRedisKey);</span>
+
+<span class="nc bnc" id="L78" title="All 4 branches missed.">        if (refreshTokenInRedis == null || refreshTokenInRedis.isBlank()) {</span>
+<span class="nc" id="L79">            writeUnauthorizedResponse(httpServletResponse);</span>
+<span class="nc" id="L80">            return;</span>
+        }
+
+<span class="nc bnc" id="L83" title="All 2 branches missed.">        if (!redisTemplate.delete(jwtUtil.toRedisRefreshTokenKey(userId))) {</span>
+<span class="nc" id="L84">            writeUnauthorizedResponse(httpServletResponse);</span>
+<span class="nc" id="L85">            return;</span>
+        }
+
+<span class="nc bnc" id="L88" title="All 2 branches missed.">        if (SecurityContextHolder.getContext().getAuthentication() != null) {</span>
+<span class="nc" id="L89">            SecurityContextHolder.clearContext();</span>
+        }
+
+<span class="nc" id="L92">        writeLogoutSuccessMessageInResponse(httpServletResponse);</span>
+<span class="nc" id="L93">    }</span>
+
+    private void writeUnauthorizedResponse(HttpServletResponse httpServletResponse) throws IOException {
+<span class="nc" id="L96">        log.debug(&quot;Is Not Logged In User&quot;);</span>
+<span class="nc" id="L97">        httpServletResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);</span>
+<span class="nc" id="L98">        httpServletResponse.setCharacterEncoding(&quot;UTF-8&quot;);</span>
+<span class="nc" id="L99">        httpServletResponse.setStatus(ErrorCode.UNAUTHORIZED.getHttpStatus().value());</span>
+<span class="nc" id="L100">        objectMapper.writeValue(</span>
+<span class="nc" id="L101">                httpServletResponse.getWriter(),</span>
+<span class="nc" id="L102">                ResponseVo.error(ErrorCode.UNAUTHORIZED, ErrorCode.UNAUTHORIZED.getMessage())</span>
+        );
+<span class="nc" id="L104">    }</span>
+
+    public void writeLogoutSuccessMessageInResponse(HttpServletResponse httpServletResponse) throws IOException {
+<span class="nc" id="L107">        httpServletResponse.setStatus(200);</span>
+<span class="nc" id="L108">        httpServletResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);</span>
+<span class="nc" id="L109">        httpServletResponse.setCharacterEncoding(&quot;UTF-8&quot;);</span>
+<span class="nc" id="L110">        objectMapper.writeValue(</span>
+<span class="nc" id="L111">                httpServletResponse.getWriter(),</span>
+                new ResponseVo&lt;&gt;(true, SuccessCode.OK, &quot;Logout successful&quot;, null)
+        );
+<span class="nc" id="L114">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

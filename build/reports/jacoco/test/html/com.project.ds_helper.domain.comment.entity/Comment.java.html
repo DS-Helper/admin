@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Comment.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.comment.entity</a> &gt; <span class="el_source">Comment.java</span></div><h1>Comment.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.comment.entity;
+
+import com.project.ds_helper.domain.base.entity.BaseTime;
+import com.project.ds_helper.domain.board.entity.Board;
+import com.project.ds_helper.domain.user.entity.User;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@Entity
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Table(name = &quot;tb_comment&quot;)
+public class Comment extends BaseTime {
+
+    @PrePersist
+    private void prePersistGenerateId(){
+<span class="nc" id="L26">        this.id = String.valueOf(UUID.randomUUID());</span>
+<span class="nc" id="L27">    }</span>
+
+    @Id
+    @Column(name = &quot;comment_id&quot;)
+    
+    private String id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;board_id&quot;, nullable = false)
+    private Board board;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;user_id&quot;, nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;parent_id&quot;)
+    private Comment parent; // 부모 댓글
+
+    @Builder.Default
+    @OneToMany(mappedBy = &quot;parent&quot;, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List&lt;Comment&gt; children = new ArrayList&lt;&gt;(); // 자식 댓글들
+
+    @Column(name = &quot;content&quot;, columnDefinition = &quot;TEXT&quot;)
+    private String content;
+
+    @Builder.Default
+    @Column(name = &quot;is_deleted&quot;)
+    private boolean isDeleted = false;
+
+    public void updateContent(String content){
+<span class="fc" id="L58">        this.content = content;</span>
+<span class="fc" id="L59">    }</span>
+
+    public void softDelete() {
+<span class="nc" id="L62">        this.isDeleted = true;</span>
+<span class="nc" id="L63">    }</span>
+
+    public void softDeleteWithChildren() {
+<span class="fc" id="L66">        this.isDeleted = true;</span>
+
+<span class="fc bfc" id="L68" title="All 2 branches covered.">        for (Comment child : children) {</span>
+<span class="fc" id="L69">            child.softDeleteWithChildren();</span>
+<span class="fc" id="L70">        }</span>
+<span class="fc" id="L71">    }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

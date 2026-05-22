@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.user.service.UserLoginHistoryServiceTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:03:05" hostname="아기" time="0.004">
+  <properties/>
+  <testcase name="로그인 성공 시 고정된 시각으로 마지막 로그인 일시를 저장한다" classname="com.project.ds_helper.domain.user.service.UserLoginHistoryServiceTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

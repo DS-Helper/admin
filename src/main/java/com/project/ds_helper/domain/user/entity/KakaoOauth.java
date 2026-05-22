@@ -32,4 +32,13 @@ public class KakaoOauth extends BaseTime {
 
     @Column(name = "oauth_email")
     private String oauthEmail;
+
+    @Column(name = "refresh_token", columnDefinition = "TEXT")
+    private String refreshToken;
+
+    public void updateRefreshToken(String refreshToken) {
+        if (refreshToken != null && !refreshToken.isBlank()) {
+            this.refreshToken = refreshToken;
+        }
+    }
 }

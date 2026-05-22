@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.project.ds_helper.domain.notification.controller.PushTokenControllerTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:10" hostname="아기" time="0.061">
+<testsuite name="com.project.ds_helper.domain.notification.controller.PushTokenControllerTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:02:55" hostname="아기" time="0.071">
   <properties/>
-  <testcase name="푸시 토큰 등록 시 생성 응답과 토큰 정보를 반환한다" classname="com.project.ds_helper.domain.notification.controller.PushTokenControllerTest" time="0.056"/>
-  <testcase name="푸시 토큰 비활성화 시 no content 응답을 반환한다" classname="com.project.ds_helper.domain.notification.controller.PushTokenControllerTest" time="0.004"/>
+  <testcase name="푸시 토큰 등록 시 생성 응답과 토큰 정보를 반환한다" classname="com.project.ds_helper.domain.notification.controller.PushTokenControllerTest" time="0.059"/>
+  <testcase name="푸시 토큰 비활성화 시 no content 응답을 반환한다" classname="com.project.ds_helper.domain.notification.controller.PushTokenControllerTest" time="0.012"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MobileNaverOauthService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.user.service</a> &gt; <span class="el_source">MobileNaverOauthService.java</span></div><h1>MobileNaverOauthService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.user.service;
+
+
+import com.project.ds_helper.common.dto.response.JwtResponse;
+import com.project.ds_helper.common.util.CookieUtil;
+import com.project.ds_helper.common.util.JwtUtil;
+import com.project.ds_helper.common.util.UserUtil;
+import com.project.ds_helper.domain.user.dto.request.MobileNaverLoginRequestDto;
+import com.project.ds_helper.domain.user.entity.NaverOauth;
+import com.project.ds_helper.domain.user.entity.User;
+import com.project.ds_helper.domain.user.enums.UserType;
+import com.project.ds_helper.domain.user.repository.NaverOauthRepository;
+import com.project.ds_helper.domain.user.repository.UserRepository;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.time.Duration;
+import java.util.Map;
+import java.util.Optional;
+
+@Service
+<span class="fc" id="L31">@Slf4j</span>
+public class MobileNaverOauthService {
+
+    @Value(&quot;${naver.client.id}&quot;)
+    private String clientId;
+
+    @Value(&quot;${naver.client.secret}&quot;)
+    private String clientSecret;
+
+    private final JwtUtil jwtUtil;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final CookieUtil cookieUtil;
+    private final RestTemplate restTemplate;
+    private final UserUtil userUtil;
+    private final UserRepository userRepository;
+    private final NaverOauthRepository naverOauthRepository;
+    private final UserLoginHistoryService userLoginHistoryService;
+
+
+<span class="fc" id="L50">    public MobileNaverOauthService(JwtUtil jwtUtil, StringRedisTemplate stringRedisTemplate, CookieUtil cookieUtil, @Qualifier(value = &quot;customRestTemplate&quot;) RestTemplate restTemplate, UserUtil userUtil, UserRepository userRepository, NaverOauthRepository naverOauthRepository, UserLoginHistoryService userLoginHistoryService) {</span>
+<span class="fc" id="L51">        this.jwtUtil = jwtUtil;</span>
+<span class="fc" id="L52">        this.stringRedisTemplate = stringRedisTemplate;</span>
+<span class="fc" id="L53">        this.cookieUtil = cookieUtil;</span>
+<span class="fc" id="L54">        this.restTemplate = restTemplate;</span>
+<span class="fc" id="L55">        this.userUtil = userUtil;</span>
+<span class="fc" id="L56">        this.userRepository = userRepository;</span>
+<span class="fc" id="L57">        this.naverOauthRepository = naverOauthRepository;</span>
+<span class="fc" id="L58">        this.userLoginHistoryService = userLoginHistoryService;</span>
+<span class="fc" id="L59">    }</span>
+
+
+    public JwtResponse mobileNaverLogin(MobileNaverLoginRequestDto dto, HttpServletResponse httpServletResponse) {
+
+<span class="fc" id="L64">        Map&lt;String, Object&gt; naverUserInfo = fetchUserInfoFromNaver(dto.accessToken());</span>
+
+<span class="fc" id="L66">        String socialOauthId = (String) naverUserInfo.get(&quot;id&quot;);</span>
+<span class="fc" id="L67">        String profileImageUrl = (String) naverUserInfo.get(&quot;profile_image&quot;);</span>
+//        String ageRange = (String) naverUserInfo.get(&quot;age&quot;);
+<span class="fc" id="L69">        String gender = (String) naverUserInfo.get(&quot;gender&quot;);</span>
+
+<span class="fc" id="L71">        String phoneNumber = (String) naverUserInfo.get(&quot;mobile&quot;);</span>
+<span class="fc" id="L72">        String birthyear = (String) naverUserInfo.get(&quot;birthyear&quot;);</span>
+        // kakao(male, female) 과 naver(M, W) 불일치로 변환
+<span class="fc" id="L74">        gender = convertNaverGender(gender);</span>
+<span class="fc" id="L75">        String email = (String) naverUserInfo.get(&quot;email&quot;);</span>
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">        if (email != null) {</span>
+<span class="fc" id="L77">            email = email.trim();</span>
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">            if (email.isEmpty()) {</span>
+<span class="nc" id="L79">                email = null;</span>
+            }
+        }
+<span class="fc" id="L82">        String name = (String) naverUserInfo.get(&quot;name&quot;);</span>
+<span class="fc" id="L83">        String token = (String) naverUserInfo.get(&quot;token&quot;);</span>
+<span class="fc" id="L84">        log.debug(&quot;socialOauthId : {}, profileImageUril : {}, gender : {}, phoneNumber : {}, birthyear : {},email : {}, name : {}, token : {}&quot;, socialOauthId, profileImageUrl, gender, phoneNumber, birthyear, email, name,token);</span>
+
+        // 네이버 회원가입 유무에 따른 처리 (socialOauthId, email)
+<span class="fc" id="L87">        Optional&lt;NaverOauth&gt; optionalNaverOauth = naverOauthRepository.findBySocialOauthIdAndOauthEmail(socialOauthId, email);</span>
+<span class="fc" id="L88">        log.debug(&quot;optionalNaverOauth selected&quot;);</span>
+        // 기 가입된 유저 토큰 반환 처리
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        if(optionalNaverOauth.isPresent()){</span>
+<span class="fc" id="L91">            log.debug(&quot;Already Joined Naver Oauth User&quot;);</span>
+
+            // 토큰 발급을 위한 userId, userRole 획득
+<span class="fc" id="L94">            NaverOauth naverOauth = optionalNaverOauth.get();</span>
+<span class="fc" id="L95">            naverOauth.updateRefreshToken(dto.refreshToken());</span>
+            //if (naverOauth.getUser().isDeleted()) {
+                //throw new IllegalArgumentException(&quot;Deleted User&quot;);
+            //}
+<span class="fc" id="L99">            String userId = naverOauth.getUser().getId();</span>
+<span class="fc" id="L100">            String userRole = naverOauth.getUser().getRole().name();</span>
+<span class="fc" id="L101">            String userType = naverOauth.getUser().getType().name();</span>
+<span class="fc" id="L102">            log.debug(&quot;userId : {}, userRole : {}&quot;, userId, userRole);</span>
+
+
+<span class="fc" id="L105">            String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);</span>
+<span class="fc" id="L106">            String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);</span>
+<span class="fc" id="L107">            userLoginHistoryService.recordSuccessfulLogin(naverOauth.getUser());</span>
+<span class="fc" id="L108">            saveRefreshTokenWithTtl(userId, refreshToken);</span>
+<span class="fc" id="L109">            return new JwtResponse(accessToken, refreshToken);</span>
+
+        }else {
+            // provider와 무관하게 User 테이블 기준 이메일 중복 가입을 차단한다.
+<span class="pc bpc" id="L113" title="1 of 4 branches missed.">            if (email != null &amp;&amp; userRepository.existsByEmail(email)) {</span>
+<span class="fc" id="L114">                log.debug(&quot;mobile naver signup rejected. duplicated email found in user table. email={}&quot;, email);</span>
+<span class="fc" id="L115">                throw new IllegalArgumentException(&quot;Email Already Exist&quot;);</span>
+            }
+            // Email 기반 로컬 회원가입 여부 조회
+            // 로컬 회원이 있다면 KakaoOauth에 매핑
+            // 추후 로직 추가
+
+            // 로컬 회원가입 미가입 신규 회원가입 처리
+<span class="fc" id="L122">            User newUser = User.builder()</span>
+<span class="fc" id="L123">                    .email(email)</span>
+<span class="fc" id="L124">                    .name(name)</span>
+<span class="fc" id="L125">                    .profileImageUrl(profileImageUrl)</span>
+<span class="fc" id="L126">                    .gender(gender)</span>
+<span class="fc" id="L127">                    .birthyear(birthyear)</span>
+<span class="fc" id="L128">                    .phoneNumber(phoneNumber)</span>
+<span class="fc" id="L129">                    .type(UserType.PERSONAL)</span>
+<span class="fc" id="L130">                    .naverOauthConnected(true)</span>
+<span class="fc" id="L131">                    .build();</span>
+<span class="fc" id="L132">            log.debug(&quot;newUser is built&quot;);</span>
+
+            // 신규 유저 저장
+<span class="fc" id="L135">            User user = userRepository.save(newUser);</span>
+<span class="fc" id="L136">            log.debug(&quot;user saved&quot;);</span>
+
+            // KakaoOauth 빌드
+<span class="fc" id="L139">            NaverOauth naverOauth = NaverOauth.builder()</span>
+<span class="fc" id="L140">                    .user(user)</span>
+<span class="fc" id="L141">                    .socialOauthId(socialOauthId)</span>
+<span class="fc" id="L142">                    .oauthEmail(email)</span>
+<span class="fc" id="L143">                    .refreshToken(dto.refreshToken())</span>
+<span class="fc" id="L144">                    .build();</span>
+<span class="fc" id="L145">            log.debug(&quot;naverOauth is built&quot;);</span>
+
+            // kakaoOauth 저장
+<span class="fc" id="L148">            naverOauthRepository.save(naverOauth);</span>
+<span class="fc" id="L149">            log.debug(&quot;naverOauth is saved&quot;);</span>
+
+            // jwt token 발급
+<span class="fc" id="L152">            String userId = user.getId();</span>
+<span class="fc" id="L153">            String userRole = user.getRole().name();</span>
+<span class="fc" id="L154">            String userType = user.getType().name();</span>
+<span class="fc" id="L155">            log.debug(&quot;userId : {}. userRole : {}, userType : {}&quot;, userId, userRole, userType);</span>
+
+<span class="fc" id="L157">            String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);</span>
+<span class="fc" id="L158">            String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);</span>
+<span class="fc" id="L159">            userLoginHistoryService.recordSuccessfulLogin(user);</span>
+<span class="fc" id="L160">            saveRefreshTokenWithTtl(userId, refreshToken);</span>
+<span class="fc" id="L161">            return new JwtResponse(accessToken, refreshToken);</span>
+        }
+    }
+
+    public Map&lt;String, Object&gt; fetchUserInfoFromNaver(String accessToken){
+        // Step 3: 사용자 정보 요청
+<span class="nc" id="L167">        HttpHeaders headers = new HttpHeaders();</span>
+<span class="nc" id="L168">        headers.add(&quot;Authorization&quot;, &quot;Bearer &quot; + accessToken);</span>
+<span class="nc" id="L169">        HttpEntity&lt;Void&gt; request = new HttpEntity&lt;&gt;(headers);</span>
+
+<span class="nc" id="L171">        ResponseEntity&lt;Map&gt; profileResponse = restTemplate.exchange(</span>
+                &quot;https://openapi.naver.com/v1/nid/me&quot;,
+                HttpMethod.GET,
+                request,
+                Map.class
+        );
+
+<span class="nc" id="L178">        Map&lt;String, Object&gt; responseBody = profileResponse.getBody();</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">        assert responseBody != null;</span>
+<span class="nc" id="L180">        return (Map&lt;String, Object&gt;) responseBody.get(&quot;response&quot;);</span>
+    }
+
+    private String convertNaverGender(String gender) {
+<span class="pc bpc" id="L184" title="1 of 4 branches missed.">        if (gender == null || gender.isBlank()) {</span>
+<span class="fc" id="L185">            return null;</span>
+        }
+<span class="pc bpc" id="L187" title="1 of 2 branches missed.">        return gender.equalsIgnoreCase(&quot;M&quot;) ? &quot;male&quot; : &quot;female&quot;;</span>
+    }
+
+
+    /**
+     * jwt token 발급 후 쿠키에 저장하는 메소드
+     * **/
+    public void generateJwtTokenAndPutInCookie(HttpServletResponse httpServletResponse, String userId, String userRole, String userType){
+        // jwt 토큰 생성
+<span class="nc" id="L196">        String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);</span>
+<span class="nc" id="L197">        String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);</span>
+<span class="nc" id="L198">        log.debug(&quot;accessToken : {}, refreshToken : {}&quot;, accessToken, refreshToken);</span>
+
+<span class="nc" id="L200">        saveRefreshTokenWithTtl(userId, refreshToken);</span>
+
+        // 쿠키에 토큰 추가
+<span class="nc" id="L203">        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookieUtil.addAccessTokenCookie(accessToken).toString());</span>
+<span class="nc" id="L204">        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookieUtil.addRefreshTokenCookie(refreshToken).toString());</span>
+<span class="nc" id="L205">        log.debug(&quot;jwt token is put in cookie&quot;);</span>
+<span class="nc" id="L206">    }</span>
+
+    private void saveRefreshTokenWithTtl(String userId, String refreshToken) {
+<span class="fc" id="L209">        stringRedisTemplate.opsForValue().set(</span>
+<span class="fc" id="L210">                jwtUtil.toRedisRefreshTokenKey(userId),</span>
+                refreshToken,
+<span class="fc" id="L212">                Duration.ofMillis(jwtUtil.getRefreshTokenExpirationTime())</span>
+        );
+<span class="fc" id="L214">        log.debug(&quot;RefreshToken Saved. UserId : {}, key : {}&quot;, userId, jwtUtil.toRedisRefreshTokenKey(userId));</span>
+<span class="fc" id="L215">    }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

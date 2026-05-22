@@ -1,0 +1,552 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BoardService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.board.service</a> &gt; <span class="el_source">BoardService.java</span></div><h1>BoardService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.board.service;
+
+import com.project.ds_helper.common.dto.request.S3ImageUploadRequestDto;
+import com.project.ds_helper.common.dto.response.CursorResponseDto;
+import com.project.ds_helper.common.dto.response.PageResponseDto;
+import com.project.ds_helper.common.util.UserUtil;
+import com.project.ds_helper.domain.board.dto.request.CreateBoardReqDto;
+import com.project.ds_helper.domain.board.dto.request.UpdateBoardRequestDto;
+import com.project.ds_helper.domain.board.dto.response.CreateBoardResponseDto;
+import com.project.ds_helper.domain.board.dto.response.GetBoardByIdResponseDto;
+import com.project.ds_helper.domain.board.dto.response.GetBoardsByCategoryResponseDto;
+import com.project.ds_helper.domain.board.dto.response.GetMyBoardsResponseDto;
+import com.project.ds_helper.domain.board.entity.Board;
+import com.project.ds_helper.domain.board.entity.BoardImage;
+import com.project.ds_helper.domain.board.enums.BoardCategory;
+import com.project.ds_helper.domain.board.repository.BoardImageRepository;
+import com.project.ds_helper.domain.board.repository.BoardLikeRepository;
+import com.project.ds_helper.domain.board.repository.BoardRepository;
+import com.project.ds_helper.domain.board.repository.BoardScrapRepository;
+import com.project.ds_helper.domain.comment.repository.CommentRepository;
+import com.project.ds_helper.domain.post.util.ImageCompressionUtil;
+import com.project.ds_helper.domain.post.util.ImageUtil;
+import com.project.ds_helper.domain.post.util.S3Util;
+import com.project.ds_helper.domain.user.entity.User;
+import com.project.ds_helper.domain.user.enums.UserRole;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+@Service
+<span class="fc" id="L48">@Slf4j</span>
+@RequiredArgsConstructor
+@Transactional
+public class BoardService {
+
+    private static final int MAX_BOARD_IMAGE_COUNT = 2;
+
+    private final UserUtil userUtil;
+    private final ImageCompressionUtil imageCompressionUtil;
+    private final ImageUtil imageUtil;
+    private final S3Util s3Util;
+    private final BoardRepository boardRepository;
+    private final BoardImageRepository boardImageRepository;
+    private final BoardLikeRepository boardLikeRepository;
+    private final BoardScrapRepository boardScrapRepository;
+    private final CommentRepository commentRepository;
+
+    public CreateBoardResponseDto createBoard(Authentication authentication, @Valid CreateBoardReqDto dto, List&lt;MultipartFile&gt; images) throws IOException {
+<span class="fc bfc" id="L66" title="All 2 branches covered.">        if (images == null) {</span>
+<span class="fc" id="L67">            images = List.of();</span>
+        }
+
+<span class="fc" id="L70">        log.debug(&quot;BoardService.createBoard started. title={}, category={}, imageCount={}&quot;,</span>
+<span class="fc" id="L71">                dto.getTitle(), dto.getCategory(), images.size());</span>
+<span class="fc" id="L72">        User user = userUtil.findUserById(userUtil.extractUserId(authentication));</span>
+<span class="fc" id="L73">        validateImageCount(images.size());</span>
+
+<span class="fc" id="L75">        Board newBoard = Board.builder()</span>
+<span class="fc" id="L76">                .user(user)</span>
+<span class="fc" id="L77">                .title(dto.getTitle())</span>
+<span class="fc" id="L78">                .content(dto.getContent())</span>
+<span class="fc" id="L79">                .category(resolveBoardCategory(dto.getCategory()))</span>
+<span class="fc" id="L80">                .build();</span>
+<span class="fc" id="L81">        boardRepository.save(newBoard);</span>
+<span class="fc" id="L82">        log.debug(&quot;BoardService.createBoard board saved. boardId={}, userId={}&quot;, newBoard.getId(), user.getId());</span>
+
+<span class="fc" id="L84">        List&lt;String&gt; uploadedS3Keys = new ArrayList&lt;&gt;();</span>
+
+        try {
+<span class="fc" id="L87">            ImageUploadBatch uploadBatch = prepareBoardImages(newBoard, images, uploadedS3Keys);</span>
+<span class="fc" id="L88">            persistBoardImages(uploadBatch);</span>
+<span class="fc" id="L89">            log.debug(&quot;BoardService.createBoard completed. boardId={}, uploadedImageCount={}&quot;,</span>
+<span class="fc" id="L90">                    newBoard.getId(), uploadBatch.boardImages().size());</span>
+<span class="fc" id="L91">            List&lt;String&gt; imageUrls = uploadBatch.boardImages().stream()</span>
+<span class="fc" id="L92">                    .map(BoardImage::getS3Key)</span>
+<span class="fc" id="L93">                    .map(s3Util::toS3UrlByS3Key)</span>
+<span class="fc" id="L94">                    .toList();</span>
+<span class="fc bfc" id="L95" title="All 2 branches covered.">            String createdAt = newBoard.getCreatedAt() == null ? null : newBoard.getCreatedAt().toString();</span>
+<span class="fc" id="L96">            return new CreateBoardResponseDto(</span>
+<span class="fc" id="L97">                    newBoard.getId(),</span>
+<span class="fc" id="L98">                    newBoard.getTitle(),</span>
+<span class="fc" id="L99">                    newBoard.getContent(),</span>
+<span class="fc" id="L100">                    newBoard.getUser().getName(),</span>
+<span class="fc" id="L101">                    newBoard.getUser().getProfileImageUrl(),</span>
+<span class="fc" id="L102">                    newBoard.getViewCount(),</span>
+<span class="fc" id="L103">                    newBoard.getLikeCount(),</span>
+<span class="fc" id="L104">                    newBoard.getCommentCount(),</span>
+                    false,
+                    false,
+                    imageUrls,
+                    createdAt
+            );
+<span class="fc" id="L110">        } catch (Exception e) {</span>
+<span class="fc" id="L111">            log.debug(&quot;BoardService.createBoard failed. boardId={}, uploadedKeyCount={}, errorType={}&quot;,</span>
+<span class="fc" id="L112">                    newBoard.getId(), uploadedS3Keys.size(), e.getClass().getSimpleName());</span>
+<span class="fc" id="L113">            rollbackUploadedImages(uploadedS3Keys);</span>
+<span class="fc" id="L114">            throw rethrowBoardWriteException(e);</span>
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public GetBoardsByCategoryResponseDto getBoardsByCategory(
+            Authentication authentication,
+            String category,
+            String keyword,
+            int page,
+            int size,
+            String sort,
+            String sortBy
+    ) {
+<span class="fc" id="L128">        log.debug(&quot;BoardService.getBoardsByCategory started. category={}, keyword={}, page={}, size={}, sort={}, sortBy={}&quot;,</span>
+<span class="fc" id="L129">                category, keyword, page, size, sort, sortBy);</span>
+
+<span class="fc" id="L131">        Pageable pageable = PageRequest.of(page, size, resolveSort(sort, sortBy));</span>
+<span class="fc" id="L132">        Page&lt;Board&gt; boards = findBoardsByCategoryAndKeyword(category, keyword, pageable);</span>
+<span class="fc" id="L133">        log.debug(&quot;BoardService.getBoardsByCategory boards fetched. boardCount={}, totalElements={}&quot;,</span>
+<span class="fc" id="L134">                boards.getContent().size(), boards.getTotalElements());</span>
+
+<span class="fc" id="L136">        return buildBoardListResponse(authentication, boards);</span>
+    }
+
+    private GetBoardsByCategoryResponseDto buildBoardListResponse(Authentication authentication, Page&lt;Board&gt; boards) {
+
+<span class="fc" id="L141">        List&lt;String&gt; boardIds = boards.getContent().stream().map(Board::getId).toList();</span>
+<span class="fc bfc" id="L142" title="All 4 branches covered.">        Set&lt;String&gt; likedBoardIds = !hasAuthenticatedUser(authentication) || boardIds.isEmpty()</span>
+<span class="fc" id="L143">                ? Set.of()</span>
+<span class="fc" id="L144">                : new HashSet&lt;&gt;(boardLikeRepository.findLikedBoardIdsByUserIdAndBoardIds(</span>
+<span class="fc" id="L145">                        userUtil.extractUserId(authentication),</span>
+                        boardIds
+                ));
+<span class="fc bfc" id="L148" title="All 2 branches covered.">        List&lt;BoardImage&gt; boardImages = boardIds.isEmpty()</span>
+<span class="fc" id="L149">                ? List.of()</span>
+<span class="fc" id="L150">                : boardImageRepository.findBoardThumbnailsByBoardIds(boardIds);</span>
+
+<span class="fc" id="L152">        HashMap&lt;String, String&gt; thumbnails = buildThumbnailMap(boardImages);</span>
+<span class="fc" id="L153">        List&lt;GetBoardsByCategoryResponseDto.Board&gt; boardsDto = boards.getContent().stream()</span>
+<span class="fc" id="L154">                .map(board -&gt; GetBoardsByCategoryResponseDto.Board.toBoard(</span>
+                        board,
+<span class="fc" id="L156">                        toVisibleCommentCount(board.getId()),</span>
+<span class="fc" id="L157">                        likedBoardIds.contains(board.getId()),</span>
+<span class="fc" id="L158">                        thumbnails.get(board.getId())</span>
+                ))
+<span class="fc" id="L160">                .toList();</span>
+<span class="fc" id="L161">        log.debug(&quot;BoardService.buildBoardListResponse completed. responseBoardCount={}, thumbnailCount={}&quot;,</span>
+<span class="fc" id="L162">                boardsDto.size(), thumbnails.size());</span>
+
+<span class="fc" id="L164">        return new GetBoardsByCategoryResponseDto(boardsDto, PageResponseDto.toDto(boards));</span>
+    }
+
+    public GetBoardByIdResponseDto getBoardById(Authentication authentication, String boardId) {
+<span class="fc" id="L168">        log.debug(&quot;BoardService.getBoardById started. boardId={}&quot;, boardId);</span>
+
+<span class="fc" id="L170">        Board board = findActiveBoardById(boardId);</span>
+<span class="fc" id="L171">        log.debug(&quot;BoardService.getBoardById board loaded. boardId={}, isAuthenticatedUser={}&quot;, boardId, hasAuthenticatedUser(authentication));</span>
+
+<span class="fc" id="L173">        boolean isLiked = false;</span>
+<span class="fc" id="L174">        boolean isScrapped = false;</span>
+<span class="fc bfc" id="L175" title="All 2 branches covered.">        if (hasAuthenticatedUser(authentication)) {</span>
+<span class="fc" id="L176">            String userId = userUtil.extractUserId(authentication);</span>
+<span class="fc" id="L177">            isLiked = boardLikeRepository.existsByUser_IdAndBoard_Id(userId, boardId);</span>
+<span class="fc" id="L178">            isScrapped = boardScrapRepository.existsByUser_IdAndBoard_Id(userId, boardId);</span>
+        }
+<span class="fc" id="L180">        List&lt;String&gt; boardImageUrls = toImageUrls(boardImageRepository.findByBoard_Id(boardId));</span>
+<span class="fc" id="L181">        log.debug(&quot;BoardService.getBoardById board state resolved. boardId={}, isLiked={}, isScrapped={}, imageCount={}&quot;,</span>
+<span class="fc" id="L182">                boardId, isLiked, isScrapped, boardImageUrls.size());</span>
+
+<span class="fc" id="L184">        boardRepository.increaseViewCount(boardId);</span>
+<span class="fc" id="L185">        board.increaseViewCount();</span>
+<span class="fc" id="L186">        log.debug(&quot;BoardService.getBoardById completed. boardId={}, viewCount={}&quot;, boardId, board.getViewCount());</span>
+
+<span class="fc" id="L188">        return GetBoardByIdResponseDto.toDto(</span>
+                board,
+<span class="fc" id="L190">                toVisibleCommentCount(boardId),</span>
+                isLiked,
+                isScrapped,
+                boardImageUrls
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public CursorResponseDto&lt;GetMyBoardsResponseDto&gt; getMyBoards(
+            Authentication authentication,
+            LocalDateTime cursorTime,
+            String cursorId,
+            int size
+    ) {
+<span class="fc" id="L204">        validateCursor(cursorTime, cursorId);</span>
+<span class="fc" id="L205">        String userId = userUtil.extractUserId(authentication);</span>
+<span class="fc" id="L206">        Pageable pageable = PageRequest.of(0, size + 1);</span>
+
+<span class="fc" id="L208">        List&lt;Board&gt; boards = boardRepository.findMyBoardsWithCursor(userId, cursorTime, cursorId, pageable);</span>
+<span class="fc bfc" id="L209" title="All 2 branches covered.">        boolean hasNext = boards.size() &gt; size;</span>
+<span class="fc bfc" id="L210" title="All 2 branches covered.">        if (hasNext) {</span>
+<span class="fc" id="L211">            boards = boards.subList(0, size);</span>
+        }
+
+<span class="fc" id="L214">        List&lt;String&gt; boardIds = boards.stream().map(Board::getId).toList();</span>
+<span class="fc bfc" id="L215" title="All 2 branches covered.">        Set&lt;String&gt; likedBoardIds = boardIds.isEmpty()</span>
+<span class="fc" id="L216">                ? Set.of()</span>
+<span class="fc" id="L217">                : new HashSet&lt;&gt;(boardLikeRepository.findLikedBoardIdsByUserIdAndBoardIds(userId, boardIds));</span>
+<span class="fc bfc" id="L218" title="All 2 branches covered.">        List&lt;BoardImage&gt; boardImages = boardIds.isEmpty()</span>
+<span class="fc" id="L219">                ? List.of()</span>
+<span class="fc" id="L220">                : boardImageRepository.findBoardThumbnailsByBoardIds(boardIds);</span>
+<span class="fc" id="L221">        HashMap&lt;String, String&gt; thumbnails = buildThumbnailMap(boardImages);</span>
+
+<span class="fc" id="L223">        List&lt;GetMyBoardsResponseDto&gt; content = boards.stream()</span>
+<span class="fc" id="L224">                .map(board -&gt; GetMyBoardsResponseDto.from(</span>
+                        board,
+<span class="fc" id="L226">                        toVisibleCommentCount(board.getId()),</span>
+<span class="fc" id="L227">                        likedBoardIds.contains(board.getId()),</span>
+<span class="fc" id="L228">                        thumbnails.get(board.getId())</span>
+                ))
+<span class="fc" id="L230">                .toList();</span>
+
+<span class="fc" id="L232">        LocalDateTime nextCursorTime = null;</span>
+<span class="fc" id="L233">        String nextCursorId = null;</span>
+<span class="fc bfc" id="L234" title="All 2 branches covered.">        if (!content.isEmpty()) {</span>
+<span class="fc" id="L235">            Board lastBoard = boards.get(boards.size() - 1);</span>
+<span class="fc" id="L236">            nextCursorTime = lastBoard.getCreatedAt();</span>
+<span class="fc" id="L237">            nextCursorId = lastBoard.getId();</span>
+        }
+
+<span class="fc" id="L240">        return CursorResponseDto.toDto(content, nextCursorTime, nextCursorId, hasNext);</span>
+    }
+
+
+
+    public void deleteBoard(Authentication authentication, String boardId) {
+<span class="fc" id="L246">        log.debug(&quot;BoardService.deleteBoard started. boardId={}&quot;, boardId);</span>
+
+<span class="fc" id="L248">        String userId = userUtil.extractUserId(authentication);</span>
+<span class="fc" id="L249">        User requester = userUtil.findUserById(userId);</span>
+<span class="fc" id="L250">        Board board = findBoardById(boardId);</span>
+<span class="fc" id="L251">        validateBoardOwner(board, userId, requester, &quot;Delete&quot;);</span>
+
+<span class="fc" id="L253">        board.softDelete();</span>
+<span class="fc" id="L254">        log.debug(&quot;BoardService.deleteBoard completed. boardId={}, requesterId={}&quot;, boardId, userId);</span>
+<span class="fc" id="L255">    }</span>
+
+    public void updateBoard(Authentication authentication, @Valid UpdateBoardRequestDto dto, List&lt;MultipartFile&gt; newImages) throws IOException {
+<span class="fc" id="L258">        String boardId = dto.getBoardId();</span>
+<span class="fc" id="L259">        log.debug(&quot;BoardService.updateBoard started. boardId={}, keepImageCount={}, newImageCount={}&quot;,</span>
+                boardId,
+<span class="fc bfc" id="L261" title="All 2 branches covered.">                dto.getKeepImageUrls() == null ? 0 : dto.getKeepImageUrls().size(),</span>
+<span class="fc" id="L262">                newImages.size());</span>
+
+        // 1. 수정 대상 게시글을 조회하고 작성자 권한을 검증한다.
+<span class="fc" id="L265">        Board board = loadBoardForUpdate(authentication, boardId);</span>
+
+        // 2. 제목/내용 수정처럼 이미지와 무관한 본문 변경을 먼저 반영한다.
+<span class="fc" id="L268">        applyBoardUpdate(board, dto);</span>
+
+        // 3. 어떤 이미지를 유지/삭제/추가할지 사전 계획을 계산한다.
+<span class="fc" id="L271">        BoardImageUpdatePlan updatePlan = createBoardImageUpdatePlan(boardId, dto.getKeepImageUrls(), newImages);</span>
+
+<span class="fc" id="L273">        List&lt;String&gt; uploadedS3Keys = new ArrayList&lt;&gt;();</span>
+
+        try {
+            // 4. 삭제 대상 이미지를 정리하고 새 이미지를 업로드/저장한다.
+<span class="fc" id="L277">            executeBoardImageUpdate(board, newImages, updatePlan, uploadedS3Keys);</span>
+<span class="fc" id="L278">            log.debug(&quot;BoardService.updateBoard completed. boardId={}, uploadedImageCount={}&quot;,</span>
+<span class="fc" id="L279">                    boardId, updatePlan.newImageCount());</span>
+<span class="fc" id="L280">        } catch (Exception e) {</span>
+<span class="fc" id="L281">            log.debug(&quot;BoardService.updateBoard failed. boardId={}, uploadedKeyCount={}, errorType={}&quot;,</span>
+<span class="fc" id="L282">                    boardId, uploadedS3Keys.size(), e.getClass().getSimpleName());</span>
+
+            // 5. 업로드 도중 실패했다면 이미 올라간 S3 파일만 롤백한다.
+<span class="fc" id="L285">            rollbackUploadedImages(uploadedS3Keys);</span>
+<span class="fc" id="L286">            throw rethrowBoardWriteException(e);</span>
+<span class="fc" id="L287">        }</span>
+<span class="fc" id="L288">    }</span>
+
+    private Board loadBoardForUpdate(Authentication authentication, String boardId) {
+<span class="fc" id="L291">        String userId = userUtil.extractUserId(authentication);</span>
+<span class="fc" id="L292">        log.debug(&quot;BoardService.loadBoardForUpdate started. boardId={}, requesterId={}&quot;, boardId, userId);</span>
+
+<span class="fc" id="L294">        Board board = findActiveBoardById(boardId);</span>
+<span class="fc" id="L295">        validateBoardOwner(board, userId, &quot;Update&quot;);</span>
+
+<span class="fc" id="L297">        log.debug(&quot;BoardService.loadBoardForUpdate completed. boardId={}, writerId={}, requesterId={}&quot;,</span>
+<span class="fc" id="L298">                boardId, board.getUser().getId(), userId);</span>
+<span class="fc" id="L299">        return board;</span>
+    }
+
+    private void applyBoardUpdate(Board board, UpdateBoardRequestDto dto) {
+<span class="fc" id="L303">        log.debug(&quot;BoardService.applyBoardUpdate started. boardId={}, newTitleLength={}, newContentLength={}&quot;,</span>
+<span class="fc" id="L304">                board.getId(),</span>
+<span class="fc bfc" id="L305" title="All 2 branches covered.">                dto.getTitle() == null ? 0 : dto.getTitle().length(),</span>
+<span class="fc bfc" id="L306" title="All 2 branches covered.">                dto.getContent() == null ? 0 : dto.getContent().length());</span>
+<span class="fc" id="L307">        board.update(dto.getTitle(), dto.getContent());</span>
+<span class="fc" id="L308">        log.debug(&quot;BoardService.applyBoardUpdate completed. boardId={}&quot;, board.getId());</span>
+<span class="fc" id="L309">    }</span>
+
+    private BoardImageUpdatePlan createBoardImageUpdatePlan(String boardId, List&lt;String&gt; keepImageUrls, List&lt;MultipartFile&gt; newImages) {
+<span class="fc" id="L312">        log.debug(&quot;BoardService.createBoardImageUpdatePlan started. boardId={}, keepImageCount={}, newImageCount={}&quot;,</span>
+                boardId,
+<span class="fc bfc" id="L314" title="All 2 branches covered.">                keepImageUrls == null ? 0 : keepImageUrls.size(),</span>
+<span class="fc" id="L315">                newImages.size());</span>
+<span class="fc" id="L316">        List&lt;BoardImage&gt; existingImages = boardImageRepository.findByBoard_Id(boardId);</span>
+<span class="fc" id="L317">        Set&lt;String&gt; keepUrls = resolveKeepUrls(keepImageUrls);</span>
+<span class="fc" id="L318">        List&lt;BoardImage&gt; deleteTargets = findDeleteTargets(existingImages, keepUrls);</span>
+
+<span class="fc" id="L320">        int remainCount = existingImages.size() - deleteTargets.size();</span>
+<span class="fc" id="L321">        validateImageCount(remainCount + newImages.size());</span>
+<span class="fc" id="L322">        log.debug(&quot;BoardService.updateBoard image plan resolved. boardId={}, existingImageCount={}, deleteTargetCount={}, remainCount={}&quot;,</span>
+<span class="fc" id="L323">                boardId, existingImages.size(), deleteTargets.size(), remainCount);</span>
+<span class="fc" id="L324">        return new BoardImageUpdatePlan(deleteTargets, newImages.size());</span>
+    }
+
+    private void executeBoardImageUpdate(
+            Board board,
+            List&lt;MultipartFile&gt; newImages,
+            BoardImageUpdatePlan updatePlan,
+            List&lt;String&gt; uploadedS3Keys
+    ) throws IOException {
+<span class="fc" id="L333">        log.debug(&quot;BoardService.executeBoardImageUpdate started. boardId={}, deleteTargetCount={}, newImageCount={}&quot;,</span>
+<span class="fc" id="L334">                board.getId(), updatePlan.deleteTargets().size(), updatePlan.newImageCount());</span>
+<span class="fc" id="L335">        deleteBoardImages(updatePlan.deleteTargets());</span>
+<span class="fc" id="L336">        ImageUploadBatch uploadBatch = prepareBoardImages(board, newImages, uploadedS3Keys);</span>
+<span class="fc" id="L337">        persistBoardImages(uploadBatch);</span>
+<span class="fc" id="L338">        log.debug(&quot;BoardService.executeBoardImageUpdate completed. boardId={}, persistedImageCount={}, uploadedKeyCount={}&quot;,</span>
+<span class="fc" id="L339">                board.getId(), uploadBatch.boardImages().size(), uploadedS3Keys.size());</span>
+<span class="fc" id="L340">    }</span>
+
+    private Set&lt;String&gt; resolveKeepUrls(List&lt;String&gt; keepImageUrls) {
+<span class="fc bfc" id="L343" title="All 2 branches covered.">        Set&lt;String&gt; keepUrls = keepImageUrls == null ? Set.of() : Set.copyOf(keepImageUrls);</span>
+<span class="fc" id="L344">        log.debug(&quot;BoardService.resolveKeepUrls completed. keepUrlCount={}&quot;, keepUrls.size());</span>
+<span class="fc" id="L345">        return keepUrls;</span>
+    }
+
+    private Board findActiveBoardById(String boardId) {
+<span class="fc" id="L349">        Board board = findBoardById(boardId);</span>
+<span class="fc bfc" id="L350" title="All 2 branches covered.">        if (board.isDeleted()) {</span>
+<span class="fc" id="L351">            log.debug(&quot;BoardService.findActiveBoardById found deleted board. boardId={}&quot;, boardId);</span>
+<span class="fc" id="L352">            throw new IllegalStateException(&quot;Deleted Board&quot;);</span>
+        }
+<span class="fc" id="L354">        return board;</span>
+    }
+
+    private void validateBoardOwner(Board board, String requesterId, User requester, String action) {
+<span class="fc bfc" id="L358" title="All 2 branches covered.">        if (requester.getRole() == UserRole.ADMIN) {</span>
+<span class="fc" id="L359">            return;</span>
+        }
+
+<span class="fc" id="L362">        String writerId = board.getUser().getId();</span>
+<span class="fc bfc" id="L363" title="All 2 branches covered.">        if (!writerId.equals(requesterId)) {</span>
+<span class="fc" id="L364">            log.debug(&quot;BoardService.validateBoardOwner denied. boardId={}, action={}, writerId={}, requesterId={}&quot;,</span>
+<span class="fc" id="L365">                    board.getId(), action, writerId, requesterId);</span>
+<span class="fc" id="L366">            throw new IllegalStateException(</span>
+<span class="fc" id="L367">                    String.format(&quot;No Authority To %s Board. writerId : %s, requester : %s&quot;, action, writerId, requesterId)</span>
+            );
+        }
+<span class="fc" id="L370">    }</span>
+
+    private void validateBoardOwner(Board board, String requesterId, String action) {
+<span class="fc" id="L373">        String writerId = board.getUser().getId();</span>
+<span class="fc bfc" id="L374" title="All 2 branches covered.">        if (!writerId.equals(requesterId)) {</span>
+<span class="fc" id="L375">            log.debug(&quot;BoardService.validateBoardOwner denied. boardId={}, action={}, writerId={}, requesterId={}&quot;,</span>
+<span class="fc" id="L376">                    board.getId(), action, writerId, requesterId);</span>
+<span class="fc" id="L377">            throw new IllegalStateException(</span>
+<span class="fc" id="L378">                    String.format(&quot;No Authority To %s Board. writerId : %s, requester : %s&quot;, action, writerId, requesterId)</span>
+            );
+        }
+<span class="fc" id="L381">    }</span>
+
+    private String resolveBoardCategory(String category) {
+<span class="fc" id="L384">        String resolvedCategory = BoardCategory.findByKorean(category).name();</span>
+<span class="fc" id="L385">        log.debug(&quot;BoardService.resolveBoardCategory resolved. inputCategory={}, resolvedCategory={}&quot;, category, resolvedCategory);</span>
+<span class="fc" id="L386">        return resolvedCategory;</span>
+    }
+
+    private boolean hasAuthenticatedUser(Authentication authentication) {
+<span class="fc bfc" id="L390" title="All 2 branches covered.">        return authentication != null</span>
+<span class="fc bfc" id="L391" title="All 2 branches covered.">                &amp;&amp; authentication.isAuthenticated()</span>
+<span class="fc bfc" id="L392" title="All 2 branches covered.">                &amp;&amp; authentication.getPrincipal() != null</span>
+<span class="fc bfc" id="L393" title="All 2 branches covered.">                &amp;&amp; !&quot;anonymousUser&quot;.equals(authentication.getPrincipal());</span>
+    }
+
+    private void validateCursor(LocalDateTime cursorTime, String cursorId) {
+<span class="fc bfc" id="L397" title="All 6 branches covered.">        if ((cursorTime == null) != (cursorId == null)) {</span>
+<span class="fc" id="L398">            throw new IllegalArgumentException(&quot;cursorTime and cursorId must be provided together&quot;);</span>
+        }
+<span class="fc" id="L400">    }</span>
+
+    private Page&lt;Board&gt; findBoardsByCategoryAndKeyword(String category, String keyword, Pageable pageable) {
+<span class="fc bfc" id="L403" title="All 4 branches covered.">        boolean hasKeyword = keyword != null &amp;&amp; !keyword.isBlank();</span>
+
+<span class="fc bfc" id="L405" title="All 2 branches covered.">        if (isAllCategory(category)) {</span>
+<span class="fc bfc" id="L406" title="All 2 branches covered.">            return hasKeyword</span>
+<span class="fc" id="L407">                    ? boardRepository.findByTitleContainingAndIsDeletedFalse(keyword, pageable)</span>
+<span class="fc" id="L408">                    : boardRepository.findByIsDeletedFalse(pageable);</span>
+        }
+
+<span class="fc" id="L411">        String resolvedCategory = resolveBoardCategory(category);</span>
+<span class="fc bfc" id="L412" title="All 2 branches covered.">        return hasKeyword</span>
+<span class="fc" id="L413">                ? boardRepository.findByCategoryAndTitleContainingAndIsDeletedFalse(resolvedCategory, keyword, pageable)</span>
+<span class="fc" id="L414">                : boardRepository.findByCategoryAndIsDeletedFalse(resolvedCategory, pageable);</span>
+    }
+
+    private boolean isAllCategory(String category) {
+<span class="fc" id="L418">        return &quot;전체&quot;.equals(category);</span>
+    }
+
+    private Sort resolveSort(String sort, String sortBy) {
+<span class="fc bfc" id="L422" title="All 2 branches covered.">        Sort.Direction direction = sort.equalsIgnoreCase(&quot;desc&quot;) ? Sort.Direction.DESC : Sort.Direction.ASC;</span>
+<span class="fc" id="L423">        return Sort.by(direction, sortBy);</span>
+    }
+
+    private void validateImageCount(int imageCount) {
+<span class="fc" id="L427">        log.debug(&quot;BoardService.validateImageCount called. imageCount={}, maxImageCount={}&quot;, imageCount, MAX_BOARD_IMAGE_COUNT);</span>
+<span class="fc bfc" id="L428" title="All 2 branches covered.">        if (imageCount &gt; MAX_BOARD_IMAGE_COUNT) {</span>
+<span class="fc" id="L429">            throw new IllegalArgumentException(String.format(&quot;Images Size Exceed Limitation : %d&quot;, imageCount));</span>
+        }
+<span class="fc" id="L431">    }</span>
+
+    private HashMap&lt;String, String&gt; buildThumbnailMap(List&lt;BoardImage&gt; boardImages) {
+<span class="fc" id="L434">        HashMap&lt;String, String&gt; thumbnails = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L435" title="All 2 branches covered.">        for (BoardImage boardImage : boardImages) {</span>
+<span class="fc" id="L436">            thumbnails.putIfAbsent(boardImage.getBoard().getId(), s3Util.toS3UrlByS3Key(boardImage.getS3Key()));</span>
+<span class="fc" id="L437">        }</span>
+<span class="fc" id="L438">        return thumbnails;</span>
+    }
+
+    private List&lt;String&gt; toImageUrls(List&lt;BoardImage&gt; boardImages) {
+<span class="fc bfc" id="L442" title="All 2 branches covered.">        if (boardImages.isEmpty()) {</span>
+<span class="fc" id="L443">            return List.of();</span>
+        }
+
+<span class="fc" id="L446">        List&lt;String&gt; imageUrls = new ArrayList&lt;&gt;(boardImages.size());</span>
+<span class="fc bfc" id="L447" title="All 2 branches covered.">        for (BoardImage boardImage : boardImages) {</span>
+<span class="fc" id="L448">            imageUrls.add(s3Util.toS3UrlByS3Key(boardImage.getS3Key()));</span>
+<span class="fc" id="L449">        }</span>
+<span class="fc" id="L450">        return imageUrls;</span>
+    }
+
+    private List&lt;BoardImage&gt; findDeleteTargets(List&lt;BoardImage&gt; existingImages, Set&lt;String&gt; keepUrls) {
+<span class="fc" id="L454">        return existingImages.stream()</span>
+<span class="fc bfc" id="L455" title="All 2 branches covered.">                .filter(image -&gt; !keepUrls.contains(s3Util.toS3UrlByS3Key(image.getS3Key())))</span>
+<span class="fc" id="L456">                .toList();</span>
+    }
+
+    private void deleteBoardImages(List&lt;BoardImage&gt; deleteTargets) {
+<span class="fc bfc" id="L460" title="All 2 branches covered.">        if (deleteTargets.isEmpty()) {</span>
+<span class="fc" id="L461">            log.debug(&quot;BoardService.deleteBoardImages skipped. deleteTargetCount=0&quot;);</span>
+<span class="fc" id="L462">            return;</span>
+        }
+
+<span class="fc" id="L465">        log.debug(&quot;BoardService.deleteBoardImages deleting. deleteTargetCount={}&quot;, deleteTargets.size());</span>
+<span class="fc" id="L466">        boardImageRepository.deleteAllInBatch(deleteTargets);</span>
+<span class="fc" id="L467">        s3Util.deleteImagesByS3Key(deleteTargets.stream().map(BoardImage::getS3Key).toList());</span>
+<span class="fc" id="L468">    }</span>
+
+    private ImageUploadBatch prepareBoardImages(Board board, List&lt;MultipartFile&gt; images, List&lt;String&gt; uploadedS3Keys) throws IOException {
+<span class="fc bfc" id="L471" title="All 2 branches covered.">        if (images.isEmpty()) {</span>
+<span class="fc" id="L472">            log.debug(&quot;BoardService.prepareBoardImages skipped. boardId={}, imageCount=0&quot;, board.getId());</span>
+<span class="fc" id="L473">            return new ImageUploadBatch(List.of(), List.of());</span>
+        }
+
+<span class="fc" id="L476">        log.debug(&quot;BoardService.prepareBoardImages started. boardId={}, imageCount={}&quot;, board.getId(), images.size());</span>
+<span class="fc" id="L477">        List&lt;S3ImageUploadRequestDto&gt; uploadRequests = new ArrayList&lt;&gt;(images.size());</span>
+<span class="fc" id="L478">        List&lt;BoardImage&gt; boardImages = new ArrayList&lt;&gt;(images.size());</span>
+
+<span class="fc bfc" id="L480" title="All 2 branches covered.">        for (MultipartFile image : images) {</span>
+<span class="fc" id="L481">            String storedFilename = imageUtil.toStoredFilename();</span>
+<span class="fc" id="L482">            S3ImageUploadRequestDto compressedImage = imageCompressionUtil.compressImage(image, storedFilename);</span>
+<span class="fc" id="L483">            String contentType = compressedImage.getFileExtension();</span>
+<span class="fc" id="L484">            String s3Key = s3Util.buildS3Key(storedFilename);</span>
+<span class="fc" id="L485">            uploadedS3Keys.add(s3Key);</span>
+<span class="fc" id="L486">            uploadRequests.add(compressedImage);</span>
+<span class="fc" id="L487">            boardImages.add(BoardImage.builder()</span>
+<span class="fc" id="L488">                    .board(board)</span>
+<span class="fc" id="L489">                    .contentType(contentType)</span>
+<span class="fc" id="L490">                    .size(compressedImage.getSize())</span>
+<span class="fc" id="L491">                    .originalName(compressedImage.getOriginalFilename())</span>
+<span class="fc" id="L492">                    .storedName(storedFilename)</span>
+<span class="fc" id="L493">                    .s3Key(s3Key)</span>
+<span class="fc" id="L494">                    .build());</span>
+<span class="fc" id="L495">        }</span>
+
+<span class="fc" id="L497">        log.debug(&quot;BoardService.prepareBoardImages completed. boardId={}, preparedImageCount={}&quot;, board.getId(), boardImages.size());</span>
+<span class="fc" id="L498">        return new ImageUploadBatch(uploadRequests, boardImages);</span>
+    }
+
+    private void persistBoardImages(ImageUploadBatch uploadBatch) throws IOException {
+<span class="fc bfc" id="L502" title="All 2 branches covered.">        if (uploadBatch.boardImages().isEmpty()) {</span>
+<span class="fc" id="L503">            log.debug(&quot;BoardService.persistBoardImages skipped. imageCount=0&quot;);</span>
+<span class="fc" id="L504">            return;</span>
+        }
+
+<span class="fc" id="L507">        log.debug(&quot;BoardService.persistBoardImages started. imageCount={}&quot;, uploadBatch.boardImages().size());</span>
+<span class="fc" id="L508">        boardImageRepository.saveAll(uploadBatch.boardImages());</span>
+<span class="fc" id="L509">        s3Util.uploadImages(uploadBatch.uploadRequests());</span>
+<span class="fc" id="L510">        log.debug(&quot;BoardService.persistBoardImages completed. imageCount={}&quot;, uploadBatch.boardImages().size());</span>
+<span class="fc" id="L511">    }</span>
+
+    private void rollbackUploadedImages(List&lt;String&gt; uploadedS3Keys) {
+<span class="fc bfc" id="L514" title="All 2 branches covered.">        if (!uploadedS3Keys.isEmpty()) {</span>
+<span class="fc" id="L515">            log.debug(&quot;BoardService.rollbackUploadedImages started. uploadedKeyCount={}&quot;, uploadedS3Keys.size());</span>
+<span class="fc" id="L516">            s3Util.deleteImagesByS3Key(uploadedS3Keys);</span>
+        }
+<span class="fc" id="L518">    }</span>
+
+    private RuntimeException rethrowBoardWriteException(Exception e) throws IOException {
+<span class="fc bfc" id="L521" title="All 2 branches covered.">        if (e instanceof IOException ioException) {</span>
+<span class="fc" id="L522">            throw ioException;</span>
+        }
+<span class="fc bfc" id="L524" title="All 2 branches covered.">        if (e instanceof RuntimeException runtimeException) {</span>
+<span class="fc" id="L525">            return runtimeException;</span>
+        }
+<span class="fc" id="L527">        return new RuntimeException(e);</span>
+    }
+
+    public Board findBoardById(String boardId) {
+<span class="fc" id="L531">        log.debug(&quot;BoardService.findBoardById called. boardId={}&quot;, boardId);</span>
+<span class="fc" id="L532">        return boardRepository.findById(boardId)</span>
+<span class="fc" id="L533">                .orElseThrow(() -&gt; new EntityNotFoundException(String.format(&quot;Board Not Found %s&quot;, boardId)));</span>
+    }
+
+    private int toVisibleCommentCount(String boardId) {
+<span class="fc" id="L537">        return Math.toIntExact(commentRepository.countByBoard_IdAndIsDeletedFalse(boardId));</span>
+    }
+
+<span class="fc" id="L540">    private record ImageUploadBatch(</span>
+            List&lt;S3ImageUploadRequestDto&gt; uploadRequests,
+            List&lt;BoardImage&gt; boardImages
+    ) {
+    }
+
+<span class="fc" id="L546">    private record BoardImageUpdatePlan(</span>
+            List&lt;BoardImage&gt; deleteTargets,
+            int newImageCount
+    ) {
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

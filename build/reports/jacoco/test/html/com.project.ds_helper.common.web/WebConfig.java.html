@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WebConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.common.web</a> &gt; <span class="el_source">WebConfig.java</span></div><h1>WebConfig.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.common.web;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+<span class="nc" id="L8">public class WebConfig implements WebMvcConfigurer {</span>
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+<span class="nc" id="L11">        registry.addMapping(&quot;/**&quot;) // 모든 엔드포인트</span>
+<span class="nc" id="L12">                .allowedOrigins(&quot;http://localhost:3000&quot;, &quot;http://127.0.0.1:5500&quot;, &quot;http://localhost:8080&quot;,</span>
+                        &quot;https://test.dshelper.kro.kr&quot;, &quot;https://client.dshelper.kro.kr&quot;,
+                        // 도메인 변경하여 새로 CORS 등록 (dshelper.kr)
+                        &quot;https://www.dshelper.kr&quot;, &quot;https://server.dshelper.kr&quot;) // 허용할 도메인
+<span class="nc" id="L16">                .allowedMethods(&quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;PATCH&quot;, &quot;DELETE&quot;, &quot;OPTIONS&quot;) // 허용할 메서드</span>
+<span class="nc" id="L17">                .allowedHeaders(&quot;*&quot;) // 모든 헤더 허용</span>
+<span class="nc" id="L18">                .allowCredentials(true); // 인증정보 포함 허용</span>
+<span class="nc" id="L19">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

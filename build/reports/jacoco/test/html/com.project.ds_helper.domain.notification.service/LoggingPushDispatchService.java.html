@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LoggingPushDispatchService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.notification.service</a> &gt; <span class="el_source">LoggingPushDispatchService.java</span></div><h1>LoggingPushDispatchService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.notification.service;
+
+import com.project.ds_helper.domain.notification.entity.Notification;
+import com.project.ds_helper.domain.notification.entity.NotificationDelivery;
+import com.project.ds_helper.domain.notification.entity.PushToken;
+import com.project.ds_helper.domain.notification.enums.NotificationDeliveryStatus;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+<span class="nc" id="L15">@Slf4j</span>
+<span class="nc" id="L16">public class LoggingPushDispatchService implements PushDispatchService {</span>
+
+    @Override
+    public List&lt;NotificationDelivery&gt; dispatch(Notification notification, List&lt;PushToken&gt; pushTokens) {
+        // 1. 현재 저장소에는 실제 Push Provider 키 설정이 없으므로 발송 시도 이력만 생성한다.
+<span class="nc bnc" id="L21" title="All 2 branches missed.">        log.debug(&quot;LoggingPushDispatchService.dispatch started. notificationId={}, pushTokenCount={}&quot;, notification.getId(), pushTokens == null ? 0 : pushTokens.size());</span>
+
+<span class="nc bnc" id="L23" title="All 4 branches missed.">        if (pushTokens == null || pushTokens.isEmpty()) {</span>
+<span class="nc" id="L24">            log.debug(&quot;LoggingPushDispatchService.dispatch skipped. no active push tokens&quot;);</span>
+<span class="nc" id="L25">            return List.of();</span>
+        }
+
+        // 2. 각 토큰별로 스킵 이력을 남겨 이후 실제 FCM/APNs 연동 시 교체 가능한 구조를 유지한다.
+<span class="nc" id="L29">        List&lt;NotificationDelivery&gt; deliveries = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L30" title="All 2 branches missed.">        for (PushToken pushToken : pushTokens) {</span>
+<span class="nc" id="L31">            log.debug(</span>
+                    &quot;LoggingPushDispatchService.dispatch building skipped delivery. notificationId={}, pushTokenId={}, platform={}, deviceType={}&quot;,
+<span class="nc" id="L33">                    notification.getId(),</span>
+<span class="nc" id="L34">                    pushToken.getId(),</span>
+<span class="nc" id="L35">                    pushToken.getPlatform(),</span>
+<span class="nc" id="L36">                    pushToken.getDeviceType()</span>
+            );
+
+<span class="nc" id="L39">            deliveries.add(NotificationDelivery.builder()</span>
+<span class="nc" id="L40">                    .notification(notification)</span>
+<span class="nc" id="L41">                    .pushToken(pushToken)</span>
+<span class="nc" id="L42">                    .status(NotificationDeliveryStatus.SKIPPED)</span>
+<span class="nc" id="L43">                    .failureReason(&quot;Push provider integration not configured&quot;)</span>
+<span class="nc" id="L44">                    .sentAt(LocalDateTime.now())</span>
+<span class="nc" id="L45">                    .build());</span>
+<span class="nc" id="L46">        }</span>
+
+<span class="nc" id="L48">        log.debug(&quot;LoggingPushDispatchService.dispatch completed. deliveryCount={}&quot;, deliveries.size());</span>
+<span class="nc" id="L49">        return deliveries;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

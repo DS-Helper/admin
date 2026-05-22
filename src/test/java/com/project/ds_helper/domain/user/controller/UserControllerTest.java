@@ -4,6 +4,7 @@ import com.project.ds_helper.domain.user.dto.request.OauthWithdrawRequestDto;
 import com.project.ds_helper.domain.user.dto.request.UpdateMyInfoRequestDto;
 import com.project.ds_helper.domain.user.dto.response.UserGetSelfInfoAtMyPageResponseDto;
 import com.project.ds_helper.domain.user.dto.response.UserIdentifierResponseDto;
+import com.project.ds_helper.domain.user.dto.response.WithdrawUserResponseDto;
 import com.project.ds_helper.domain.user.service.GoogleOAuthService;
 import com.project.ds_helper.domain.user.service.KakaoOauthService;
 import com.project.ds_helper.domain.user.service.NaverOauthService;
@@ -18,6 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -98,32 +101,41 @@ class UserControllerTest {
     @DisplayName("카카오 OAuth 회원 탈퇴는 서비스에 위임한다")
     void withdrawKakaoOauthUser_delegatesToService() {
         OauthWithdrawRequestDto dto = new OauthWithdrawRequestDto("kakao-access-token");
+        WithdrawUserResponseDto responseDto = new WithdrawUserResponseDto("user-1", LocalDateTime.of(2026, 5, 21, 14, 30));
+        when(kakaoOauthService.withdraw(authentication, dto)).thenReturn(responseDto);
 
-        ResponseEntity<Void> response = userController.withdrawKakaoOauthUser(authentication, dto);
+        ResponseEntity<WithdrawUserResponseDto> response = userController.withdrawKakaoOauthUser(authentication, dto);
 
         verify(kakaoOauthService).withdraw(authentication, dto);
         assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isEqualTo(responseDto);
     }
 
     @Test
     @DisplayName("구글 OAuth 회원 탈퇴는 서비스에 위임한다")
     void withdrawGoogleOauthUser_delegatesToService() {
         OauthWithdrawRequestDto dto = new OauthWithdrawRequestDto("google-access-token");
+        WithdrawUserResponseDto responseDto = new WithdrawUserResponseDto("user-1", LocalDateTime.of(2026, 5, 21, 14, 30));
+        when(googleOAuthService.withdraw(authentication, dto)).thenReturn(responseDto);
 
-        ResponseEntity<Void> response = userController.withdrawGoogleOauthUser(authentication, dto);
+        ResponseEntity<WithdrawUserResponseDto> response = userController.withdrawGoogleOauthUser(authentication, dto);
 
         verify(googleOAuthService).withdraw(authentication, dto);
         assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isEqualTo(responseDto);
     }
 
     @Test
     @DisplayName("네이버 OAuth 회원 탈퇴는 서비스에 위임한다")
     void withdrawNaverOauthUser_delegatesToService() {
         OauthWithdrawRequestDto dto = new OauthWithdrawRequestDto("naver-access-token");
+        WithdrawUserResponseDto responseDto = new WithdrawUserResponseDto("user-1", LocalDateTime.of(2026, 5, 21, 14, 30));
+        when(naverOauthService.withdraw(authentication, dto)).thenReturn(responseDto);
 
-        ResponseEntity<Void> response = userController.withdrawNaverOauthUser(authentication, dto);
+        ResponseEntity<WithdrawUserResponseDto> response = userController.withdrawNaverOauthUser(authentication, dto);
 
         verify(naverOauthService).withdraw(authentication, dto);
         assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isEqualTo(responseDto);
     }
 }

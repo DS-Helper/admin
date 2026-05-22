@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WelfareServiceEntity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.welfare.entity</a> &gt; <span class="el_source">WelfareServiceEntity.java</span></div><h1>WelfareServiceEntity.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.welfare.entity;
+
+import com.project.ds_helper.domain.base.entity.BaseTime;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+
+/**
+ * 복지 혜택 정보 엔티티
+ * 공공데이터 API(창원시 생애주기별 복지서비스 등)에서 수집한 원천 데이터를 저장합니다.
+ */
+@Entity
+@Table(name = &quot;tb_welfare_service&quot;)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Getter
+@Builder
+public class WelfareServiceEntity extends BaseTime {
+
+    @Id
+    @Column(name = &quot;service_id&quot;, length = 50)
+    private String serviceId; // 서비스 식별자 (공공데이터 API의 servId 사용)
+
+    @Column(name = &quot;service_name&quot;, nullable = false, length = 255)
+    private String serviceName; // 혜택명 (servNm)
+
+    @Column(name = &quot;city_province_name&quot;, length = 50)
+    private String cityProvinceName; // 수집 요청 기준 시도명(ctpvNm)
+
+    @Column(name = &quot;district_name&quot;, length = 50)
+    private String districtName; // 수집 요청 기준 시군구명(sggNm)
+
+    @Column(name = &quot;service_summary&quot;, length = 1000)
+    private String serviceSummary; // 혜택 한 줄 요약 (servDgst)
+
+    @Column(name = &quot;jurisdiction_ministry_name&quot;, length = 100)
+    private String jurisdictionMinistryName; // 소관부처/기관명 (jurMnstNm)
+
+    @Column(name = &quot;target_audience_array&quot;, length = 500)
+    private String targetAudienceArray; // 지원대상 분류 코드들 (trgterIndvdlArray)
+
+    @Column(name = &quot;life_cycle_array&quot;, length = 255)
+    private String lifeCycleArray; // 생애주기 분류 코드들 (lifeArray)
+
+    @Column(name = &quot;interest_theme_array&quot;, length = 255)
+    private String interestThemeArray; // 관심주제(필요한 도움 유형) 분류 코드들 (intrsThemaArray)
+
+    @Column(name = &quot;service_provision_name&quot;, length = 100)
+    private String serviceProvisionName; // 제공방식 (srvPvsnNm)
+
+    @Column(name = &quot;representative_contact&quot;, length = 100)
+    private String representativeContact; // 문의처 (rprsCtadr)
+
+    @Column(name = &quot;last_modified_date&quot;, length = 8)
+    private String lastModifiedDate; // 공공데이터포털 목록 응답의 마지막 수정일(lastModYmd)
+
+    @Column(name = &quot;target_detail_content&quot;, columnDefinition = &quot;TEXT&quot;)
+    private String targetDetailContent; // 상세 지원대상 (상세 API: tgtrDtlCn)
+
+    @Column(name = &quot;benefit_content&quot;, columnDefinition = &quot;TEXT&quot;)
+    private String benefitContent; // 지원 내용 (상세 API: alwServCn)
+
+    @Column(name = &quot;selection_criteria_content&quot;, columnDefinition = &quot;TEXT&quot;)
+    private String selectionCriteriaContent; // 선정기준 (상세 API: slctCritCn)
+
+    @Column(name = &quot;application_method_list&quot;, columnDefinition = &quot;TEXT&quot;)
+    private String applicationMethodList; // 신청 방법 (상세 API: applmetList)
+
+    @Column(name = &quot;service_detail_url&quot;, length = 500)
+    private String serviceDetailUrl; // 서비스 상세 URL (servDetlUrl)
+
+    @Column(name = &quot;homepage_url&quot;, length = 500)
+    private String homepageUrl; // 원문 링크 (상세 API: 인구보건협회 등 외부 링크)
+
+    @Column(name = &quot;inquiry_contact_list&quot;, columnDefinition = &quot;TEXT&quot;)
+    private String inquiryContactList; // 문의처 목록 원문 JSON(inqplCtadrList)
+
+    @Column(name = &quot;homepage_list&quot;, columnDefinition = &quot;TEXT&quot;)
+    private String homepageList; // 홈페이지 목록 원문 JSON(inqplHmpgReldList)
+
+    @Column(name = &quot;basis_law_list&quot;, columnDefinition = &quot;TEXT&quot;)
+    private String basisLawList; // 근거 법령 목록 원문 JSON(baslawList)
+
+    @Column(name = &quot;basis_form_list&quot;, columnDefinition = &quot;TEXT&quot;)
+    private String basisFormList; // 신청 서식 목록 원문 JSON(basfrmList)
+
+    @Builder.Default
+    @Column(name = &quot;is_active&quot;, nullable = false)
+    private Boolean active = true; // 공공데이터포털 목록에 현재 존재하는 서비스인지 여부
+
+    @Column(name = &quot;first_seen_at&quot;)
+    private LocalDateTime firstSeenAt; // 이 서비스가 최초로 수집된 시각
+
+    @Column(name = &quot;last_seen_at&quot;)
+    private LocalDateTime lastSeenAt; // 마지막 목록 동기화에서 확인된 시각
+
+    @Column(name = &quot;discontinued_at&quot;)
+    private LocalDateTime discontinuedAt; // 목록에서 사라진 것으로 판단된 시각
+
+    @Column(name = &quot;synced_at&quot;)
+    private LocalDateTime syncedAt; // 목록 데이터가 마지막으로 동기화된 시각
+
+    @Column(name = &quot;detail_synced_at&quot;)
+    private LocalDateTime detailSyncedAt; // 상세 데이터가 마지막으로 정상 동기화된 시각
+
+    @Builder.Default
+    @Column(name = &quot;detail_sync_failed&quot;, nullable = false)
+    private Boolean detailSyncFailed = false; // 상세 API 동기화 실패 여부
+
+    @Column(name = &quot;detail_sync_failure_reason&quot;, length = 500)
+    private String detailSyncFailureReason; // 상세 API 동기화 실패 사유
+
+    /**
+     * 목록 API에서 내려오는 기본 정보를 갱신한다.
+     * 상세 필드는 별도 상세 API 동기화에서 관리하므로 목록 갱신 시 덮어쓰지 않는다.
+     */
+    public void updateListInfo(
+            String serviceName,
+            String cityProvinceName,
+            String districtName,
+            String serviceSummary,
+            String jurisdictionMinistryName,
+            String targetAudienceArray,
+            String lifeCycleArray,
+            String interestThemeArray,
+            String serviceProvisionName,
+            String representativeContact,
+            String serviceDetailUrl,
+            String lastModifiedDate
+    ) {
+<span class="fc" id="L132">        this.serviceName = serviceName;</span>
+<span class="fc" id="L133">        this.cityProvinceName = cityProvinceName;</span>
+<span class="fc" id="L134">        this.districtName = districtName;</span>
+<span class="fc" id="L135">        this.serviceSummary = serviceSummary;</span>
+<span class="fc" id="L136">        this.jurisdictionMinistryName = jurisdictionMinistryName;</span>
+<span class="fc" id="L137">        this.targetAudienceArray = targetAudienceArray;</span>
+<span class="fc" id="L138">        this.lifeCycleArray = lifeCycleArray;</span>
+<span class="fc" id="L139">        this.interestThemeArray = interestThemeArray;</span>
+<span class="fc" id="L140">        this.serviceProvisionName = serviceProvisionName;</span>
+<span class="fc" id="L141">        this.representativeContact = representativeContact;</span>
+<span class="fc" id="L142">        this.serviceDetailUrl = serviceDetailUrl;</span>
+<span class="fc" id="L143">        this.lastModifiedDate = lastModifiedDate;</span>
+<span class="fc" id="L144">    }</span>
+
+    public void markSeen(LocalDateTime seenAt) {
+<span class="pc bpc" id="L147" title="1 of 2 branches missed.">        if (this.firstSeenAt == null) {</span>
+<span class="fc" id="L148">            this.firstSeenAt = seenAt;</span>
+        }
+<span class="fc" id="L150">        this.lastSeenAt = seenAt;</span>
+<span class="fc" id="L151">        this.syncedAt = seenAt;</span>
+<span class="fc" id="L152">        this.active = true;</span>
+<span class="fc" id="L153">        this.discontinuedAt = null;</span>
+<span class="fc" id="L154">    }</span>
+
+    /**
+     * 상세 정보를 업데이트하는 메서드
+     */
+    public void updateDetailInfo(String targetDetailContent, String benefitContent, String selectionCriteriaContent, String applicationMethodList, String homepageUrl, LocalDateTime detailSyncedAt) {
+<span class="fc" id="L160">        this.targetDetailContent = targetDetailContent;</span>
+<span class="fc" id="L161">        this.benefitContent = benefitContent;</span>
+<span class="fc" id="L162">        this.selectionCriteriaContent = selectionCriteriaContent;</span>
+<span class="fc" id="L163">        this.applicationMethodList = applicationMethodList;</span>
+<span class="fc" id="L164">        this.homepageUrl = homepageUrl;</span>
+<span class="fc" id="L165">        this.detailSyncedAt = detailSyncedAt;</span>
+<span class="fc" id="L166">        this.detailSyncFailed = false;</span>
+<span class="fc" id="L167">        this.detailSyncFailureReason = null;</span>
+<span class="fc" id="L168">    }</span>
+
+    /**
+     * 상세 API의 부가 목록성 데이터를 원문 JSON 형태로 보존한다.
+     */
+    public void updateDetailRelationInfo(String inquiryContactList, String homepageList, String basisLawList, String basisFormList) {
+<span class="fc" id="L174">        this.inquiryContactList = inquiryContactList;</span>
+<span class="fc" id="L175">        this.homepageList = homepageList;</span>
+<span class="fc" id="L176">        this.basisLawList = basisLawList;</span>
+<span class="fc" id="L177">        this.basisFormList = basisFormList;</span>
+<span class="fc" id="L178">    }</span>
+
+    public void markDetailSyncFailed(String failureReason) {
+<span class="fc" id="L181">        this.detailSyncFailed = true;</span>
+<span class="pc bpc" id="L182" title="1 of 2 branches missed.">        this.detailSyncFailureReason = failureReason == null</span>
+<span class="nc" id="L183">                ? null</span>
+<span class="fc" id="L184">                : failureReason.substring(0, Math.min(failureReason.length(), 500));</span>
+<span class="fc" id="L185">    }</span>
+
+    public void markDiscontinued(LocalDateTime discontinuedAt) {
+<span class="fc" id="L188">        this.active = false;</span>
+<span class="fc" id="L189">        this.discontinuedAt = discontinuedAt;</span>
+<span class="fc" id="L190">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

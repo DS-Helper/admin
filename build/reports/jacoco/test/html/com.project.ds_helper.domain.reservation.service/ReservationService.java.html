@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReservationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.reservation.service</a> &gt; <span class="el_source">ReservationService.java</span></div><h1>ReservationService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.reservation.service;
+
+import com.project.ds_helper.common.util.UserUtil;
+import com.project.ds_helper.domain.reservation.dto.response.GetPreReservedReservationByDateResDto;
+import com.project.ds_helper.domain.reservation.entity.ReservationSchedule;
+import com.project.ds_helper.domain.reservation.repository.OrganizationReservationRepository;
+import com.project.ds_helper.domain.reservation.repository.PersonalReservationRepository;
+import com.project.ds_helper.domain.reservation.repository.ReservationScheduleRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+<span class="fc" id="L22">@Slf4j</span>
+@RequiredArgsConstructor
+public class ReservationService {
+
+    private final PersonalReservationRepository personalReservationRepository;
+    private final OrganizationReservationRepository organizationReservationRepository;
+    private final ReservationScheduleRepository reservationScheduleRepository;
+    private final UserUtil userUtil;
+    
+    /**
+     * 일자별 기예약된 예약 내역 조회
+     * **/
+    public List&lt;?&gt; getPreReservedReservationsByDate(Authentication authentication, LocalDate date) {
+<span class="fc" id="L35">        userUtil.extractUserId(authentication);</span>
+        // 일자가 비어있다면 오늘 기준 탐색
+<span class="pc bpc" id="L37" title="1 of 2 branches missed.">        if(date == null){</span>
+<span class="nc" id="L38">            date = LocalDate.now(ZoneId.of(&quot;Asia/Seoul&quot;));</span>
+        }
+<span class="fc" id="L40">        log.debug(&quot;date : {}&quot;, date);</span>
+        // 일자 기반 탐색, 시작 시간 기준 오름차순 정렬
+<span class="fc" id="L42">        List&lt;ReservationSchedule&gt; schedules = reservationScheduleRepository.findByVisitDateOrderByStartTime(date);</span>
+<span class="fc" id="L43">        List&lt;String&gt; reservedSlots = new ArrayList&lt;&gt;();</span>
+        // 시:분 형식 적용
+<span class="fc" id="L45">        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(&quot;HH:mm&quot;);</span>
+
+<span class="fc bfc" id="L47" title="All 2 branches covered.">        if(schedules.isEmpty()){</span>
+<span class="fc" id="L48">            log.debug(&quot;schedules is empty&quot;);</span>
+        }else{
+<span class="fc" id="L50">            log.debug(&quot;schedules does exist. schedules count : {}&quot;, schedules.size());</span>
+        }
+
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        for (ReservationSchedule s : schedules) {</span>
+<span class="fc" id="L54">            LocalTime time = s.getStartTime();</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">            while (time.isBefore(s.getEndTime())) {</span>
+<span class="fc" id="L56">                reservedSlots.add(time.format(formatter));</span>
+<span class="fc" id="L57">                time = time.plusMinutes(30);</span>
+            }
+<span class="fc" id="L59">        }</span>
+
+<span class="fc" id="L61">        return reservedSlots;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

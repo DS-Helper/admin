@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.project.ds_helper.domain.reply.service.ReplyServiceTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:13" hostname="아기" time="0.211">
+<testsuite name="com.project.ds_helper.domain.reply.service.ReplyServiceTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:03:01" hostname="아기" time="0.181">
   <properties/>
-  <testcase name="답변이 없으면 빈 DTO를 반환한다" classname="com.project.ds_helper.domain.reply.service.ReplyServiceTest" time="0.173"/>
-  <testcase name="답변이 있으면 답변 DTO를 반환한다" classname="com.project.ds_helper.domain.reply.service.ReplyServiceTest" time="0.01"/>
-  <testcase name="문의 답변 생성 시 문의 상태를 ANSWERED로 변경한다" classname="com.project.ds_helper.domain.reply.service.ReplyServiceTest" time="0.017"/>
-  <testcase name="이미 답변된 문의는 다시 답변할 수 없다" classname="com.project.ds_helper.domain.reply.service.ReplyServiceTest" time="0.006"/>
+  <testcase name="답변이 없으면 빈 DTO를 반환한다" classname="com.project.ds_helper.domain.reply.service.ReplyServiceTest" time="0.163"/>
+  <testcase name="답변이 있으면 답변 DTO를 반환한다" classname="com.project.ds_helper.domain.reply.service.ReplyServiceTest" time="0.005"/>
+  <testcase name="문의 답변 생성 시 문의 상태를 ANSWERED로 변경한다" classname="com.project.ds_helper.domain.reply.service.ReplyServiceTest" time="0.008"/>
+  <testcase name="이미 답변된 문의는 다시 답변할 수 없다" classname="com.project.ds_helper.domain.reply.service.ReplyServiceTest" time="0.004"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

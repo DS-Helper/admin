@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminOrganizationReservationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.admin.service</a> &gt; <span class="el_source">AdminOrganizationReservationService.java</span></div><h1>AdminOrganizationReservationService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.admin.service;
+
+import com.project.ds_helper.common.util.JwtUtil;
+import com.project.ds_helper.common.util.UserUtil;
+import com.project.ds_helper.domain.admin.dto.request.ChangeOrganizationReservationStatusReqDto;
+import com.project.ds_helper.domain.admin.repository.AdminOrganizationReservationRepository;
+import com.project.ds_helper.domain.reservation.entity.OrganizationReservation;
+import com.project.ds_helper.domain.reservation.enums.ReservationStatus;
+import com.project.ds_helper.domain.user.entity.User;
+import com.project.ds_helper.domain.user.enums.UserRole;
+import com.project.ds_helper.domain.user.repository.OrganizationRepository;
+import io.jsonwebtoken.security.JwkThumbprint;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+
+@Service
+<span class="fc" id="L21">@Slf4j</span>
+@RequiredArgsConstructor
+public class AdminOrganizationReservationService {
+
+    private final AdminOrganizationReservationRepository adminOrganizationReservationRepository;
+    private final UserUtil userUtil;
+    private final JwtUtil jwtUtil;
+
+    public void changeReservationStatus(Authentication authentication, ChangeOrganizationReservationStatusReqDto dto) throws BadRequestException {
+<span class="fc" id="L30">        String userId = userUtil.extractUserId(authentication);</span>
+<span class="fc" id="L31">        User user = userUtil.findUserById(userId);</span>
+<span class="fc" id="L32">        UserRole role = user.getRole();</span>
+
+<span class="fc bfc" id="L34" title="All 2 branches covered.">        if(role != UserRole.ADMIN) throw new BadRequestException(&quot;Only Admin Can Use This API&quot;);</span>
+
+<span class="fc" id="L36">        String organizationReservationId = dto.organizationReservationId();</span>
+<span class="fc" id="L37">        String status = dto.status();</span>
+<span class="fc" id="L38">        log.debug(&quot;AdminOrganizationReservationService.changeReservationStatus started. organizationReservationId={}, status={}&quot;, organizationReservationId, status);</span>
+
+<span class="fc" id="L40">        OrganizationReservation organizationReservation = adminOrganizationReservationRepository.findById(organizationReservationId)</span>
+<span class="pc" id="L41">                .orElseThrow(()-&gt; new IllegalArgumentException(&quot;OrganizationReservation Not Found&quot;));</span>
+
+<span class="fc" id="L43">        ReservationStatus enumedStatus = ReservationStatus.findStatusByString(status);</span>
+<span class="fc" id="L44">        organizationReservation.setReservationStatus(enumedStatus);</span>
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">        if(enumedStatus.equals(ReservationStatus.CANCELED)){</span>
+<span class="nc" id="L46">            organizationReservation.cancelReservation();</span>
+        }
+<span class="fc" id="L48">        adminOrganizationReservationRepository.save(organizationReservation);</span>
+<span class="fc" id="L49">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

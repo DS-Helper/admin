@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrganizationReservationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.reservation.service</a> &gt; <span class="el_source">OrganizationReservationService.java</span></div><h1>OrganizationReservationService.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.reservation.service;
+
+import com.project.ds_helper.common.util.JwtUtil;
+import com.project.ds_helper.common.util.UserUtil;
+import com.project.ds_helper.domain.reservation.dto.request.CreateOrganizationReservationReqDto;
+import com.project.ds_helper.domain.reservation.dto.request.DeleteOrganizationReservationReqDto;
+import com.project.ds_helper.domain.reservation.dto.request.UpdateOrganizationReservationReqDto;
+import com.project.ds_helper.domain.reservation.dto.response.*;
+import com.project.ds_helper.domain.reservation.entity.OrganizationReservation;
+import com.project.ds_helper.domain.reservation.entity.ReservationSchedule;
+import com.project.ds_helper.domain.reservation.enums.ReservationStatus;
+import com.project.ds_helper.domain.reservation.repository.OrganizationReservationRepository;
+import com.project.ds_helper.domain.reservation.repository.ReservationScheduleRepository;
+import com.project.ds_helper.domain.user.entity.User;
+import com.project.ds_helper.domain.user.repository.OrganizationRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.util.List;
+
+@Service
+<span class="fc" id="L31">@Slf4j</span>
+@RequiredArgsConstructor
+public class OrganizationReservationService {
+
+    private final OrganizationReservationRepository organizationReservationRepository;
+    private final ReservationScheduleRepository reservationScheduleRepository;
+    private final UserUtil userUtil;
+
+    /**
+     * 단건 기관 예약 조회
+     * **/
+    public GetOrganizationReservationResDto getOneOrganizationReservation(Authentication authentication, String organizationReservationId) {
+
+<span class="nc" id="L44">        String userId = String.valueOf(authentication.getPrincipal());</span>
+<span class="nc" id="L45">        log.debug(&quot;userId : {}&quot;, userId);</span>
+
+<span class="nc" id="L47">        log.debug(&quot;organizationReservationId : {}&quot;, organizationReservationId);</span>
+
+        // 기관 단건 예약 조회 및 응답
+<span class="nc" id="L50">        return GetOrganizationReservationResDto.toDto(organizationReservationRepository.findById(organizationReservationId).</span>
+<span class="nc" id="L51">                orElseThrow(() -&gt; new IllegalArgumentException(&quot;없는 기관 예약 입니다. 예약 ID : &quot; + organizationReservationId)));</span>
+    }
+
+    /**
+     * 기관 에약 리스트를 상태별 조회
+     * @Param reservationStatus
+     * @Return List&lt;GetOrganizationReservationResDto&gt;
+     *
+     * userId, reservationStatus 기반 organizationRepository 조회
+     * **/
+    public GetOrganizationReservationsResDto&lt;?&gt; getAllOrganizationReservationByReservationStatus(Authentication authentication, String reservationStatus, int page, int size, String sort) {
+<span class="nc" id="L62">        String userId = userUtil.extractUserId(authentication);</span>
+<span class="nc" id="L63">        log.debug(&quot;userId : {}, reservationStatus : {}&quot;, userId, reservationStatus);</span>
+
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        if(reservationStatus.equals(&quot;all&quot;)){</span>
+<span class="nc" id="L66">            Pageable pageable = PageRequest.of(page, size);</span>
+<span class="nc" id="L67">            Slice&lt;OrganizationReservation&gt; organizationReservations = organizationReservationRepository.findAllByUser_IdOrderByCreatedAtDesc(userId, pageable);</span>
+<span class="nc" id="L68">            Slice&lt;GetOrganizationReservationsByReservationStatusResDto&gt; convertedOrganizationReservations = organizationReservations.map(GetOrganizationReservationsByReservationStatusResDto::fromOrgReservationToReservation);</span>
+<span class="nc" id="L69">            return GetOrganizationReservationsResDto.toDto(convertedOrganizationReservations);</span>
+        } else {
+<span class="nc" id="L71">            ReservationStatus _reservationStatus = ReservationStatus.findStatusByString(reservationStatus);</span>
+
+<span class="nc" id="L73">            Pageable pageable = PageRequest.of(page, size);</span>
+<span class="nc" id="L74">            Slice&lt;OrganizationReservation&gt; organizationReservations = organizationReservationRepository.findAllByUser_IdAndReservationStatusOrderByCreatedAtDesc(userId, _reservationStatus, pageable);</span>
+<span class="nc" id="L75">            Slice&lt;GetOrganizationReservationsByReservationStatusResDto&gt; convertedOrganizationReservations = organizationReservations.map(GetOrganizationReservationsByReservationStatusResDto::fromOrgReservationToReservation);</span>
+<span class="nc" id="L76">            return GetOrganizationReservationsResDto.toDto(convertedOrganizationReservations);</span>
+        }
+    }
+
+
+    /**
+     * 신규 기관 예약 생성
+     * **/
+    public void createOrganizationReservation(Authentication authentication, CreateOrganizationReservationReqDto dto) throws BadRequestException {
+
+        // 다른 변수들 로그 추가 작성 필요
+<span class="nc" id="L87">        LocalDate visitDate = dto.getVisitDate();</span>
+<span class="nc" id="L88">        LocalTime startTime = dto.getStartTime();</span>
+<span class="nc" id="L89">        LocalTime endTime = dto.getEndTime();</span>
+<span class="nc" id="L90">        log.debug(&quot;visitDate : {}, startTime : {}, endTime : {}&quot;, visitDate, startTime, endTime);</span>
+
+<span class="nc" id="L92">        endTime = endTime.plusHours(1);</span>
+<span class="nc" id="L93">        log.debug(&quot;endTime : {}&quot;, endTime);</span>
+
+<span class="nc" id="L95">        String userId = userUtil.extractUserId(authentication);</span>
+<span class="nc" id="L96">        User user = userUtil.findUserById(userId);</span>
+<span class="nc" id="L97">        String userRole = user.getRole().name();</span>
+<span class="nc" id="L98">        String userType = user.getType().name();</span>
+<span class="nc" id="L99">        log.debug(&quot;userRole : {}, userType : {}&quot;, userRole, userType);</span>
+
+        // 이미 대기중인 예약이 있다면 예약 불가(1개만 예약 가능)
+<span class="nc bnc" id="L102" title="All 2 branches missed.">        if(organizationReservationRepository.existsByUser_IdAndReservationStatus(userId, ReservationStatus.REQUESTED)){</span>
+<span class="nc" id="L103">            throw new BadRequestException(&quot;Already Exists Requested Status Reservation&quot;);</span>
+        }
+
+        // 기관이 아니면 예외
+<span class="nc bnc" id="L107" title="All 2 branches missed.">        if(!userType.equalsIgnoreCase(&quot;ORGANIZATION&quot;)){throw new BadRequestException(&quot;Only Organization May Reserve&quot;);}</span>
+
+        // 방문 요일이 수, 금이 아닌 경우 예약 거절
+<span class="nc bnc" id="L110" title="All 4 branches missed.">        if(visitDate.getDayOfWeek().getValue() != 0 &amp;&amp; visitDate.getDayOfWeek().getValue() != 7){</span>
+<span class="nc" id="L111">             log.debug(&quot;Only Sunday Can Make a Reservation. visitDate : {}&quot;, visitDate);</span>
+<span class="nc" id="L112">             throw new IllegalArgumentException(&quot;Only Sunday Can Make a Reservation&quot;);</span>
+        }
+
+        // 예약 시간이 시작 10시, 끝 + 1시간이 18시 이후인 경우 예약 거절
+<span class="nc bnc" id="L116" title="All 4 branches missed.">        if(startTime.getHour() &lt; 10 || endTime.getHour() &gt; 18){</span>
+<span class="nc" id="L117">            log.debug(&quot;Available Time Only Between 10 to 18. startTime : {}, endTime : {}&quot;, startTime, endTime);</span>
+<span class="nc" id="L118">            throw new IllegalArgumentException(&quot;Not Proper Time. Only Between 10 and 18&quot;);</span>
+        }
+
+        // 당일 예약 불가
+<span class="nc bnc" id="L122" title="All 2 branches missed.">        if(visitDate.isEqual(LocalDate.now(ZoneId.of(&quot;Asia/Seoul&quot;)))){</span>
+<span class="nc" id="L123">            log.debug(&quot;Not Allowed For Today Reservation&quot;);</span>
+<span class="nc" id="L124">            throw new IllegalArgumentException(&quot;Same-day reservations are not allowed&quot;);</span>
+        }
+
+        // 기예약된 시간과 중복되면 예약 불가
+<span class="nc" id="L128">        reservationScheduleRepository.existsOverlap(visitDate, startTime, endTime);</span>
+
+        // 유저 정보 획득
+        // 개인 예약 엔티티 빌드
+<span class="nc" id="L132">        OrganizationReservation organizationReservation = dto.toOrganizationReservation(dto, userUtil.findUserById(userUtil.extractUserId(authentication)));</span>
+<span class="nc" id="L133">        log.debug(&quot;신규 기관 예약 엔티티 빌드 완료&quot;);</span>
+
+<span class="nc" id="L135">        ReservationSchedule reservationSchedule = ReservationSchedule.builder().visitDate(visitDate).startTime(startTime).endTime(endTime).build();</span>
+<span class="nc" id="L136">        log.debug(&quot;reservationSchedule is Successfully Built&quot;);</span>
+<span class="nc" id="L137">        organizationReservation.setReservationSchedule(reservationSchedule);</span>
+
+        // 저장 후 응답 객체 생성 후 반환
+<span class="nc" id="L140">        organizationReservationRepository.save(organizationReservation);</span>
+<span class="nc" id="L141">        log.debug(&quot;New Organization Reservation Successfully Saved&quot;);</span>
+<span class="nc" id="L142">    }</span>
+
+    /**
+     * 기존 예약을 수정한다.
+     *
+     * 봉사 일정은 수,금 10~17시만 가능하다.
+     *
+     * 사용자가 요청한 시간의 끝 시간에 뒷정리를 위한 1시간을 더하여 최종 일정은 + 1시간 된 시간으로 저장 된다.
+     * **/
+    public void updateOrganizationReservation(Authentication authentication, UpdateOrganizationReservationReqDto dto) {
+
+        // 다른 변수들 로그 추가 작성 필요
+<span class="nc" id="L154">        LocalDate visitDate = dto.getVisitDate();</span>
+<span class="nc" id="L155">        LocalTime startTime = dto.getStartTime();</span>
+<span class="nc" id="L156">        LocalTime endTime = dto.getEndTime();</span>
+<span class="nc" id="L157">        log.debug(&quot;visitDate : {}, startTime : {}, endTime : {}&quot;, visitDate, startTime, endTime);</span>
+
+        // 사용자가 예약한 시간에 뒷정리를 위한 1시간을 추가한다.
+<span class="nc" id="L160">        endTime = endTime.plusHours(1);</span>
+<span class="nc" id="L161">        log.debug(&quot;endTime : {}&quot;, endTime);</span>
+
+        // 예약 수정을 요청한 유저 정보 획득
+<span class="nc" id="L164">        String userId = String.valueOf(authentication.getPrincipal());</span>
+<span class="nc" id="L165">        log.debug(&quot;userId : {}&quot;, userId);</span>
+
+        // 수정할 새로운 예약 정보 획득
+<span class="nc" id="L168">        String organizationReservationId = dto.getOrganizationReservationId();</span>
+<span class="nc" id="L169">        log.debug(&quot;organizationReservationId : {}&quot;, organizationReservationId);</span>
+
+        // 수정을 위해 기존 개인 예약 조회
+<span class="nc" id="L172">        OrganizationReservation organizationReservation = organizationReservationRepository.findById(organizationReservationId).orElseThrow(() -&gt; new IllegalArgumentException(&quot;없는 예약 ID 입니다. : &quot; + organizationReservationId));</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">        if(!organizationReservation.getUser().getId().equals(userId)){</span>
+<span class="nc" id="L174">            throw new IllegalArgumentException(&quot;예약자 본인만 예약 수정이 가능하니다. 예약 ID : &quot; + organizationReservationId + &quot;요청 유저 Id : &quot; + userId);</span>
+        }
+        
+        // 방문 요일이 수, 금이 아닌 경우 예약 거절
+<span class="nc bnc" id="L178" title="All 4 branches missed.">        if(visitDate.getDayOfWeek().getValue() != 3 &amp;&amp; visitDate.getDayOfWeek().getValue() != 5){</span>
+<span class="nc" id="L179">            log.debug(&quot;only wen, fri available. visitDate : {}&quot;, visitDate);</span>
+<span class="nc" id="L180">            throw new IllegalArgumentException(&quot;Not Proper Day, wen, fri only&quot;);</span>
+        }
+        
+        // 예약 시간이 시작 10시, 끝 + 1시간이 18시 이후인 경우 예약 거절
+<span class="nc bnc" id="L184" title="All 4 branches missed.">        if(startTime.getHour() &lt; 10 || endTime.getHour() &gt; 18){</span>
+<span class="nc" id="L185">            log.debug(&quot;Available Time Only Between 10 to 18. startTime : {}, endTime : {}&quot;, startTime, endTime);</span>
+<span class="nc" id="L186">            throw new IllegalArgumentException(&quot;Not Proper Time. Only Between 10 and 18&quot;);</span>
+        }
+
+        // 수정
+<span class="nc" id="L190">        OrganizationReservation updatedOrganizationReservation = dto.toOrganizationReservation(organizationReservation, dto);</span>
+<span class="nc" id="L191">        log.debug(&quot;수정된 개인 예약 엔티티 빌드&quot;);</span>
+
+        // JPA 에서 관리 해주지만 명시적인 저장 메소드 호출
+<span class="nc" id="L194">        organizationReservationRepository.save(updatedOrganizationReservation);</span>
+<span class="nc" id="L195">        log.debug(&quot;수정된 엔티티 저장 완료&quot;);</span>
+<span class="nc" id="L196">    }</span>
+
+    /**
+     * 기관 예약 취소
+     *
+     * 예약의 상태를 취소로 변경 후 저장한다. (삭제하지 않고 기록을 남김)
+     * 영구 저장(추후 일정 기간이 지난 예약은 삭제하도록 해도 무방할듯)
+     * **/
+    public void cancelOrganizationReservation(Authentication authentication, DeleteOrganizationReservationReqDto dto) {
+    
+        // 취소를 요청한 유저 아이디 조회
+<span class="nc" id="L207">        String userId = String.valueOf(authentication.getPrincipal());</span>
+<span class="nc" id="L208">        log.debug(&quot;userId : {}&quot;, userId);</span>
+        
+        // dto에서 기관id 조회
+<span class="nc" id="L211">        String organizationReservationId = dto.getOrganizationReservationId();</span>
+<span class="nc" id="L212">        log.debug(&quot;organizationReservationId : {}&quot;, organizationReservationId);</span>
+        
+        // 취소를 위해 기존 예약 조회
+<span class="nc" id="L215">        OrganizationReservation organizationReservation = organizationReservationRepository.findById(organizationReservationId).orElseThrow(() -&gt; new IllegalArgumentException(&quot;없는 기관 예약 입니다. 예약 ID : &quot; + organizationReservationId));</span>
+<span class="nc" id="L216">        log.debug(&quot;기관 예약 조회 완료&quot;);</span>
+        
+        // 예약 취소
+<span class="nc" id="L219">        organizationReservation.setReservationStatus(ReservationStatus.CANCELED);</span>
+<span class="nc" id="L220">        organizationReservation.cancelReservation();</span>
+        
+        // 예약 취소 된 상태로 저장 (삭제하지 않음)
+<span class="nc" id="L223">        organizationReservationRepository.save(organizationReservation);</span>
+<span class="nc" id="L224">        log.debug(&quot;기관 예약 삭제 완료&quot;);</span>
+<span class="nc" id="L225">    }</span>
+    
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

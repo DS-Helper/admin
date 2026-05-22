@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GetMyBoardsResponseDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.board.dto.response</a> &gt; <span class="el_source">GetMyBoardsResponseDto.java</span></div><h1>GetMyBoardsResponseDto.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.board.dto.response;
+
+import com.project.ds_helper.domain.board.entity.Board;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+
+@Builder
+@Schema(description = &quot;내가 작성한 게시글 조회 응답 DTO&quot;)
+<span class="fc" id="L9">public record GetMyBoardsResponseDto(</span>
+        @Schema(description = &quot;게시글 ID&quot;, example = &quot;3f9c7c8e-4d5a-4b1e-9a2f-7c1d2e8f9a01&quot;)
+        String id,
+        @Schema(description = &quot;게시글 제목&quot;, example = &quot;복지관 프로그램 추천 부탁드려요&quot;)
+        String title,
+        @Schema(description = &quot;게시글 내용&quot;, example = &quot;부모님과 함께 참여할 수 있는 프로그램이 있으면 추천 부탁드립니다.&quot;)
+        String content,
+        @Schema(description = &quot;작성자 이름&quot;, example = &quot;김민지&quot;)
+        String writerName,
+        @Schema(description = &quot;작성자 유저 ID&quot;, example = &quot;88fa8c94-ad1a-4351-9fd6-cdd002ecf167&quot;)
+        String writerId,
+        @Schema(description = &quot;작성자 프로필 이미지 URL&quot;, example = &quot;https://ds-helper-bucket.s3.ap-northeast-2.amazonaws.com/profile/user-001.jpg&quot;)
+        String writerProfileImageUrl,
+        @Schema(description = &quot;좋아요 수&quot;, example = &quot;14&quot;)
+        int likeCount,
+        @Schema(description = &quot;댓글 수&quot;, example = &quot;15&quot;)
+        int commentCount,
+        @Schema(description = &quot;좋아요 여부&quot;, example = &quot;true&quot;)
+        boolean isLiked,
+        @Schema(description = &quot;썸네일 이미지 URL&quot;, example = &quot;https://ds-helper-bucket.s3.ap-northeast-2.amazonaws.com/images/2026/02/21/uuid2.jpg&quot;)
+        String thumbNailUrl
+) {
+    public static GetMyBoardsResponseDto from(Board board, int commentCount, boolean isLiked, String thumbNailUrl) {
+<span class="fc" id="L32">        return GetMyBoardsResponseDto.builder()</span>
+<span class="fc" id="L33">                .id(board.getId())</span>
+<span class="fc" id="L34">                .title(board.getTitle())</span>
+<span class="fc" id="L35">                .content(board.getContent())</span>
+<span class="fc" id="L36">                .writerName(board.getUser().getName())</span>
+<span class="fc" id="L37">                .writerId(board.getUser().getId())</span>
+<span class="fc" id="L38">                .writerProfileImageUrl(board.getUser().getProfileImageUrl())</span>
+<span class="fc" id="L39">                .likeCount(board.getLikeCount())</span>
+<span class="fc" id="L40">                .commentCount(commentCount)</span>
+<span class="fc" id="L41">                .isLiked(isLiked)</span>
+<span class="fc" id="L42">                .thumbNailUrl(thumbNailUrl)</span>
+<span class="fc" id="L43">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

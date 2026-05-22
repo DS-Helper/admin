@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotificationFacade.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.notification.service</a> &gt; <span class="el_source">NotificationFacade.java</span></div><h1>NotificationFacade.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.notification.service;
+
+import com.project.ds_helper.domain.board.entity.Board;
+import com.project.ds_helper.domain.comment.entity.Comment;
+import com.project.ds_helper.domain.notification.entity.Notification;
+import com.project.ds_helper.domain.notification.entity.NotificationDelivery;
+import com.project.ds_helper.domain.notification.entity.PushToken;
+import com.project.ds_helper.domain.notification.enums.NotificationType;
+import com.project.ds_helper.domain.notification.repository.NotificationDeliveryRepository;
+import com.project.ds_helper.domain.notification.repository.NotificationRepository;
+import com.project.ds_helper.domain.user.entity.User;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+@Service
+@RequiredArgsConstructor
+<span class="fc" id="L24">@Slf4j</span>
+public class NotificationFacade {
+
+    private static final String BOARD_COMMENT_NOTIFICATION_CONTENT = &quot;내 게시글에 댓글이 작성되었습니다.&quot;;
+    private static final String BOARD_REPLY_NOTIFICATION_CONTENT = &quot;내 게시글에 답글이 작성되었습니다.&quot;;
+    private static final String COMMENT_REPLY_NOTIFICATION_CONTENT = &quot;내 댓글에 답글이 작성되었습니다.&quot;;
+
+    private final NotificationRepository notificationRepository;
+    private final NotificationDeliveryRepository notificationDeliveryRepository;
+    private final PushTokenService pushTokenService;
+    private final PushDispatchService pushDispatchService;
+
+    @Transactional
+    public void createCommentNotifications(Comment comment) {
+        // 1. 댓글 작성 이벤트에서 알림 수신 대상과 알림 유형을 계산한다.
+<span class="fc" id="L39">        User commentWriter = comment.getUser();</span>
+<span class="fc" id="L40">        Board board = comment.getBoard();</span>
+<span class="fc" id="L41">        Comment parentComment = comment.getParent();</span>
+<span class="fc" id="L42">        log.debug(&quot;NotificationFacade.createCommentNotifications started. commentId={}, boardId={}, parentCommentId={}&quot;,</span>
+<span class="pc bpc" id="L43" title="1 of 2 branches missed.">                comment.getId(), board.getId(), parentComment == null ? null : parentComment.getId());</span>
+
+<span class="fc" id="L45">        List&lt;Notification&gt; notifications = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L46">        Set&lt;String&gt; recipientIds = new HashSet&lt;&gt;();</span>
+
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">        if (parentComment != null) {</span>
+<span class="nc" id="L49">            addNotificationIfNeeded(</span>
+                    notifications,
+                    recipientIds,
+<span class="nc" id="L52">                    parentComment.getUser(),</span>
+                    commentWriter,
+                    NotificationType.COMMENT_REPLY,
+<span class="nc" id="L55">                    board.getId(),</span>
+<span class="nc" id="L56">                    parentComment.getId(),</span>
+                    COMMENT_REPLY_NOTIFICATION_CONTENT
+            );
+        }
+
+<span class="fc" id="L61">        addNotificationIfNeeded(</span>
+                notifications,
+                recipientIds,
+<span class="fc" id="L64">                board.getUser(),</span>
+                commentWriter,
+                NotificationType.BOARD_COMMENT,
+<span class="fc" id="L67">                board.getId(),</span>
+<span class="fc" id="L68">                comment.getId(),</span>
+<span class="pc bpc" id="L69" title="1 of 2 branches missed.">                parentComment == null ? BOARD_COMMENT_NOTIFICATION_CONTENT : BOARD_REPLY_NOTIFICATION_CONTENT</span>
+        );
+
+<span class="fc bfc" id="L72" title="All 2 branches covered.">        if (notifications.isEmpty()) {</span>
+<span class="fc" id="L73">            log.debug(&quot;NotificationFacade.createCommentNotifications completed with no recipients&quot;);</span>
+<span class="fc" id="L74">            return;</span>
+        }
+
+        // 2. 인앱 알림함에 저장할 Notification 엔티티를 먼저 영속화한다.
+<span class="fc" id="L78">        List&lt;Notification&gt; savedNotifications = notificationRepository.saveAll(notifications);</span>
+<span class="fc" id="L79">        log.debug(&quot;NotificationFacade.createCommentNotifications saved notifications. count={}&quot;, savedNotifications.size());</span>
+
+        // 3. 수신자의 활성 푸시 토큰을 조회해 시스템 푸시 발송 대상을 결정한다.
+<span class="fc" id="L82">        List&lt;PushToken&gt; activePushTokens = pushTokenService.getActivePushTokensByUserIds(recipientIds);</span>
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">        if (activePushTokens.isEmpty()) {</span>
+<span class="nc" id="L84">            log.debug(&quot;NotificationFacade.createCommentNotifications completed without active push tokens&quot;);</span>
+<span class="nc" id="L85">            return;</span>
+        }
+
+        // 4. 저장된 각 알림에 대해 푸시 발송을 위임하고, 발송 이력을 별도 테이블에 저장한다.
+<span class="fc" id="L89">        List&lt;NotificationDelivery&gt; deliveries = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        for (Notification savedNotification : savedNotifications) {</span>
+<span class="fc" id="L91">            List&lt;PushToken&gt; targetPushTokens = activePushTokens.stream()</span>
+<span class="fc" id="L92">                    .filter(pushToken -&gt; pushToken.getUser().getId().equals(savedNotification.getUser().getId()))</span>
+<span class="fc" id="L93">                    .toList();</span>
+
+<span class="fc" id="L95">            deliveries.addAll(pushDispatchService.dispatch(savedNotification, targetPushTokens));</span>
+<span class="fc" id="L96">        }</span>
+
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">        if (!deliveries.isEmpty()) {</span>
+<span class="fc" id="L99">            notificationDeliveryRepository.saveAll(deliveries);</span>
+<span class="fc" id="L100">            log.debug(&quot;NotificationFacade.createCommentNotifications saved deliveries. count={}&quot;, deliveries.size());</span>
+        }
+
+<span class="fc" id="L103">        log.debug(&quot;NotificationFacade.createCommentNotifications completed&quot;);</span>
+<span class="fc" id="L104">    }</span>
+
+    private void addNotificationIfNeeded(
+            List&lt;Notification&gt; notifications,
+            Set&lt;String&gt; recipientIds,
+            User recipient,
+            User commentWriter,
+            NotificationType type,
+            String boardId,
+            String commentId,
+            String content
+    ) {
+        // 1. 수신자 또는 작성자 정보가 비정상이면 알림 생성 자체를 건너뛴다.
+<span class="pc bpc" id="L117" title="2 of 4 branches missed.">        if (recipient == null || commentWriter == null) {</span>
+<span class="nc" id="L118">            log.debug(&quot;NotificationFacade.addNotificationIfNeeded skipped. recipient or commentWriter is null&quot;);</span>
+<span class="nc" id="L119">            return;</span>
+        }
+
+        // 2. 본인이 쓴 댓글/답글에는 자기 자신에게 알림을 만들지 않는다.
+<span class="fc bfc" id="L123" title="All 2 branches covered.">        if (recipient.getId().equals(commentWriter.getId())) {</span>
+<span class="fc" id="L124">            log.debug(&quot;NotificationFacade.addNotificationIfNeeded skipped. self notification. recipientId={}&quot;, recipient.getId());</span>
+<span class="fc" id="L125">            return;</span>
+        }
+
+        // 3. 동일 이벤트에서 같은 사용자가 중복 수신자가 되면 한 번만 생성한다.
+<span class="pc bpc" id="L129" title="1 of 2 branches missed.">        if (!recipientIds.add(recipient.getId())) {</span>
+<span class="nc" id="L130">            log.debug(&quot;NotificationFacade.addNotificationIfNeeded skipped. duplicated recipientId={}&quot;, recipient.getId());</span>
+<span class="nc" id="L131">            return;</span>
+        }
+
+        // 4. 인앱 알림함에 들어갈 Notification 엔티티를 메모리에서 먼저 구성한다.
+<span class="fc" id="L135">        notifications.add(Notification.builder()</span>
+<span class="fc" id="L136">                .user(recipient)</span>
+<span class="fc" id="L137">                .type(type)</span>
+<span class="fc" id="L138">                .boardId(boardId)</span>
+<span class="fc" id="L139">                .commentId(commentId)</span>
+<span class="fc" id="L140">                .content(content)</span>
+<span class="fc" id="L141">                .build());</span>
+<span class="fc" id="L142">        log.debug(&quot;NotificationFacade.addNotificationIfNeeded added notification. recipientId={}, type={}&quot;, recipient.getId(), type);</span>
+<span class="fc" id="L143">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

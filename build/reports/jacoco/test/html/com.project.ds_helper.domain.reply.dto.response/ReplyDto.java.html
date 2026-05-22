@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReplyDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.reply.dto.response</a> &gt; <span class="el_source">ReplyDto.java</span></div><h1>ReplyDto.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.reply.dto.response;
+
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.project.ds_helper.domain.inquiry.dto.response.InquiryDto;
+import com.project.ds_helper.domain.reply.entity.Reply;
+import com.project.ds_helper.domain.user.dto.response.UserDto;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Getter
+@Schema(description = &quot;답변 DTO&quot;, example = &quot;{\&quot;replyId\&quot;:\&quot;reply-001\&quot;,\&quot;content\&quot;:\&quot;안녕하세요. 문의 주신 내용 답변드립니다.\&quot;,\&quot;user\&quot;:{\&quot;userId\&quot;:\&quot;admin-001\&quot;,\&quot;email\&quot;:\&quot;admin@test.com\&quot;,\&quot;role\&quot;:\&quot;ADMIN\&quot;,\&quot;name\&quot;:\&quot;관리자\&quot;,\&quot;gender\&quot;:\&quot;\&quot;}}&quot;)
+public class ReplyDto {
+
+    private String replyId;
+
+    private String content;
+
+    private UserDto user;
+
+    public static ReplyDto toDto(Reply reply){
+<span class="nc" id="L27">        return ReplyDto.builder()</span>
+<span class="nc" id="L28">                .replyId(reply.getId())</span>
+<span class="nc" id="L29">                .content(reply.getContent())</span>
+<span class="nc" id="L30">                .user(UserDto.toDto(reply.getUser()))</span>
+<span class="nc" id="L31">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

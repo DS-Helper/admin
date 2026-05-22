@@ -8,6 +8,7 @@ import com.project.ds_helper.domain.user.dto.request.MobileGoogleLoginRequestDto
 import com.project.ds_helper.domain.user.dto.request.OauthWithdrawRequestDto;
 import com.project.ds_helper.domain.user.dto.response.GoogleTokenResponse;
 import com.project.ds_helper.domain.user.dto.response.GoogleUserInfoResponse;
+import com.project.ds_helper.domain.user.dto.response.WithdrawUserResponseDto;
 import com.project.ds_helper.domain.user.entity.GoogleOauth;
 import com.project.ds_helper.domain.user.entity.User;
 import com.project.ds_helper.domain.user.enums.UserRole;
@@ -31,7 +32,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Service
@@ -54,11 +54,13 @@ public class GoogleOAuthService {
     private final CookieUtil cookieUtil;
     private final StringRedisTemplate stringRedisTemplate;
     private final UserUtil userUtil;
+    private final UserWithdrawalService userWithdrawalService;
+    private final UserLoginHistoryService userLoginHistoryService;
 
     public GoogleOAuthService(GoogleOauthRepository googleOauthRepository, UserRepository userRepository,
                               @Qualifier("customRestTemplate") RestTemplate restTemplate,
                               JwtUtil jwtUtil, CookieUtil cookieUtil, @Qualifier("CustomStringRedisTemplate") StringRedisTemplate stringRedisTemplate,
-                              UserUtil userUtil) {
+                              UserUtil userUtil, UserWithdrawalService userWithdrawalService, UserLoginHistoryService userLoginHistoryService) {
         this.googleOauthRepository = googleOauthRepository;
         this.userRepository = userRepository;
         this.restTemplate = restTemplate;
@@ -66,6 +68,8 @@ public class GoogleOAuthService {
         this.cookieUtil = cookieUtil;
         this.stringRedisTemplate = stringRedisTemplate;
         this.userUtil = userUtil;
+        this.userWithdrawalService = userWithdrawalService;
+        this.userLoginHistoryService = userLoginHistoryService;
     }
 
     public String getGoogleLoginUrl() {
@@ -76,8 +80,8 @@ public class GoogleOAuthService {
                 .queryParam("redirect_uri", redirectUri)
                 .queryParam("response_type", "code")
                 .queryParam("scope", "email") // profile
-//                .queryParam("access_type", "offline")
-//                .queryParam("prompt", "consent")
+                .queryParam("access_type", "offline")
+                .queryParam("prompt", "consent")
                 .build()
                 .toUriString();
     }
@@ -176,6 +180,7 @@ public class GoogleOAuthService {
                     .socialOauthId(socialOauthId)
                     .oauthEmail(email)
                     .user(user)
+                    .refreshToken(token.getRefreshToken())
                     .build();
             googleOauthRepository.save(newGoogleOauth);
             log.debug("GoogleOauth Successfully Saved");
@@ -190,6 +195,7 @@ public class GoogleOAuthService {
             String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);
             String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);
             log.debug("jwt generated for new google user");
+            userLoginHistoryService.recordSuccessfulLogin(user);
             saveRefreshTokenWithTtl(userId, refreshToken);
 
             return new JwtResponse(accessToken, refreshToken);
@@ -197,6 +203,7 @@ public class GoogleOAuthService {
             log.debug("Already Joined Google Oauth User");
 
             User user = googleOauth.getUser();
+            googleOauth.updateRefreshToken(token.getRefreshToken());
             //if (user.isDeleted()) {
                 //throw new IllegalArgumentException("Deleted User");
             //}
@@ -212,6 +219,7 @@ public class GoogleOAuthService {
             String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);
             String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);
             log.debug("jwt generated for existing google user");
+            userLoginHistoryService.recordSuccessfulLogin(user);
             saveRefreshTokenWithTtl(userId, refreshToken);
 
             return new JwtResponse(accessToken, refreshToken);
@@ -266,6 +274,7 @@ public class GoogleOAuthService {
                     .socialOauthId(socialOauthId)
                     .oauthEmail(email)
                     .user(user)
+                    .refreshToken(dto.refreshToken())
                     .build();
             googleOauthRepository.save(newGoogleOauth);
             log.debug("GoogleOauth Successfully Saved");
@@ -278,12 +287,14 @@ public class GoogleOAuthService {
             String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);
             String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);
             log.debug("jwt generated for new google user");
+            userLoginHistoryService.recordSuccessfulLogin(user);
             saveRefreshTokenWithTtl(userId, refreshToken);
             return new JwtResponse(accessToken, refreshToken);
         }
 
         log.debug("Already Joined Google Oauth User");
         User user = googleOauth.getUser();
+        googleOauth.updateRefreshToken(dto.refreshToken());
         //if (user.isDeleted()) {
             //throw new IllegalArgumentException("Deleted User");
         //}
@@ -297,6 +308,7 @@ public class GoogleOAuthService {
         String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);
         String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);
         log.debug("jwt generated for existing google user");
+        userLoginHistoryService.recordSuccessfulLogin(user);
         saveRefreshTokenWithTtl(userId, refreshToken);
         return new JwtResponse(accessToken, refreshToken);
     }
@@ -390,7 +402,7 @@ public class GoogleOAuthService {
     }
 
     @Transactional
-    public void withdraw(org.springframework.security.core.Authentication authentication, OauthWithdrawRequestDto dto) {
+    public WithdrawUserResponseDto withdraw(org.springframework.security.core.Authentication authentication, OauthWithdrawRequestDto dto) {
         String userId = userUtil.extractUserId(authentication);
         User user = userUtil.findUserById(userId);
 
@@ -401,9 +413,38 @@ public class GoogleOAuthService {
             throw new IllegalArgumentException("Google OAuth Not Connected");
         }
 
-        revokeAccessToken(dto.accessToken());
-        softDeleteUser(user);
-        stringRedisTemplate.delete(jwtUtil.toRedisRefreshTokenKey(userId));
+        String providerAccessToken = refreshAccessToken(googleOauth);
+        revokeAccessToken(providerAccessToken);
+        return userWithdrawalService.softDeleteAndDeleteRefreshToken(user);
+    }
+
+    String refreshAccessToken(GoogleOauth googleOauth) {
+        if (googleOauth.getRefreshToken() == null || googleOauth.getRefreshToken().isBlank()) {
+            throw new IllegalStateException("Google OAuth Refresh Token Not Found");
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("client_id", clientId);
+        params.add("client_secret", clientSecret);
+        params.add("refresh_token", googleOauth.getRefreshToken());
+        params.add("grant_type", "refresh_token");
+
+        ResponseEntity<GoogleTokenResponse> response = restTemplate.postForEntity(
+                "https://oauth2.googleapis.com/token",
+                new HttpEntity<>(params, headers),
+                GoogleTokenResponse.class
+        );
+
+        GoogleTokenResponse tokenResponse = response.getBody();
+        if (tokenResponse == null || tokenResponse.getAccessToken() == null || tokenResponse.getAccessToken().isBlank()) {
+            throw new IllegalStateException("Google Access Token Refresh Failed");
+        }
+
+        googleOauth.updateRefreshToken(tokenResponse.getRefreshToken());
+        return tokenResponse.getAccessToken();
     }
 
     void revokeAccessToken(String accessToken) {
@@ -419,12 +460,6 @@ public class GoogleOAuthService {
                 String.class
         );
     }
-
-    private void softDeleteUser(User user) {
-        user.setDeleted(true);
-        user.setDeletedAt(LocalDateTime.now());
-    }
-
 
     /**
      * jwt token 발급 후 쿠키에 저장하는 메소드

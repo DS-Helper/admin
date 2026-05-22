@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TestController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.test.controller</a> &gt; <span class="el_source">TestController.java</span></div><h1>TestController.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.test.controller;
+
+import com.project.ds_helper.common.dto.response.JwtResponse;
+import com.project.ds_helper.common.enums.SwaggerTagName;
+import com.project.ds_helper.test.dto.TestImageCompressionPreviewResponseDto;
+import com.project.ds_helper.test.service.TestService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
+
+<span class="fc" id="L26">@Slf4j</span>
+@RestController
+@RequestMapping(&quot;/test&quot;)
+@RequiredArgsConstructor
+public class TestController {
+
+    private final TestService testService;
+
+    @Tag(name = SwaggerTagName.TEST)
+    @Operation(summary = &quot;테스트 유저 정보 조회&quot;, description = &quot;유저 정보 조회&quot;)
+    @GetMapping(&quot;/user-info&quot;)
+    public ResponseEntity&lt;?&gt; getUserInfo(Authentication authentication) {
+<span class="fc" id="L38">        return ResponseEntity.ok(testService.getUserInfo(authentication));</span>
+    }
+
+    @Tag(name = SwaggerTagName.TEST)
+    @Operation(summary = &quot;테스트 관리자 계정 생성&quot;, description = &quot;관리자 계정 신규 생성&quot;)
+    @PostMapping(&quot;/new-admin&quot;)
+    public ResponseEntity&lt;?&gt; createNewAdmin() throws BadRequestException {
+<span class="fc" id="L45">        testService.createNewAdmin();</span>
+<span class="fc" id="L46">        return new ResponseEntity&lt;&gt;(HttpStatus.CREATED);</span>
+    }
+
+    @Tag(name = SwaggerTagName.TEST)
+    @Operation(summary = &quot;테스트 임시 JWT 발급&quot;, description = &quot;개발용 임시 JWT 토큰 발급&quot;)
+    @GetMapping(&quot;/temp-token&quot;)
+    public ResponseEntity&lt;JwtResponse&gt; tempToken(HttpServletResponse response) {
+<span class="fc" id="L53">        return ResponseEntity.ok(testService.generateTempToken(response));</span>
+    }
+
+    @Tag(name = SwaggerTagName.TEST)
+    @Operation(summary = &quot;이미지 압축 결과 미리보기&quot;, description = &quot;업로드한 원본 이미지와 WebP 압축 결과를 함께 반환&quot;)
+    @PostMapping(&quot;/image-compression-preview&quot;)
+    public ResponseEntity&lt;TestImageCompressionPreviewResponseDto&gt; previewCompressedImage(
+            @RequestPart(&quot;image&quot;) MultipartFile image
+    ) throws Exception {
+<span class="fc" id="L62">        return ResponseEntity.ok(testService.previewCompressedImage(image));</span>
+    }
+
+    @Tag(name = SwaggerTagName.TEST)
+    @Operation(summary = &quot;압축 이미지 바이너리 다운로드&quot;, description = &quot;업로드한 이미지를 WebP 손실 압축한 실제 바이너리를 바로 반환&quot;)
+    @PostMapping(&quot;/image-compression-preview/binary&quot;)
+    public ResponseEntity&lt;ByteArrayResource&gt; previewCompressedImageBinary(
+            @RequestPart(&quot;image&quot;) MultipartFile image
+    ) throws Exception {
+<span class="fc" id="L71">        var compressedImage = testService.previewCompressedImageBinary(image);</span>
+
+<span class="fc" id="L73">        return ResponseEntity.ok()</span>
+<span class="fc" id="L74">                .header(HttpHeaders.CONTENT_DISPOSITION, &quot;inline; filename=\&quot;&quot; + compressedImage.getStoredFilename() + &quot;.&quot; + compressedImage.getFileExtension() + &quot;\&quot;&quot;)</span>
+<span class="fc" id="L75">                .contentType(MediaType.parseMediaType(compressedImage.getS3ContentType()))</span>
+<span class="fc" id="L76">                .contentLength(compressedImage.getSize())</span>
+<span class="fc" id="L77">                .body(new ByteArrayResource(compressedImage.getBytes()));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

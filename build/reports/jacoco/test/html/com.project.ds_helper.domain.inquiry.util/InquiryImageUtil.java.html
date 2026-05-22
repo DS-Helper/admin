@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InquiryImageUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.inquiry.util</a> &gt; <span class="el_source">InquiryImageUtil.java</span></div><h1>InquiryImageUtil.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.inquiry.util;
+
+import com.project.ds_helper.common.dto.request.S3ImageUploadRequestDto;
+import com.project.ds_helper.domain.inquiry.entity.Inquiry;
+import com.project.ds_helper.domain.inquiry.entity.InquiryImage;
+import com.project.ds_helper.domain.inquiry.repository.InquiryImageRepository;
+import com.project.ds_helper.domain.post.entity.PostImage;
+import com.project.ds_helper.domain.post.repository.ImageRepository;
+import com.project.ds_helper.domain.post.util.ImageUtil;
+import com.project.ds_helper.domain.post.util.S3Util;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+@Component
+<span class="fc" id="L25">@Slf4j</span>
+@RequiredArgsConstructor
+public class InquiryImageUtil{
+
+    private final S3Util s3Util;
+    private final InquiryImageRepository inquiryImageRepository;
+    private final ImageUtil imageUtil;
+
+    /**
+     * 이미지 엔티티 빌드
+     * **/
+    public InquiryImage toImage(S3ImageUploadRequestDto imageUploadRequestDto, String s3Key, Inquiry inquiry){
+<span class="nc" id="L37">                    InquiryImage inquiryImage = InquiryImage.builder()</span>
+<span class="nc" id="L38">                    .originalName(imageUploadRequestDto.getOriginalFilename())</span>
+<span class="nc" id="L39">                    .storedName(imageUploadRequestDto.getStoredFilename())</span>
+<span class="nc" id="L40">                    .url(s3Util.toS3UrlByS3Key(s3Key))</span>
+<span class="nc" id="L41">                    .size(imageUploadRequestDto.getSize())</span>
+<span class="nc" id="L42">                    .contentType(imageUploadRequestDto.getFileExtension())</span>
+<span class="nc" id="L43">                    .inquiry(inquiry)</span>
+<span class="nc" id="L44">                    .build();</span>
+<span class="nc" id="L45">        log.info(&quot;InquiryImage Successfully Built&quot;);</span>
+<span class="nc" id="L46">        return inquiryImage;</span>
+    }
+
+    /**
+     * 이미지 엔티티 리스트 빌드
+     * **/
+    public List&lt;InquiryImage&gt; toImages(List&lt;MultipartFile&gt; images, Inquiry inquiry){
+<span class="nc" id="L53">        List&lt;InquiryImage&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">        if(!images.isEmpty()) {</span>
+<span class="nc" id="L55">            images.forEach( image -&gt; result.add(InquiryImage.builder()</span>
+<span class="nc" id="L56">                    .originalName(image.getOriginalFilename())</span>
+<span class="nc" id="L57">                    .storedName(imageUtil.toStoredFilename())</span>
+<span class="nc" id="L58">                    .url(s3Util.toS3UrlByStoredFilename(imageUtil.toStoredFilename()))</span>
+<span class="nc" id="L59">                    .size(image.getSize())</span>
+<span class="nc" id="L60">                    .contentType(Objects.requireNonNull(image.getContentType()).split(&quot;/&quot;)[1])</span>
+<span class="nc" id="L61">                    .inquiry(inquiry)</span>
+<span class="nc" id="L62">                    .build()));</span>
+        }
+<span class="nc" id="L64">        log.info(&quot;InquiryImage Successfully Built&quot;);</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        if(!result.isEmpty()){</span>
+<span class="nc" id="L66">            log.info(&quot;InquiryImages Size : {}&quot;, result.size());</span>
+        }else{
+<span class="nc" id="L68">            log.info(&quot;InquiryImages is Empty : {}&quot;, result.size());</span>
+        }
+<span class="nc" id="L70">        return result;</span>
+    }   
+    
+    
+    /**
+     * ImageUtil의 toStoredFilename을 리턴함. 종속성 있음 (유지보수성 향상을 위해서, 하지만 역할 분리를 위해 InquiryImageUtil에서 Call해서 사용)
+     * **/
+    public String toStoredFilename(String originalFilename){
+<span class="nc" id="L78">       return imageUtil.toStoredFilename();</span>
+    }
+
+    /**
+     * ImageUtil의 extractContentType을 리턴함. 종속성 있음 (유지보수성 향상을 위해서, 하지만 역할 분리를 위해 InquiryImageUtil에서 Call해서 사용)
+     * **/
+    public String extractContentTypeFromRawContentType(String rawContentType){
+<span class="nc" id="L85">        return imageUtil.extractContentTypeFromRawContentType(rawContentType);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

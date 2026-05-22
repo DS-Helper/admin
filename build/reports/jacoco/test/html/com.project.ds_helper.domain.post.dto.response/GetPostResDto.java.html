@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GetPostResDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.post.dto.response</a> &gt; <span class="el_source">GetPostResDto.java</span></div><h1>GetPostResDto.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.post.dto.response;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.project.ds_helper.domain.post.entity.PostImage;
+import com.project.ds_helper.domain.post.entity.Post;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+<span class="fc" id="L21">@Slf4j</span>
+@Schema(description = &quot;게시글 조회 응답 DTO&quot;, example = &quot;{\&quot;postId\&quot;:\&quot;post-001\&quot;,\&quot;title\&quot;:\&quot;복지 서비스 후기\&quot;,\&quot;content\&quot;:\&quot;상담이 정말 친절했어요.\&quot;,\&quot;writerName\&quot;:\&quot;홍길동\&quot;,\&quot;viewCount\&quot;:23,\&quot;imageUrls\&quot;:[\&quot;https://cdn.dshelper.kr/post/1.png\&quot;],\&quot;createdAt\&quot;:\&quot;2026-03-23\&quot;}&quot;)
+public class GetPostResDto {
+
+    private String postId;
+
+    private String title;
+
+    private String content;
+
+    private String writerName;
+
+    private int viewCount;
+
+    private List&lt;String&gt; imageUrls;
+
+    private String createdAt;
+
+    public static GetPostResDto toDto(Post post){
+<span class="fc" id="L40">        LocalDateTime createdAt = post.getCreatedAt();</span>
+<span class="fc" id="L41">        String createdAtAsDate = createdAt.toLocalDate().toString();</span>
+<span class="fc" id="L42">        log.info(&quot;createdAt : {}&quot;, createdAt);</span>
+<span class="fc" id="L43">        log.info(&quot;createdAt convert to LocalDate : {}&quot;, createdAtAsDate);</span>
+<span class="fc" id="L44">        return GetPostResDto.builder()</span>
+<span class="fc" id="L45">                .postId(post.getId())</span>
+<span class="fc" id="L46">                .title(post.getTitle())</span>
+<span class="fc" id="L47">                .content(post.getContent())</span>
+<span class="fc" id="L48">                .writerName(post.getUser().getName())</span>
+<span class="fc" id="L49">                .imageUrls(post.getPostImages().stream().map(PostImage::getUrl).toList())</span>
+<span class="fc" id="L50">                .viewCount(post.getViewCount())</span>
+<span class="fc" id="L51">                .createdAt(createdAtAsDate)</span>
+<span class="fc" id="L52">                .build();</span>
+    }
+
+    public static List&lt;GetPostResDto&gt; toDtoList(List&lt;Post&gt; posts){
+<span class="fc bfc" id="L56" title="All 2 branches covered.">        if(posts.isEmpty()){</span>
+<span class="fc" id="L57">            return new ArrayList&lt;GetPostResDto&gt;();</span>
+        }
+<span class="fc" id="L59">        return posts.stream().map(GetPostResDto::toDto).toList();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

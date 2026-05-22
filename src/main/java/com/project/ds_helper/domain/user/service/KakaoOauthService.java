@@ -9,6 +9,7 @@ import com.project.ds_helper.domain.user.dto.request.MobileKakaoLoginRequestDto;
 import com.project.ds_helper.domain.user.dto.request.OauthWithdrawRequestDto;
 import com.project.ds_helper.domain.user.dto.response.KakaoTokenResponse;
 import com.project.ds_helper.domain.user.dto.response.KakaoUserResponse;
+import com.project.ds_helper.domain.user.dto.response.WithdrawUserResponseDto;
 import com.project.ds_helper.domain.user.entity.KakaoOauth;
 import com.project.ds_helper.domain.user.entity.User;
 import com.project.ds_helper.domain.user.enums.UserType;
@@ -28,7 +29,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -54,6 +54,8 @@ public class KakaoOauthService {
     private final UserRepository userRepository;
     private final StringRedisTemplate stringRedisTemplate;
     private final UserUtil userUtil;
+    private final UserWithdrawalService userWithdrawalService;
+    private final UserLoginHistoryService userLoginHistoryService;
 
     public KakaoOauthService(
             @Qualifier("kakaoOauthWebClient") WebClient kakaoOauthWebClient,
@@ -65,7 +67,9 @@ public class KakaoOauthService {
             KakaoOauthRepository kakaoOauthRepository,
             UserRepository userRepository,
             @Qualifier("CustomStringRedisTemplate") StringRedisTemplate stringRedisTemplate,
-            UserUtil userUtil
+            UserUtil userUtil,
+            UserWithdrawalService userWithdrawalService,
+            UserLoginHistoryService userLoginHistoryService
     ) {
         this.kakaoOauthWebClient = kakaoOauthWebClient;
         this.kakaoApiWebClient = kakaoApiWebClient;
@@ -77,6 +81,8 @@ public class KakaoOauthService {
         this.userRepository = userRepository;
         this.stringRedisTemplate = stringRedisTemplate;
         this.userUtil = userUtil;
+        this.userWithdrawalService = userWithdrawalService;
+        this.userLoginHistoryService = userLoginHistoryService;
     }
 
     public String getKakaoLoginUrl() {
@@ -151,6 +157,7 @@ public class KakaoOauthService {
             log.debug("Already Joined Kakao Oauth User");
 
             KakaoOauth kakaoOauth = optionalKakaoOauth.get();
+            kakaoOauth.updateRefreshToken(kakaoTokenResponse.getRefreshToken());
             //if (kakaoOauth.getUser().isDeleted()) {
                 //throw new IllegalArgumentException("Deleted User");
             //}
@@ -162,6 +169,7 @@ public class KakaoOauthService {
             String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);
             String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);
             log.debug("jwt generated for existing kakao user");
+            userLoginHistoryService.recordSuccessfulLogin(kakaoOauth.getUser());
             saveRefreshTokenWithTtl(userId, refreshToken);
 
             return new JwtResponse(accessToken, refreshToken);
@@ -193,6 +201,7 @@ public class KakaoOauthService {
                     .user(user)
                     .socialOauthId(socialOauthId)
                     .oauthEmail(email)
+                    .refreshToken(kakaoTokenResponse.getRefreshToken())
                     .build();
             log.debug("kakaoOauth is built");
 
@@ -208,6 +217,7 @@ public class KakaoOauthService {
             String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);
             String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);
             log.debug("jwt generated for new kakao user");
+            userLoginHistoryService.recordSuccessfulLogin(user);
             saveRefreshTokenWithTtl(userId, refreshToken);
 
             return new JwtResponse(accessToken, refreshToken);
@@ -263,7 +273,7 @@ public class KakaoOauthService {
     }
 
     @Transactional
-    public void withdraw(org.springframework.security.core.Authentication authentication, OauthWithdrawRequestDto dto) {
+    public WithdrawUserResponseDto withdraw(org.springframework.security.core.Authentication authentication, OauthWithdrawRequestDto dto) {
         String userId = userUtil.extractUserId(authentication);
         User user = userUtil.findUserById(userId);
 
@@ -274,9 +284,32 @@ public class KakaoOauthService {
             throw new IllegalArgumentException("Kakao OAuth Not Connected");
         }
 
-        unlink(dto.accessToken());
-        softDeleteUser(user);
-        stringRedisTemplate.delete(jwtUtil.toRedisRefreshTokenKey(userId));
+        String providerAccessToken = refreshAccessToken(kakaoOauth);
+        unlink(providerAccessToken);
+        return userWithdrawalService.softDeleteAndDeleteRefreshToken(user);
+    }
+
+    String refreshAccessToken(KakaoOauth kakaoOauth) {
+        if (kakaoOauth.getRefreshToken() == null || kakaoOauth.getRefreshToken().isBlank()) {
+            throw new IllegalStateException("Kakao OAuth Refresh Token Not Found");
+        }
+
+        KakaoTokenResponse tokenResponse = kakaoOauthWebClient.post()
+                .uri(uriBuilder -> uriBuilder.path("/oauth/token").build())
+                .body(BodyInserters.fromFormData("grant_type", "refresh_token")
+                        .with("client_id", clientId)
+                        .with("client_secret", clientSecret)
+                        .with("refresh_token", kakaoOauth.getRefreshToken()))
+                .retrieve()
+                .bodyToMono(KakaoTokenResponse.class)
+                .block(Duration.ofMillis(5000));
+
+        if (tokenResponse == null || tokenResponse.getAccessToken() == null || tokenResponse.getAccessToken().isBlank()) {
+            throw new IllegalStateException("Kakao Access Token Refresh Failed");
+        }
+
+        kakaoOauth.updateRefreshToken(tokenResponse.getRefreshToken());
+        return tokenResponse.getAccessToken();
     }
 
     void unlink(String accessToken) {
@@ -346,6 +379,7 @@ public class KakaoOauthService {
             log.debug("Already Joined Kakao Oauth User");
 
             KakaoOauth kakaoOauth = optionalKakaoOauth.get();
+            kakaoOauth.updateRefreshToken(dto.refreshToken());
             //if (kakaoOauth.getUser().isDeleted()) {
                 //throw new IllegalArgumentException("Deleted User");
             //}
@@ -385,6 +419,7 @@ public class KakaoOauthService {
                 .user(user)
                 .socialOauthId(socialOauthId)
                 .oauthEmail(email)
+                .refreshToken(dto.refreshToken())
                 .build();
         log.debug("kakaoOauth is built");
 
@@ -411,8 +446,4 @@ public class KakaoOauthService {
         log.debug("RefreshToken Saved. UserId : {}, key : {}", userId, jwtUtil.toRedisRefreshTokenKey(userId));
     }
 
-    private void softDeleteUser(User user) {
-        user.setDeleted(true);
-        user.setDeletedAt(LocalDateTime.now());
-    }
 }

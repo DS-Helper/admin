@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.project.ds_helper.domain.reservation.service.ReservationServiceTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:14" hostname="아기" time="0.14">
+<testsuite name="com.project.ds_helper.domain.reservation.service.ReservationServiceTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:03:01" hostname="아기" time="0.235">
   <properties/>
-  <testcase name="예약 스케줄이 없으면 빈 목록을 반환한다" classname="com.project.ds_helper.domain.reservation.service.ReservationServiceTest" time="0.133"/>
-  <testcase name="날짜별 예약 슬롯을 30분 단위로 반환한다" classname="com.project.ds_helper.domain.reservation.service.ReservationServiceTest" time="0.006"/>
+  <testcase name="예약 스케줄이 없으면 빈 목록을 반환한다" classname="com.project.ds_helper.domain.reservation.service.ReservationServiceTest" time="0.229"/>
+  <testcase name="날짜별 예약 슬롯을 30분 단위로 반환한다" classname="com.project.ds_helper.domain.reservation.service.ReservationServiceTest" time="0.005"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

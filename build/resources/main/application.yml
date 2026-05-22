@@ -1,24 +1,107 @@
 server:
   port: ${SERVER_PORT:8081}
+  url: ${SERVER_URL:http://52.78.137.32}
+
+client:
+  url: ${CLIENT_URL:https://www.dshelper.kr}
+
+local:
+  port: ${LOCAL_PORT:8081}
+  url: ${LOCAL_URL:http://localhost:8081}
+
+test:
+  port: ${TEST_PORT:8080}
+  url: ${TEST_URL:https://be-test.dshelper.kr}
 
 spring:
   application:
     name: ds-helper-admin
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  jackson:
+    time-zone: Asia/Seoul
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/dshelper?serverTimezone=Asia/Seoul}
-    username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://52.78.137.32:3306/dshelper?serverTimezone=Asia/Seoul&cacheDefaultTimezone=false&useLegacyDatetimeCode=false}
+    username: ${SPRING_DATASOURCE_USERNAME:dshelper}
+    password: ${SPRING_DATASOURCE_PASSWORD:dshelper}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    show-sql: ${SPRING_JPA_SHOW_SQL:true}
     database-platform: org.hibernate.dialect.MySQLDialect
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: Asia/Seoul
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+  mail:
+    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+  cloud:
+    aws:
+      s3:
+        bucket: ${SPRING_CLOUD_AWS_S3_BUCKET:}
+      credentials:
+        access-key: ${SPRING_CLOUD_AWS_CREDENTIALS_ACCESS_KEY:}
+        secret-key: ${SPRING_CLOUD_AWS_CREDENTIALS_SECRET_KEY:}
+      region:
+        static: ${SPRING_CLOUD_AWS_REGION_STATIC:ap-northeast-2}
+      stack:
+        auto: false
 
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+mail:
+  redirect:
+    url: ${MAIL_REDIRECT_URL:http://localhost:8081}
+
+kakao:
+  client:
+    id: ${KAKAO_CLIENT_ID:}
+    secret: ${KAKAO_CLIENT_SECRET:}
+  redirect:
+    uri: ${KAKAO_REDIRECT_URI:https://test.dshelper.kr/kakao/callback}
+
+naver:
+  client:
+    id: ${NAVER_CLIENT_ID:}
+    secret: ${NAVER_CLIENT_SECRET:}
+    uri: ${NAVER_CLIENT_URI:https://www.dshelper.kr}
+  redirect:
+    uri: ${NAVER_REDIRECT_URI:https://test.dshelper.kr/naver/callback}
+
+google:
+  client:
+    id: ${GOOGLE_CLIENT_ID:}
+    secret: ${GOOGLE_CLIENT_SECRET:}
+  redirect:
+    uri: ${GOOGLE_REDIRECT_URI:https://test.dshelper.kr/google/callback}
+
+file:
+  upload:
+    max-size: 5MB
+    max-request-size: 30MB
+    allowed-file-extensions: jpg,jpeg,png
+
+public:
+  data:
+    portal:
+      service:
+        key: ${PUBLIC_DATA_PORTAL_SERVICE_KEY:https://apis.data.go.kr/B554287/LocalGovernmentWelfareInformations/LcgvWelfarelist?serviceKey=4b40d9c02c4024d5d3536419a0638d645875c1b353e64075c6de43d192e8a3b3}
+
+discord:
+  webhook:
+    url: ${DISCORD_WEBHOOK_URL:}

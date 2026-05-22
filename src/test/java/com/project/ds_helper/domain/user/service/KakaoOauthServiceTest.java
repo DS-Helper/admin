@@ -8,6 +8,7 @@ import com.project.ds_helper.common.util.UserUtil;
 import com.project.ds_helper.domain.user.dto.request.MobileKakaoLoginRequestDto;
 import com.project.ds_helper.domain.user.dto.request.OauthWithdrawRequestDto;
 import com.project.ds_helper.domain.user.dto.response.KakaoUserResponse;
+import com.project.ds_helper.domain.user.dto.response.WithdrawUserResponseDto;
 import com.project.ds_helper.domain.user.entity.KakaoOauth;
 import com.project.ds_helper.domain.user.entity.User;
 import com.project.ds_helper.domain.user.enums.OauthType;
@@ -29,6 +30,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,6 +54,8 @@ class KakaoOauthServiceTest {
     @Mock private KakaoOauthRepository kakaoOauthRepository;
     @Mock private UserRepository userRepository;
     @Mock private UserUtil userUtil;
+    @Mock private UserWithdrawalService userWithdrawalService;
+    @Mock private UserLoginHistoryService userLoginHistoryService;
     @Mock private StringRedisTemplate stringRedisTemplate;
     @Mock private ValueOperations<String, String> valueOperations;
     @Mock private HttpServletResponse response;
@@ -94,7 +98,7 @@ class KakaoOauthServiceTest {
     @DisplayName("access token 기반 카카오 로그인은 기존 회원이면 JWT를 반환한다")
     void kakaoLogin_withAccessToken_returnsJwtForExistingUser() throws IOException {
         KakaoOauthService spyService = spy(service);
-        MobileKakaoLoginRequestDto dto = new MobileKakaoLoginRequestDto(OauthType.KAKAO, "kakao-access-token");
+        MobileKakaoLoginRequestDto dto = new MobileKakaoLoginRequestDto(OauthType.KAKAO, "kakao-access-token", null);
         KakaoUserResponse userResponse = createKakaoUserResponse(1L, "user@test.com", "홍길동", "male", "2000", "https://img", "010-1234-5678");
         doReturn(userResponse).when(spyService).fetchUserInfo("kakao-access-token");
 
@@ -122,7 +126,7 @@ class KakaoOauthServiceTest {
     @DisplayName("access token 기반 카카오 로그인은 신규 회원이면 가입 후 JWT를 반환한다")
     void kakaoLogin_withAccessToken_createsUserAndReturnsJwt() throws IOException {
         KakaoOauthService spyService = spy(service);
-        MobileKakaoLoginRequestDto dto = new MobileKakaoLoginRequestDto(OauthType.KAKAO, "kakao-access-token");
+        MobileKakaoLoginRequestDto dto = new MobileKakaoLoginRequestDto(OauthType.KAKAO, "kakao-access-token", null);
         KakaoUserResponse userResponse = createKakaoUserResponse(2L, "new@test.com", "신규", "female", "2001", "https://img2", "010-9999-9999");
         doReturn(userResponse).when(spyService).fetchUserInfo("kakao-access-token");
 
@@ -158,19 +162,21 @@ class KakaoOauthServiceTest {
                 .email("user@test.com")
                 .kakaoOauthConnected(true)
                 .build();
-        KakaoOauth kakaoOauth = KakaoOauth.builder().user(user).build();
+        KakaoOauth kakaoOauth = KakaoOauth.builder().user(user).refreshToken("kakao-provider-refresh-token").build();
 
-        doNothing().when(spyService).unlink("kakao-access-token");
+        doReturn("kakao-refreshed-access-token").when(spyService).refreshAccessToken(kakaoOauth);
+        doNothing().when(spyService).unlink("kakao-refreshed-access-token");
         when(userUtil.extractUserId(authentication)).thenReturn("user-1");
         when(userUtil.findUserById("user-1")).thenReturn(user);
         when(kakaoOauthRepository.findByUser_Id("user-1")).thenReturn(Optional.of(kakaoOauth));
-        when(jwtUtil.toRedisRefreshTokenKey("user-1")).thenReturn("refresh:user-1");
+        WithdrawUserResponseDto responseDto = new WithdrawUserResponseDto("user-1", LocalDateTime.of(2026, 5, 21, 14, 30));
+        when(userWithdrawalService.softDeleteAndDeleteRefreshToken(user)).thenReturn(responseDto);
 
-        spyService.withdraw(authentication, dto);
+        WithdrawUserResponseDto result = spyService.withdraw(authentication, dto);
 
-        verify(stringRedisTemplate).delete("refresh:user-1");
-        assertThat(user.isDeleted()).isTrue();
-        assertThat(user.getDeletedAt()).isNotNull();
+        verify(spyService).unlink("kakao-refreshed-access-token");
+        verify(userWithdrawalService).softDeleteAndDeleteRefreshToken(user);
+        assertThat(result).isEqualTo(responseDto);
         assertThat(user.getEmail()).isEqualTo("user@test.com");
     }
 
@@ -178,7 +184,7 @@ class KakaoOauthServiceTest {
     @DisplayName("카카오 신규 가입 시 동일 이메일이 있으면 가입을 거절한다")
     void kakaoLogin_withAccessToken_throwsWhenEmailExists() throws IOException {
         KakaoOauthService spyService = spy(service);
-        MobileKakaoLoginRequestDto dto = new MobileKakaoLoginRequestDto(OauthType.KAKAO, "kakao-access-token");
+        MobileKakaoLoginRequestDto dto = new MobileKakaoLoginRequestDto(OauthType.KAKAO, "kakao-access-token", null);
         KakaoUserResponse userResponse = createKakaoUserResponse(2L, "dup@test.com", "중복", "female", "2001", "https://img2", "010-9999-9999");
         doReturn(userResponse).when(spyService).fetchUserInfo("kakao-access-token");
 

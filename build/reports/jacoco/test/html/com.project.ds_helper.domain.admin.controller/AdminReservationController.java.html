@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminReservationController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.admin.controller</a> &gt; <span class="el_source">AdminReservationController.java</span></div><h1>AdminReservationController.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.admin.controller;
+
+import com.project.ds_helper.domain.admin.service.AdminReservationService;
+import com.project.ds_helper.domain.reservation.enums.ReservationStatus;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDate;
+
+@RestController
+@RequestMapping(&quot;/admin/reservations&quot;)
+@RequiredArgsConstructor
+<span class="fc" id="L20">@Slf4j</span>
+public class AdminReservationController {
+
+    private final AdminReservationService adminReservationService;
+
+    @Tag(name = &quot;관리자 &gt; 예약&quot;)
+    @Operation(summary = &quot;대기 상태의 예약 전체 조회 (JWT 인증 필요)&quot;, description = &quot;개인 및 기관의 대기 중인 예약을 조회합니다. 검색 옵션을 지원합니다.&quot;)
+    @GetMapping(&quot;/requested-reservations&quot;)
+    public ResponseEntity&lt;?&gt; getRequestedReservations(
+            @RequestParam(required = false) String requesterName,
+            @RequestParam(required = false) ReservationStatus reservationStatus,
+            @RequestParam(required = false) String applicantType,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate,
+            @RequestParam(defaultValue = &quot;0&quot;) int page,
+            @RequestParam(defaultValue = &quot;10&quot;) int size,
+            @RequestParam(defaultValue = &quot;desc&quot;) String sort,
+            @RequestParam(defaultValue = &quot;createdAt&quot;) String sortBy
+    ) {
+<span class="fc" id="L39">        log.debug(&quot;AdminReservationController.getRequestedReservations called. name={}, status={}, type={}, dateRange={}~{}&quot;, </span>
+                requesterName, reservationStatus, applicantType, startDate, endDate);
+<span class="fc" id="L41">        return ResponseEntity.ok(adminReservationService.getRequestedReservations(</span>
+                requesterName, reservationStatus, applicantType, startDate, endDate, page, size, sort, sortBy));
+    }
+
+    @Tag(name = &quot;관리자 &gt; 예약&quot;)
+    @Operation(summary = &quot;수락된 예약 전체 수 조회 (JWT 인증 필요)&quot;)
+    @GetMapping(&quot;/accepted/count&quot;)
+    public ResponseEntity&lt;Long&gt; getAcceptedReservationCount() {
+<span class="fc" id="L49">        log.debug(&quot;AdminReservationController.getAcceptedReservationCount called.&quot;);</span>
+<span class="fc" id="L50">        return ResponseEntity.ok(adminReservationService.getAcceptedReservationCount());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

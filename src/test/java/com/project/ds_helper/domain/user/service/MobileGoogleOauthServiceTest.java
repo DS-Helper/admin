@@ -50,6 +50,8 @@ class MobileGoogleOauthServiceTest {
     @Mock
     private CookieUtil cookieUtil;
     @Mock
+    private UserLoginHistoryService userLoginHistoryService;
+    @Mock
     private StringRedisTemplate stringRedisTemplate;
     @Mock
     private ValueOperations<String, String> valueOperations;
@@ -63,7 +65,7 @@ class MobileGoogleOauthServiceTest {
     @DisplayName("모바일 구글 로그인은 기존 회원에게 access token과 refresh token을 각각 발급한다")
     void mobileGoogleLogin_existingUser_returnsDistinctTokens() throws IOException {
         MobileGoogleOauthService spyService = spy(service);
-        MobileGoogleLoginRequestDto dto = new MobileGoogleLoginRequestDto(OauthType.GOOGLE, "google-access-token");
+        MobileGoogleLoginRequestDto dto = new MobileGoogleLoginRequestDto(OauthType.GOOGLE, "google-access-token", "google-provider-refresh-token");
         GoogleUserInfoResponse userInfo = new GoogleUserInfoResponse();
         ReflectionTestUtils.setField(userInfo, "id", "social-id");
         ReflectionTestUtils.setField(userInfo, "email", "user@test.com");
@@ -88,6 +90,7 @@ class MobileGoogleOauthServiceTest {
         assertThat(result.accessToken()).isEqualTo("access-token");
         assertThat(result.refreshToken()).isEqualTo("refresh-token");
         assertThat(result.refreshToken()).isNotEqualTo(result.accessToken());
+        assertThat(googleOauth.getRefreshToken()).isEqualTo("google-provider-refresh-token");
         verify(jwtUtil).generateRefreshToken("user-id", "USER", "PERSONAL");
         verify(userRepository, never()).save(any(User.class));
     }
@@ -96,7 +99,7 @@ class MobileGoogleOauthServiceTest {
     @DisplayName("모바일 구글 신규 가입 시 동일 이메일이 있으면 가입을 거절한다")
     void mobileGoogleLogin_throwsWhenEmailExists() throws IOException {
         MobileGoogleOauthService spyService = spy(service);
-        MobileGoogleLoginRequestDto dto = new MobileGoogleLoginRequestDto(OauthType.GOOGLE, "google-access-token");
+        MobileGoogleLoginRequestDto dto = new MobileGoogleLoginRequestDto(OauthType.GOOGLE, "google-access-token", null);
         GoogleUserInfoResponse userInfo = new GoogleUserInfoResponse();
         ReflectionTestUtils.setField(userInfo, "id", "social-id");
         ReflectionTestUtils.setField(userInfo, "email", "dup@test.com");

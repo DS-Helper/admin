@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GetNotificationsResponseDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.notification.dto.response</a> &gt; <span class="el_source">GetNotificationsResponseDto.java</span></div><h1>GetNotificationsResponseDto.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.notification.dto.response;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.project.ds_helper.domain.notification.entity.Notification;
+import com.project.ds_helper.domain.notification.enums.NotificationType;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.time.LocalDateTime;
+
+@Schema(description = &quot;알림 조회 응답 DTO&quot;)
+<span class="fc" id="L11">public record GetNotificationsResponseDto(</span>
+        @Schema(description = &quot;알림 ID&quot;, example = &quot;3f9c7c8e-4d5a-4b1e-9a2f-7c1d2e8f9a01&quot;)
+        String notificationId,
+
+        @Schema(description = &quot;알림 타입&quot;, example = &quot;BOARD_COMMENT&quot;)
+        NotificationType type,
+
+        @Schema(description = &quot;이동 대상 게시글 ID&quot;, example = &quot;3f9c7c8e-4d5a-4b1e-9a2f-7c1d2e8f9a01&quot;)
+        String boardId,
+
+        @Schema(description = &quot;이동 대상 댓글 ID&quot;, example = &quot;3f9c7c8e-4d5a-4b1e-9a2f-7c1d2e8f9a01&quot;)
+        String commentId,
+
+        @Schema(description = &quot;알림 내용&quot;, example = &quot;내 게시글에 댓글이 작성되었습니다.&quot;)
+        String content,
+
+        @Schema(description = &quot;읽음 여부&quot;, example = &quot;false&quot;)
+        boolean isRead,
+
+        @Schema(description = &quot;알림 생성 일시&quot;, example = &quot;2026-04-03 10:30:00&quot;)
+        @JsonFormat(pattern = &quot;yyyy-MM-dd HH:mm:ss&quot;)
+        LocalDateTime createdAt
+) {
+    public static GetNotificationsResponseDto toDto(Notification notification) {
+<span class="fc" id="L35">        return new GetNotificationsResponseDto(</span>
+<span class="fc" id="L36">                notification.getId(),</span>
+<span class="fc" id="L37">                notification.getType(),</span>
+<span class="fc" id="L38">                notification.getBoardId(),</span>
+<span class="fc" id="L39">                notification.getCommentId(),</span>
+<span class="fc" id="L40">                notification.getContent(),</span>
+<span class="fc" id="L41">                notification.isRead(),</span>
+<span class="fc" id="L42">                notification.getCreatedAt()</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

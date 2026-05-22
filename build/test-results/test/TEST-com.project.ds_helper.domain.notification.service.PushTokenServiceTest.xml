@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.project.ds_helper.domain.notification.service.PushTokenServiceTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:11" hostname="아기" time="0.111">
+<testsuite name="com.project.ds_helper.domain.notification.service.PushTokenServiceTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:02:56" hostname="아기" time="0.413">
   <properties/>
-  <testcase name="활성 푸시 토큰 조회 시 활성 토큰 목록만 반환한다" classname="com.project.ds_helper.domain.notification.service.PushTokenServiceTest" time="0.083"/>
-  <testcase name="푸시 토큰 비활성화 시 현재 사용자 토큰만 비활성화한다" classname="com.project.ds_helper.domain.notification.service.PushTokenServiceTest" time="0.017"/>
-  <testcase name="푸시 토큰 등록 시 기존 토큰이 없으면 새 엔티티를 저장한다" classname="com.project.ds_helper.domain.notification.service.PushTokenServiceTest" time="0.005"/>
+  <testcase name="활성 푸시 토큰 조회 시 활성 토큰 목록만 반환한다" classname="com.project.ds_helper.domain.notification.service.PushTokenServiceTest" time="0.385"/>
+  <testcase name="푸시 토큰 비활성화 시 현재 사용자 토큰만 비활성화한다" classname="com.project.ds_helper.domain.notification.service.PushTokenServiceTest" time="0.012"/>
+  <testcase name="푸시 토큰 등록 시 기존 토큰이 없으면 새 엔티티를 저장한다" classname="com.project.ds_helper.domain.notification.service.PushTokenServiceTest" time="0.006"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

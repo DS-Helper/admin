@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.project.ds_helper.domain.post.PostDtoEntityTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:02:56" hostname="아기" time="0.05">
+  <properties/>
+  <testcase name="Post와 PostImage는 PrePersist에서 ID를 생성한다" classname="com.project.ds_helper.domain.post.PostDtoEntityTest" time="0.02"/>
+  <testcase name="GetPostResDto는 이미지가 있는 게시글과 빈 목록을 변환한다" classname="com.project.ds_helper.domain.post.PostDtoEntityTest" time="0.01"/>
+  <testcase name="UpdatePostReqDto는 기존 Post Entity를 수정한다" classname="com.project.ds_helper.domain.post.PostDtoEntityTest" time="0.001"/>
+  <testcase name="CreatePostReqDto는 Post Entity로 변환된다" classname="com.project.ds_helper.domain.post.PostDtoEntityTest" time="0.002"/>
+  <testcase name="GetAllPostOfUserResDto는 빈 페이지와 이미지가 있는 페이지를 변환한다" classname="com.project.ds_helper.domain.post.PostDtoEntityTest" time="0.01"/>
+  <testcase name="Post는 이미지 양방향 관계를 추가/제거한다" classname="com.project.ds_helper.domain.post.PostDtoEntityTest" time="0.001"/>
+  <system-out><![CDATA[12:02:56.838 [Test worker] INFO com.project.ds_helper.domain.post.entity.Post -- addImage called: stored.webp
+12:02:56.841 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt : 2026-03-27T10:00
+12:02:56.842 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt convert to LocalDate : 2026-03-27
+12:02:56.846 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt : 2026-03-27T10:00
+12:02:56.846 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt convert to LocalDate : 2026-03-27
+12:02:56.854 [Test worker] INFO com.project.ds_helper.domain.post.entity.Post -- addImage called: stored.webp
+12:02:56.857 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto -- Posts is Empty
+12:02:56.857 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto -- posts size : 10
+12:02:56.858 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt : 2026-03-27T10:00
+12:02:56.858 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetPostResDto -- createdAt convert to LocalDate : 2026-03-27
+12:02:56.859 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto -- postId : post-1, title : 제목, content : 내용, writerName : tester, imageUrls : [https://bucket/images/stored.webp]
+12:02:56.860 [Test worker] INFO com.project.ds_helper.domain.post.dto.response.GetAllPostOfUserResDto -- postId : post-1, title : 제목, content : 내용, writerName : tester, imageUrls : []
+12:02:56.862 [Test worker] INFO com.project.ds_helper.domain.post.entity.Post -- addImage called: stored.webp
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

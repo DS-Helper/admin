@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrganizationReservation.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.reservation.entity</a> &gt; <span class="el_source">OrganizationReservation.java</span></div><h1>OrganizationReservation.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.reservation.entity;
+
+import com.project.ds_helper.domain.base.entity.BaseTime;
+import com.project.ds_helper.domain.reservation.enums.RecipientGenderType;
+import com.project.ds_helper.domain.reservation.enums.ReservationStatus;
+import com.project.ds_helper.domain.user.entity.User;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = &quot;tb_organization_reservation&quot;)
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@Builder
+public class OrganizationReservation extends BaseTime {
+
+    @PrePersist
+    private void perPersistGenerateId(){
+<span class="nc" id="L25">        this.id = String.valueOf(UUID.randomUUID());</span>
+<span class="nc" id="L26">    }</span>
+
+    @Id
+    @Column(name = &quot;organization_reservation_id&quot;)
+    private String id; // 식별자 / UUID
+
+    @Column(name = &quot;organization_name&quot;)
+    private String organizationName; // 기관명
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = &quot;user_id&quot;)
+    private User user; // 신청한 유저
+
+    @Column(name = &quot;name&quot;)
+    private String name; // 신청자 이름
+
+    @Column(name = &quot;phone_number&quot;)
+    private String phoneNumber; // 신청자 연락처
+
+    @Column(name = &quot;visit_date&quot;)
+    private LocalDate visitDate; // 방문 날짜
+
+    @Column(name = &quot;start_time&quot;)
+    private LocalTime startTime; // 봉사 시작 시간
+
+    @Column(name = &quot;end_time&quot;)
+    private LocalTime endTime; // 봉사 종료 시간
+
+    @Column(name = &quot;address&quot;)
+    private String address; // 주소
+
+    @Column(name = &quot;requirement&quot;, columnDefinition = &quot;TEXT&quot;)
+    private String requirement; // 요청 사항
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;recipient_gender&quot;)
+    private RecipientGenderType recipientGender; // 도움 받을 사람 성별
+
+    @Column(name = &quot;recipient_number&quot;)
+    private int recipientNumber; // 도움 받는 사람 수
+
+    @Column(name = &quot;note&quot;)
+    private String note; // 특이사항
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;reservation_status&quot;)
+    private ReservationStatus reservationStatus = ReservationStatus.REQUESTED; // 예약 상태
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = &quot;reservation_schedule_id&quot;)
+    private ReservationSchedule reservationSchedule;
+
+    /**
+     * 예약 취소 시 기존 예약시간 삭제
+     * **/
+    public void cancelReservation(){
+<span class="nc" id="L83">        this.setReservationSchedule(null);</span>
+<span class="nc" id="L84">    }</span>
+
+    /**
+     * 예약 완료 시 기존 예약시간 삭제
+     * **/
+    public void completeReservation(){
+<span class="nc" id="L90">        this.setReservationSchedule(null);</span>
+<span class="nc" id="L91">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

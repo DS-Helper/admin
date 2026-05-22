@@ -44,16 +44,19 @@ public class MobileGoogleOauthService {
     private final JwtUtil jwtUtil;
     private final CookieUtil cookieUtil;
     private final StringRedisTemplate stringRedisTemplate;
+    private final UserLoginHistoryService userLoginHistoryService;
 
     public MobileGoogleOauthService(GoogleOauthRepository googleOauthRepository, UserRepository userRepository,
                                     @Qualifier("customRestTemplate") RestTemplate restTemplate,
-                                    JwtUtil jwtUtil, CookieUtil cookieUtil, @Qualifier("CustomStringRedisTemplate") StringRedisTemplate stringRedisTemplate) {
+                                    JwtUtil jwtUtil, CookieUtil cookieUtil, @Qualifier("CustomStringRedisTemplate") StringRedisTemplate stringRedisTemplate,
+                                    UserLoginHistoryService userLoginHistoryService) {
         this.googleOauthRepository = googleOauthRepository;
         this.userRepository = userRepository;
         this.restTemplate = restTemplate;
         this.jwtUtil = jwtUtil;
         this.cookieUtil = cookieUtil;
         this.stringRedisTemplate = stringRedisTemplate;
+        this.userLoginHistoryService = userLoginHistoryService;
     }
 
     /**
@@ -139,6 +142,7 @@ public class MobileGoogleOauthService {
                     .socialOauthId(socialOauthId)
                     .oauthEmail(email)
                     .user(user)
+                    .refreshToken(dto.refreshToken())
                     .build();
             googleOauthRepository.save(newGoogleOauth);
             log.debug("GoogleOauth Successfully Saved");
@@ -151,11 +155,13 @@ public class MobileGoogleOauthService {
 
             String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);
             String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);
+            userLoginHistoryService.recordSuccessfulLogin(user);
             saveRefreshTokenWithTtl(userId, refreshToken);
             return new JwtResponse(accessToken, refreshToken);
         }else{
 
             User user = googleOauth.getUser();
+            googleOauth.updateRefreshToken(dto.refreshToken());
             //if (user.isDeleted()) {
                 //throw new IllegalArgumentException("Deleted User");
             //}
@@ -169,6 +175,7 @@ public class MobileGoogleOauthService {
 
             String accessToken = jwtUtil.generateAccessToken(userId, userRole, userType);
             String refreshToken = jwtUtil.generateRefreshToken(userId, userRole, userType);
+            userLoginHistoryService.recordSuccessfulLogin(user);
             saveRefreshTokenWithTtl(userId, refreshToken);
             return new JwtResponse(accessToken, refreshToken);
         }

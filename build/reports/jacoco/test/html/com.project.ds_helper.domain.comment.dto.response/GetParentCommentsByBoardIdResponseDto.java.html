@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GetParentCommentsByBoardIdResponseDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.comment.dto.response</a> &gt; <span class="el_source">GetParentCommentsByBoardIdResponseDto.java</span></div><h1>GetParentCommentsByBoardIdResponseDto.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.comment.dto.response;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.project.ds_helper.domain.comment.entity.Comment;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.time.LocalDateTime;
+
+@Schema(
+        description = &quot;부모 댓글 조회 응답 DTO&quot;,
+        example = &quot;&quot;&quot;
+                {
+                  &quot;commentId&quot;: &quot;3f9c7c8e-4d5a-4b1e-9a2f-7c1d2e8f9a01&quot;,
+                  &quot;writerName&quot;: &quot;김도움&quot;,
+                  &quot;writerProfileImageUrl&quot;: &quot;https://ds-helper-bucket.s3.ap-northeast-2.amazonaws.com/profile/user-001.jpg&quot;,
+                  &quot;content&quot;: &quot;저도 같은 프로그램 추천합니다.&quot;,
+                  &quot;createdAt&quot;: &quot;2025-12-31 18:22:50&quot;
+                }
+                &quot;&quot;&quot;
+)
+<span class="fc" id="L21">public record GetParentCommentsByBoardIdResponseDto(</span>
+
+        @Schema(description = &quot;댓글 ID&quot;, example = &quot;3f9c7c8e-4d5a-4b1e-9a2f-7c1d2e8f9a01&quot;)
+        String commentId,
+
+        @Schema(description = &quot;댓글 작성자 이름&quot;, example = &quot;김도움&quot;)
+        String writerName,
+
+        @Schema(description = &quot;작성자 유저 ID&quot;, example = &quot;88fa8c94-ad1a-4351-9fd6-cdd002ecf167&quot;)
+        String writerId,
+
+        @Schema(description = &quot;댓글 작성자 프로필 이미지 URL&quot;, example = &quot;https://ds-helper-bucket.s3.ap-northeast-2.amazonaws.com/profile/user-001.jpg&quot;)
+        String writerProfileImageUrl,
+
+        @Schema(description = &quot;댓글 내용&quot;, example = &quot;저도 같은 프로그램 추천합니다.&quot;)
+        String content,
+
+        @Schema(description = &quot;댓글 작성 일시&quot;, example = &quot;2025-12-31 18:22:50&quot;)
+        @JsonFormat(pattern = &quot;yyyy-MM-dd HH:mm:ss&quot;)
+        LocalDateTime createdAt
+) {
+    public static GetParentCommentsByBoardIdResponseDto toDto(Comment comment){
+<span class="fc" id="L43">        return new GetParentCommentsByBoardIdResponseDto(</span>
+<span class="fc" id="L44">                comment.getId(),</span>
+<span class="fc" id="L45">                comment.getUser().getName(),</span>
+<span class="fc" id="L46">                comment.getUser().getId(),</span>
+<span class="fc" id="L47">                comment.getUser().getProfileImageUrl(),</span>
+<span class="fc" id="L48">                comment.getContent(),</span>
+<span class="fc" id="L49">                comment.getCreatedAt()</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

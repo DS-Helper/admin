@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.project.ds_helper.domain.reply.controller.ReplyControllerTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:13" hostname="아기" time="0.093">
+<testsuite name="com.project.ds_helper.domain.reply.controller.ReplyControllerTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:03:01" hostname="아기" time="0.094">
   <properties/>
   <testcase name="문의 답변 생성은 서비스 호출 후 200을 반환한다" classname="com.project.ds_helper.domain.reply.controller.ReplyControllerTest" time="0.07"/>
-  <testcase name="문의 답변 조회는 서비스 결과를 그대로 반환한다" classname="com.project.ds_helper.domain.reply.controller.ReplyControllerTest" time="0.021"/>
+  <testcase name="문의 답변 조회는 서비스 결과를 그대로 반환한다" classname="com.project.ds_helper.domain.reply.controller.ReplyControllerTest" time="0.014"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>User.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.domain.user.entity</a> &gt; <span class="el_source">User.java</span></div><h1>User.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.domain.user.entity;
+
+import com.project.ds_helper.domain.base.entity.BaseTime;
+import com.project.ds_helper.domain.user.enums.UserRole;
+import com.project.ds_helper.domain.user.enums.UserType;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = &quot;tb_user&quot;)
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@Builder
+public class User extends BaseTime {
+
+    @PrePersist
+    private void prePersistGenerateId(){
+<span class="fc" id="L23">        this.id = String.valueOf(UUID.randomUUID());</span>
+<span class="fc" id="L24">    }</span>
+
+    @Id
+    @Column(name = &quot;user_id&quot;)
+    private String id; // 식별자
+
+    @Column(name = &quot;email&quot;, unique = true)
+    private String email; // 이메일
+
+    @Column(name = &quot;password&quot;)
+    private String password; // 비밀번호
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;role&quot;)
+    private UserRole role = UserRole.USER; // 권한
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;type&quot;)
+    private UserType type = UserType.PERSONAL; // 권한
+
+    @Column(name = &quot;name&quot;)
+    private String name; // 이름
+
+    @Column(name = &quot;profile_image_url&quot;)
+    private String profileImageUrl;
+
+    @Column(name = &quot;gender&quot;)
+    private String gender;
+
+    @Column(name = &quot;age_range&quot;)
+    private String ageRange; // 삭제 예정
+
+    @Column(name = &quot;birthday&quot;) // 삭제 예정
+    private String birthday;
+
+    @Column(name = &quot;birthyear&quot;)
+    private String birthyear;
+
+    @Builder.Default
+    @Column(name = &quot;phone_number&quot;)
+    private String phoneNumber = &quot;010-0000-0000&quot;;
+
+    @Builder.Default
+    @Column(name = &quot;local_auth_connected&quot;)
+    private boolean localAuthConnected = false; // 자체 회원가입 여부
+
+    @Builder.Default
+    @Column(name = &quot;kakao_oauth_connected&quot;)
+    private boolean kakaoOauthConnected = false; // 카카오 소셜 회원가입 여부
+
+    @Builder.Default
+    @Column(name = &quot;google_oauth_connected&quot;)
+    private boolean googleOauthConnected = false; // 구글 소셜 회원가입 여부
+
+    @Builder.Default
+    @Column(name = &quot;naver_oauth_connected&quot;)
+    private boolean naverOauthConnected = false; // 네이버 소셜 회원가입 여부
+
+    @Builder.Default
+    @Column(name = &quot;is_deleted&quot;)
+    private boolean isDeleted = false;
+
+    @Column(name = &quot;deleted_at&quot;)
+    private LocalDateTime deletedAt;
+
+    @Column(name = &quot;last_login_at&quot;, nullable = true)
+    private LocalDateTime lastLoginAt;
+
+    public void softDelete(LocalDateTime deletedAt) {
+<span class="fc" id="L95">        this.isDeleted = true;</span>
+<span class="fc" id="L96">        this.deletedAt = deletedAt;</span>
+<span class="fc" id="L97">    }</span>
+
+    public void recordLogin(LocalDateTime lastLoginAt) {
+<span class="fc" id="L100">        this.lastLoginAt = lastLoginAt;</span>
+<span class="fc" id="L101">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

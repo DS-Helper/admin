@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TestImageCompressionPreviewResponseDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">admin</a> &gt; <a href="index.source.html" class="el_package">com.project.ds_helper.test.dto</a> &gt; <span class="el_source">TestImageCompressionPreviewResponseDto.java</span></div><h1>TestImageCompressionPreviewResponseDto.java</h1><pre class="source lang-java linenums">package com.project.ds_helper.test.dto;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+
+@Builder
+@Schema(description = &quot;원본/압축 이미지 미리보기 응답 DTO&quot;)
+<span class="fc" id="L8">public record TestImageCompressionPreviewResponseDto(</span>
+        @Schema(description = &quot;원본 파일명&quot;, example = &quot;sample.png&quot;)
+        String originalFilename,
+
+        @Schema(description = &quot;원본 Content-Type&quot;, example = &quot;image/png&quot;)
+        String originalContentType,
+
+        @Schema(description = &quot;원본 파일 크기(byte)&quot;, example = &quot;102400&quot;)
+        long originalSize,
+
+        @Schema(description = &quot;원본 이미지 Data URL&quot;, example = &quot;data:image/png;base64,...&quot;)
+        String originalImageDataUrl,
+
+        @Schema(description = &quot;압축 후 저장 파일명&quot;, example = &quot;20260424120000_uuid&quot;)
+        String compressedStoredFilename,
+
+        @Schema(description = &quot;압축 후 Content-Type&quot;, example = &quot;image/webp&quot;)
+        String compressedContentType,
+
+        @Schema(description = &quot;압축 후 확장자&quot;, example = &quot;webp&quot;)
+        String compressedExtension,
+
+        @Schema(description = &quot;압축 후 파일 크기(byte)&quot;, example = &quot;20480&quot;)
+        long compressedSize,
+
+        @Schema(description = &quot;압축 이미지 Data URL&quot;, example = &quot;data:image/webp;base64,...&quot;)
+        String compressedImageDataUrl
+) {
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

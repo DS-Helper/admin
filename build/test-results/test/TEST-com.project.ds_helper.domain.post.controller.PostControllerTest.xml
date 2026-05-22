@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.project.ds_helper.domain.post.controller.PostControllerTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:11" hostname="아기" time="0.11">
+<testsuite name="com.project.ds_helper.domain.post.controller.PostControllerTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:02:56" hostname="아기" time="0.242">
   <properties/>
-  <testcase name="게시글 목록 조회는 서비스 결과를 반환한다" classname="com.project.ds_helper.domain.post.controller.PostControllerTest" time="0.073"/>
-  <testcase name="게시글 생성은 서비스 호출 후 201을 반환한다" classname="com.project.ds_helper.domain.post.controller.PostControllerTest" time="0.004"/>
-  <testcase name="게시글 삭제는 서비스 호출 후 204를 반환한다" classname="com.project.ds_helper.domain.post.controller.PostControllerTest" time="0.008"/>
-  <testcase name="게시글 목록 조회 시 keyword를 서비스에 전달한다" classname="com.project.ds_helper.domain.post.controller.PostControllerTest" time="0.005"/>
-  <testcase name="게시글 단건 조회는 서비스 결과를 반환한다" classname="com.project.ds_helper.domain.post.controller.PostControllerTest" time="0.006"/>
-  <testcase name="게시글 수정은 서비스 호출 후 200을 반환한다" classname="com.project.ds_helper.domain.post.controller.PostControllerTest" time="0.003"/>
+  <testcase name="게시글 목록 조회는 서비스 결과를 반환한다" classname="com.project.ds_helper.domain.post.controller.PostControllerTest" time="0.078"/>
+  <testcase name="게시글 생성은 서비스 호출 후 201을 반환한다" classname="com.project.ds_helper.domain.post.controller.PostControllerTest" time="0.008"/>
+  <testcase name="게시글 삭제는 서비스 호출 후 204를 반환한다" classname="com.project.ds_helper.domain.post.controller.PostControllerTest" time="0.013"/>
+  <testcase name="게시글 목록 조회 시 keyword를 서비스에 전달한다" classname="com.project.ds_helper.domain.post.controller.PostControllerTest" time="0.025"/>
+  <testcase name="게시글 단건 조회는 서비스 결과를 반환한다" classname="com.project.ds_helper.domain.post.controller.PostControllerTest" time="0.077"/>
+  <testcase name="게시글 수정은 서비스 호출 후 200을 반환한다" classname="com.project.ds_helper.domain.post.controller.PostControllerTest" time="0.005"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

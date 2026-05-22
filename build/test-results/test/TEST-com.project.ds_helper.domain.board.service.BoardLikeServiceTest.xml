@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.project.ds_helper.domain.board.service.BoardLikeServiceTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:07" hostname="아기" time="0.317">
+<testsuite name="com.project.ds_helper.domain.board.service.BoardLikeServiceTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:02:52" hostname="아기" time="0.363">
   <properties/>
-  <testcase name="좋아요 수를 조회한다" classname="com.project.ds_helper.domain.board.service.BoardLikeServiceTest" time="0.286"/>
-  <testcase name="좋아요가 없으면 새 좋아요를 생성하고 true를 반환한다" classname="com.project.ds_helper.domain.board.service.BoardLikeServiceTest" time="0.01"/>
-  <testcase name="좋아요 증가 대상 게시글이 없으면 예외가 발생한다" classname="com.project.ds_helper.domain.board.service.BoardLikeServiceTest" time="0.007"/>
+  <testcase name="좋아요 수를 조회한다" classname="com.project.ds_helper.domain.board.service.BoardLikeServiceTest" time="0.301"/>
+  <testcase name="좋아요 취소 카운트 갱신 대상 게시글이 없으면 예외가 발생한다" classname="com.project.ds_helper.domain.board.service.BoardLikeServiceTest" time="0.01"/>
+  <testcase name="좋아요가 없으면 새 좋아요를 생성하고 true를 반환한다" classname="com.project.ds_helper.domain.board.service.BoardLikeServiceTest" time="0.006"/>
+  <testcase name="좋아요 증가 대상 게시글이 없으면 예외가 발생한다" classname="com.project.ds_helper.domain.board.service.BoardLikeServiceTest" time="0.016"/>
+  <testcase name="좋아요 대상 게시글이 없으면 예외가 발생한다" classname="com.project.ds_helper.domain.board.service.BoardLikeServiceTest" time="0.011"/>
   <testcase name="삭제된 게시글은 좋아요할 수 없다" classname="com.project.ds_helper.domain.board.service.BoardLikeServiceTest" time="0.005"/>
-  <testcase name="기존 좋아요가 있으면 삭제하고 false를 반환한다" classname="com.project.ds_helper.domain.board.service.BoardLikeServiceTest" time="0.003"/>
+  <testcase name="기존 좋아요가 있으면 삭제하고 false를 반환한다" classname="com.project.ds_helper.domain.board.service.BoardLikeServiceTest" time="0.004"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

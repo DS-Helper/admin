@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.project.ds_helper.domain.user.controller.UserControllerTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-05-10T11:39:16" hostname="아기" time="0.179">
+<testsuite name="com.project.ds_helper.domain.user.controller.UserControllerTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-05-22T03:03:03" hostname="아기" time="0.026">
   <properties/>
-  <testcase name="카카오 OAuth 회원 탈퇴는 서비스에 위임한다" classname="com.project.ds_helper.domain.user.controller.UserControllerTest" time="0.06"/>
-  <testcase name="내 정보 조회는 DTO 응답을 반환한다" classname="com.project.ds_helper.domain.user.controller.UserControllerTest" time="0.012"/>
-  <testcase name="현재 유저 식별자 조회는 DTO 응답을 반환한다" classname="com.project.ds_helper.domain.user.controller.UserControllerTest" time="0.023"/>
-  <testcase name="내 정보 수정은 수정된 DTO 응답을 반환한다" classname="com.project.ds_helper.domain.user.controller.UserControllerTest" time="0.019"/>
-  <testcase name="구글 OAuth 회원 탈퇴는 서비스에 위임한다" classname="com.project.ds_helper.domain.user.controller.UserControllerTest" time="0.021"/>
-  <testcase name="네이버 OAuth 회원 탈퇴는 서비스에 위임한다" classname="com.project.ds_helper.domain.user.controller.UserControllerTest" time="0.03"/>
+  <testcase name="카카오 OAuth 회원 탈퇴는 서비스에 위임한다" classname="com.project.ds_helper.domain.user.controller.UserControllerTest" time="0.003"/>
+  <testcase name="내 정보 조회는 DTO 응답을 반환한다" classname="com.project.ds_helper.domain.user.controller.UserControllerTest" time="0.006"/>
+  <testcase name="현재 유저 식별자 조회는 DTO 응답을 반환한다" classname="com.project.ds_helper.domain.user.controller.UserControllerTest" time="0.002"/>
+  <testcase name="내 정보 수정은 수정된 DTO 응답을 반환한다" classname="com.project.ds_helper.domain.user.controller.UserControllerTest" time="0.006"/>
+  <testcase name="구글 OAuth 회원 탈퇴는 서비스에 위임한다" classname="com.project.ds_helper.domain.user.controller.UserControllerTest" time="0.002"/>
+  <testcase name="네이버 OAuth 회원 탈퇴는 서비스에 위임한다" classname="com.project.ds_helper.domain.user.controller.UserControllerTest" time="0.005"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
