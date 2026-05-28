@@ -6,10 +6,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface AdminInquiryRepository extends JpaRepository<Inquiry,String> {
+public interface AdminInquiryRepository extends JpaRepository<Inquiry,String>, JpaSpecificationExecutor<Inquiry> {
     @EntityGraph(attributePaths = {"user"})
     Page<Inquiry> findAllByStatus(InquiryStatus status, Pageable pageRequest);
 }

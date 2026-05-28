@@ -93,7 +93,7 @@ class ReplyServiceTest {
 
     @Test
     @DisplayName("이미 답변된 문의는 다시 답변할 수 없다")
-    void createReplyOfInquiry_throwsWhenAlreadyAnswered() {
+    void createReplyOfInquiry_updatesWhenAlreadyAnswered() {
         User admin = user("admin-1");
         Inquiry inquiry = inquiry("inquiry-1", admin);
         inquiry.setReply(Reply.builder().id("reply-1").content("기존 답변").user(admin).build());
@@ -104,9 +104,12 @@ class ReplyServiceTest {
         when(userUtil.findUserById("admin-1")).thenReturn(admin);
         when(inquiryRepository.findById("inquiry-1")).thenReturn(Optional.of(inquiry));
 
-        assertThatThrownBy(() -> replyService.createReplyOfInquiry(authentication, dto))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Already Answered");
+        replyService.createReplyOfInquiry(authentication, dto);
+
+        assertThat(inquiry.getStatus()).isEqualTo(InquiryStatus.ANSWERED);
+        assertThat(inquiry.getReply()).isNotNull();
+        assertThat(inquiry.getReply().getContent()).isEqualTo(dto.getContent());
+        verify(inquiryRepository).save(inquiry);
     }
 
     private User user(String id) {

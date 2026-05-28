@@ -8,6 +8,6 @@ class DsHelperApplicationTests {
 
     @Test
     void applicationClassExists() {
-        assertThat(DsHelperApplication.class).isNotNull();
+        assertThat(DsHelperAdminApplication.class).isNotNull();
     }
 }

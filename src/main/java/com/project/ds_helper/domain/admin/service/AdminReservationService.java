@@ -30,18 +30,20 @@ public class AdminReservationService {
 
     private final UserUtil userUtil;
 
-    public Object getRequestedReservations(
+    public Object getReservations(
             String requesterName, 
             ReservationStatus reservationStatus, 
             String applicantType, 
-            LocalDate startDate, 
-            LocalDate endDate, 
+            LocalDate createdAtStartDate,
+            LocalDate createdAtEndDate,
+            LocalDate visitDateStart,
+            LocalDate visitDateEnd,
             int page, 
             int size, 
             String sort, 
             String sortBy
     ) {
-        log.debug("AdminReservationService.getRequestedReservations started.");
+        log.debug("AdminReservationService.getReservations started.");
         Pageable pageRequest = PageRequest.of(page, Math.min(size, 100), 
                 sort.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
 
@@ -53,8 +55,10 @@ public class AdminReservationService {
                 List<Predicate> predicates = new ArrayList<>();
                 if (requesterName != null) predicates.add(cb.like(root.get("name"), "%" + requesterName + "%"));
                 if (reservationStatus != null) predicates.add(cb.equal(root.get("reservationStatus"), reservationStatus));
-                if (startDate != null) predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), startDate.atStartOfDay()));
-                if (endDate != null) predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), endDate.atTime(23, 59, 59)));
+                if (createdAtStartDate != null) predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), createdAtStartDate.atStartOfDay()));
+                if (createdAtEndDate != null) predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), createdAtEndDate.atTime(23, 59, 59)));
+                if (visitDateStart != null) predicates.add(cb.greaterThanOrEqualTo(root.get("visitDate"), visitDateStart));
+                if (visitDateEnd != null) predicates.add(cb.lessThanOrEqualTo(root.get("visitDate"), visitDateEnd));
                 return cb.and(predicates.toArray(new Predicate[0]));
             };
             Page<PersonalReservation> personalReservations = adminPersonalReservationRepository.findAll(spec, pageRequest);
@@ -69,8 +73,10 @@ public class AdminReservationService {
                 List<Predicate> predicates = new ArrayList<>();
                 if (requesterName != null) predicates.add(cb.like(root.get("name"), "%" + requesterName + "%"));
                 if (reservationStatus != null) predicates.add(cb.equal(root.get("reservationStatus"), reservationStatus));
-                if (startDate != null) predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), startDate.atStartOfDay()));
-                if (endDate != null) predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), endDate.atTime(23, 59, 59)));
+                if (createdAtStartDate != null) predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), createdAtStartDate.atStartOfDay()));
+                if (createdAtEndDate != null) predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), createdAtEndDate.atTime(23, 59, 59)));
+                if (visitDateStart != null) predicates.add(cb.greaterThanOrEqualTo(root.get("visitDate"), visitDateStart));
+                if (visitDateEnd != null) predicates.add(cb.lessThanOrEqualTo(root.get("visitDate"), visitDateEnd));
                 return cb.and(predicates.toArray(new Predicate[0]));
             };
             Page<OrganizationReservation> organizationReservations = adminOrganizationReservationRepository.findAll(spec, pageRequest);

@@ -57,7 +57,13 @@ public class ReplyService {
         User user = userUtil.findUserById(userId);
         Inquiry inquiry = inquiryRepository.findById(inquiryId).orElseThrow( () -> new RuntimeException("Inquiry Not Found"));
 
-        if(inquiry.getReply() != null){throw new RuntimeException("This Inquiry Already Answered. InquiryId : " + inquiryId);}
+        if (inquiry.getReply() != null) {
+            Reply existingReply = inquiry.getReply();
+            existingReply.setContent(content);
+            inquiry.setStatus(InquiryStatus.ANSWERED);
+            inquiryRepository.save(inquiry);
+            return;
+        }
 
         // build reply
         Reply reply = dto.toReply(dto, user);

@@ -23,27 +23,40 @@ public class AdminReservationController {
     private final AdminReservationService adminReservationService;
 
     @Tag(name = "관리자 > 예약")
-    @Operation(summary = "대기 상태의 예약 전체 조회 (JWT 인증 필요)", description = "개인 및 기관의 대기 중인 예약을 조회합니다. 검색 옵션을 지원합니다.")
-    @GetMapping("/requested-reservations")
-    public ResponseEntity<?> getRequestedReservations(
+    @Operation(
+            summary = "예약 전체 조회 (JWT 인증 필요)",
+            description = ""
+                    + "- 개인/기관 예약을 한 API로 통합 조회합니다.\n"
+                    + "- reservationStatus가 null이면 전체 상태를 조회합니다.\n"
+                    + "- applicantType이 null이면 PERSONAL+ORGANIZATION을 모두 조회합니다.\n"
+                    + "- 날짜 필터는 2종을 지원합니다: 신청일(createdAt), 방문일(visitDate).\n"
+                    + "- 응답은 personalReservations / organizationReservations로 분리되어 내려갑니다."
+    )
+    @GetMapping()
+    public ResponseEntity<?> getReservations(
             @RequestParam(required = false) String requesterName,
             @RequestParam(required = false) ReservationStatus reservationStatus,
             @RequestParam(required = false) String applicantType,
-            @RequestParam(required = false) LocalDate startDate,
-            @RequestParam(required = false) LocalDate endDate,
+            @RequestParam(required = false) LocalDate createdAtStartDate,
+            @RequestParam(required = false) LocalDate createdAtEndDate,
+            @RequestParam(required = false) LocalDate visitDateStart,
+            @RequestParam(required = false) LocalDate visitDateEnd,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "desc") String sort,
             @RequestParam(defaultValue = "createdAt") String sortBy
     ) {
-        log.debug("AdminReservationController.getRequestedReservations called. name={}, status={}, type={}, dateRange={}~{}", 
-                requesterName, reservationStatus, applicantType, startDate, endDate);
-        return ResponseEntity.ok(adminReservationService.getRequestedReservations(
-                requesterName, reservationStatus, applicantType, startDate, endDate, page, size, sort, sortBy));
+        log.debug("AdminReservationController.getReservations called. name={}, status={}, type={}, createdAtRange={}~{}, visitDateRange={}~{}",
+                requesterName, reservationStatus, applicantType, createdAtStartDate, createdAtEndDate, visitDateStart, visitDateEnd);
+        return ResponseEntity.ok(adminReservationService.getReservations(
+                requesterName, reservationStatus, applicantType, createdAtStartDate, createdAtEndDate, visitDateStart, visitDateEnd, page, size, sort, sortBy));
     }
 
     @Tag(name = "관리자 > 예약")
-    @Operation(summary = "수락된 예약 전체 수 조회 (JWT 인증 필요)")
+    @Operation(
+            summary = "수락된 예약 전체 수 조회 (JWT 인증 필요)",
+            description = "reservation_status=COMPLETED(완료)인 예약 건수를 개인+기관 합산으로 반환합니다."
+    )
     @GetMapping("/accepted/count")
     public ResponseEntity<Long> getAcceptedReservationCount() {
         log.debug("AdminReservationController.getAcceptedReservationCount called.");

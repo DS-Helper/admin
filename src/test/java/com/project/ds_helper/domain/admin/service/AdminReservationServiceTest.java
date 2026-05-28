@@ -13,10 +13,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -25,7 +27,9 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class AdminReservationServiceTest {
@@ -44,7 +48,7 @@ class AdminReservationServiceTest {
 
     @Test
     @DisplayName("예약 목록 필터링 조회를 지원한다")
-    void getRequestedReservations_withFilters() {
+    void getReservations_withFilters() {
         PersonalReservation personal = PersonalReservation.builder()
                 .id("p1")
                 .name("tester")
@@ -72,12 +76,60 @@ class AdminReservationServiceTest {
         when(adminOrganizationReservationRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(organization)));
 
-        Object result = adminReservationService.getRequestedReservations(null, null, null, null, null, 0, 10, "desc", "createdAt");
+        Object result = adminReservationService.getReservations(
+                "tester",
+                ReservationStatus.REQUESTED,
+                null,
+                LocalDate.of(2026, 5, 1),
+                LocalDate.of(2026, 5, 2),
+                LocalDate.of(2026, 5, 10),
+                LocalDate.of(2026, 5, 11),
+                0,
+                10,
+                "desc",
+                "createdAt"
+        );
 
         assertThat(result).isInstanceOf(Map.class);
         Map<?, ?> body = (Map<?, ?>) result;
         assertThat(body.containsKey("personalReservations")).isTrue();
         assertThat(body.containsKey("organizationReservations")).isTrue();
+    }
+
+    @Test
+    @DisplayName("예약 조회 Specification은 createdAt/visitDate 조건을 포함해 Predicate를 생성한다")
+    void getReservations_specification_buildsPredicates() {
+        when(adminPersonalReservationRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        when(adminOrganizationReservationRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        adminReservationService.getReservations(
+                "name",
+                ReservationStatus.REQUESTED,
+                null,
+                LocalDate.of(2026, 5, 1),
+                LocalDate.of(2026, 5, 2),
+                LocalDate.of(2026, 5, 3),
+                LocalDate.of(2026, 5, 4),
+                0,
+                10,
+                "desc",
+                "createdAt"
+        );
+
+        ArgumentCaptor<Specification<PersonalReservation>> personalCaptor = ArgumentCaptor.forClass(Specification.class);
+        verify(adminPersonalReservationRepository).findAll(personalCaptor.capture(), any(Pageable.class));
+
+        jakarta.persistence.criteria.Root<PersonalReservation> root =
+                org.mockito.Mockito.mock(jakarta.persistence.criteria.Root.class, org.mockito.Answers.RETURNS_MOCKS);
+        jakarta.persistence.criteria.CriteriaQuery<?> query =
+                org.mockito.Mockito.mock(jakarta.persistence.criteria.CriteriaQuery.class, org.mockito.Answers.RETURNS_MOCKS);
+        jakarta.persistence.criteria.CriteriaBuilder cb =
+                org.mockito.Mockito.mock(jakarta.persistence.criteria.CriteriaBuilder.class, org.mockito.Answers.RETURNS_MOCKS);
+
+        jakarta.persistence.criteria.Predicate built = personalCaptor.getValue().toPredicate(root, query, cb);
+        assertThat(built).isNotNull();
     }
 
     @Test
