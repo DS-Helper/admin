@@ -6,7 +6,8 @@ import com.project.ds_helper.common.enums.SuccessCode;
 import com.project.ds_helper.common.enums.SwaggerTagName;
 import com.project.ds_helper.domain.notification.dto.response.GetNotificationsResponseDto;
 import com.project.ds_helper.domain.notification.dto.response.UnreadNotificationCountResponseDto;
-import com.project.ds_helper.domain.notification.service.NotificationService;
+import com.project.ds_helper.domain.notification.service.NotificationCommandService;
+import com.project.ds_helper.domain.notification.service.NotificationQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,7 +28,8 @@ import java.time.LocalDateTime;
 @Tag(name = SwaggerTagName.NOTIFICATION)
 public class NotificationController {
 
-    private final NotificationService notificationService;
+    private final NotificationQueryService notificationQueryService;
+    private final NotificationCommandService notificationCommandService;
 
     @Operation(summary = "내 알림 목록 조회", description = "로그인한 사용자의 알림을 최신순으로 커서 기반 조회합니다.")
     @GetMapping("/notifications")
@@ -40,7 +42,7 @@ public class NotificationController {
             @RequestParam(name = "size", defaultValue = "10") int size
     ) {
         CursorResponseDto<GetNotificationsResponseDto> responseDto =
-                notificationService.getMyNotifications(authentication, cursorTime, cursorId, size);
+                notificationQueryService.getMyNotifications(authentication, cursorTime, cursorId, size);
         ResponseVo<CursorResponseDto<GetNotificationsResponseDto>> responseVo =
                 new ResponseVo<>(true, SuccessCode.OK, SuccessCode.OK.getMessage(), responseDto);
         return new ResponseEntity<>(responseVo, responseVo.getCode().httpStatus());
@@ -52,7 +54,7 @@ public class NotificationController {
             Authentication authentication,
             @PathVariable String notificationId
     ) {
-        notificationService.markAsRead(authentication, notificationId);
+        notificationCommandService.markAsRead(authentication, notificationId);
         ResponseVo<Void> responseVo =
                 new ResponseVo<>(true, SuccessCode.OK, SuccessCode.OK.getMessage(), null);
         return new ResponseEntity<>(responseVo, responseVo.getCode().httpStatus());
@@ -61,7 +63,7 @@ public class NotificationController {
     @Operation(summary = "전체 알림 읽음 처리", description = "로그인한 사용자의 모든 알림을 읽음 상태로 변경합니다.")
     @PatchMapping("/notifications/read-all")
     public ResponseEntity<ResponseVo<Void>> markAllAsRead(Authentication authentication) {
-        notificationService.markAllAsRead(authentication);
+        notificationCommandService.markAllAsRead(authentication);
         ResponseVo<Void> responseVo =
                 new ResponseVo<>(true, SuccessCode.OK, SuccessCode.OK.getMessage(), null);
         return new ResponseEntity<>(responseVo, responseVo.getCode().httpStatus());
@@ -71,7 +73,7 @@ public class NotificationController {
     @GetMapping("/notifications/unread-count")
     public ResponseEntity<ResponseVo<UnreadNotificationCountResponseDto>> getUnreadNotificationCount(Authentication authentication) {
         UnreadNotificationCountResponseDto responseDto =
-                notificationService.getUnreadNotificationCount(authentication);
+                notificationQueryService.getUnreadNotificationCount(authentication);
         ResponseVo<UnreadNotificationCountResponseDto> responseVo =
                 new ResponseVo<>(true, SuccessCode.OK, SuccessCode.OK.getMessage(), responseDto);
         return new ResponseEntity<>(responseVo, responseVo.getCode().httpStatus());

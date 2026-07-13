@@ -1,14 +1,12 @@
 package com.project.ds_helper.domain.user.service;
 
-import com.project.ds_helper.common.enums.JwtTokenType;
-import com.project.ds_helper.common.util.CookieUtil;
-import com.project.ds_helper.common.util.JwtUtil;
 import com.project.ds_helper.common.util.PasswordUtil;
 import com.project.ds_helper.common.util.UserUtil;
 import com.project.ds_helper.domain.post.util.ImageCompressionUtil;
 import com.project.ds_helper.domain.post.util.ImageUtil;
 import com.project.ds_helper.domain.post.util.S3Util;
 import com.project.ds_helper.domain.user.dto.request.OrganizationJoinReqDto;
+import com.project.ds_helper.domain.user.dto.request.OrganizationLoginReqDto;
 import com.project.ds_helper.domain.user.dto.request.UpdateMyInfoRequestDto;
 import com.project.ds_helper.domain.user.dto.request.UserJoinReqDto;
 import com.project.ds_helper.domain.user.dto.response.UserIdentifierResponseDto;
@@ -24,11 +22,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.Field;
@@ -36,6 +34,7 @@ import java.lang.reflect.Field;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -56,12 +55,6 @@ class UserServiceTest {
     private S3Util s3Util;
 
     @Mock
-    private JwtUtil jwtUtil;
-
-    @Mock
-    private CookieUtil cookieUtil;
-
-    @Mock
     private ImageCompressionUtil imageCompressionUtil;
 
     @Mock
@@ -71,13 +64,13 @@ class UserServiceTest {
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Mock
-    private StringRedisTemplate stringRedisTemplate;
-
-    @Mock
-    private ValueOperations<String, String> valueOperations;
-
-    @Mock
     private UserUtil userUtil;
+
+    @Mock
+    private UserProfileService userProfileService;
+
+    @Mock
+    private UserAuthTokenService userAuthTokenService;
 
     @Mock
     private HttpServletResponse response;
@@ -94,38 +87,155 @@ class UserServiceTest {
     @Test
     @DisplayName("로그인 체크는 refresh token이 비어 있으면 false를 반환한다")
     void checkIfUserLoggedIn_returnsFalseWhenRefreshTokenBlank() {
+        when(userAuthTokenService.checkIfUserLoggedIn("")).thenReturn(false);
         Object result = userService.checkIfUserLoggedIn("");
 
         assertThat(result).isEqualTo(false);
     }
 
     @Test
-    @DisplayName("로그인 체크는 redis refresh token이 유효하면 true를 반환한다")
-    void checkIfUserLoggedIn_returnsTrueWhenRedisTokenValid() {
-        when(jwtUtil.isExpired("refresh-token")).thenReturn(false);
-        when(jwtUtil.getId("refresh-token")).thenReturn("user-1");
-        when(jwtUtil.toRedisRefreshTokenKey("user-1")).thenReturn("refresh:user-1");
-        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get("refresh:user-1")).thenReturn("refresh-token");
+    @DisplayName("로그인 체크는 만료된 refresh token 이면 false를 반환한다")
+    void checkIfUserLoggedIn_returnsFalseWhenTokenExpired() {
+        when(userAuthTokenService.checkIfUserLoggedIn("refresh-token")).thenReturn(false);
 
         Object result = userService.checkIfUserLoggedIn("refresh-token");
 
-        assertThat(result).isEqualTo(true);
+        assertThat(result).isEqualTo(false);
     }
 
     @Test
-    @DisplayName("JWT 생성 후 redis와 헤더에 토큰을 저장한다")
-    void generateJwtTokenAndPutInCookie_setsRedisAndCookies() {
-        when(jwtUtil.generateAccessToken("user-1", "USER", "PERSONAL")).thenReturn("access");
-        when(jwtUtil.generateRefreshToken("user-1", "USER", "PERSONAL")).thenReturn("refresh");
-        when(jwtUtil.toRedisRefreshTokenKey("user-1")).thenReturn("refresh:user-1");
-        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+    @DisplayName("기관 회원 가입은 인증서 이미지가 있으면 업로드 후 저장한다")
+    void organizationJoin_savesOrganizationWithCertificates() throws Exception {
+        OrganizationJoinReqDto dto = OrganizationJoinReqDto.builder()
+                .email("org@test.com")
+                .password("pw")
+                .passwordCheck("pw")
+                .organizationName("기관")
+                .organizationPhoneNumber("010-1234-5678")
+                .build();
+        MultipartFile certification = new MockMultipartFile("cert", "cert.png", "image/png", new byte[]{1});
+        when(passwordUtil.isPasswordMatch("pw", "pw")).thenReturn(true);
+        when(bCryptPasswordEncoder.encode("pw")).thenReturn("encoded");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User saved = invocation.getArgument(0);
+            ReflectionTestUtils.setField(saved, "id", "user-1");
+            return saved;
+        });
+        when(imageUtil.toStoredFilename()).thenReturn("stored.png");
+        when(imageCompressionUtil.compressImage(any(), any())).thenReturn(compressedImage("stored.png", "cert.png", "png", new byte[]{1}));
+        when(s3Util.uploadImages(anyList())).thenReturn(java.util.List.of("https://bucket/cert.png"));
 
-        userService.generateJwtTokenAndPutInResponseHeader(response, "user-1", "USER", "PERSONAL");
+        userService.organizationJoin(dto, java.util.List.of(certification));
 
-        verify(valueOperations).set("refresh:user-1", "refresh");
-        verify(response).setHeader(JwtTokenType.ACCESS_TOKEN_NAME.getTokenName(), "access");
-        verify(response).setHeader(JwtTokenType.REFRESH_TOKEN_NAME.getTokenName(), "refresh");
+        verify(organizationRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("기관 회원 가입은 인증서가 없으면 이미지 업로드 없이 저장한다")
+    void organizationJoin_savesOrganizationWithoutCertificates() throws Exception {
+        OrganizationJoinReqDto dto = OrganizationJoinReqDto.builder()
+                .email("org@test.com")
+                .password("pw")
+                .passwordCheck("pw")
+                .organizationName("기관")
+                .organizationPhoneNumber("010-1234-5678")
+                .build();
+        when(passwordUtil.isPasswordMatch("pw", "pw")).thenReturn(true);
+        when(bCryptPasswordEncoder.encode("pw")).thenReturn("encoded");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User saved = invocation.getArgument(0);
+            ReflectionTestUtils.setField(saved, "id", "user-1");
+            return saved;
+        });
+
+        userService.organizationJoin(dto, null);
+
+        verify(organizationRepository).save(any());
+        verify(s3Util, never()).uploadImages(anyList());
+    }
+
+    @Test
+    @DisplayName("기관 로그인은 정상 계정이면 토큰을 발급한다")
+    void organizationLogin_generatesTokens() {
+        OrganizationLoginReqDto dto = OrganizationLoginReqDto.builder().email("org@test.com").password("pw").build();
+        User user = User.builder().id("user-1").password("encoded").type(UserType.ORGANIZATION).build();
+        when(userRepository.findByEmail("org@test.com")).thenReturn(java.util.Optional.of(user));
+        when(bCryptPasswordEncoder.matches("pw", "encoded")).thenReturn(true);
+
+        userService.organizationLogin(dto, response);
+
+        verify(userAuthTokenService).generateJwtTokenAndPutInResponseHeader(response, "user-1", "USER", "ORGANIZATION");
+    }
+
+    @Test
+    @DisplayName("기관 로그인은 계정이 없으면 예외가 발생한다")
+    void organizationLogin_throwsWhenUserMissing() {
+        OrganizationLoginReqDto dto = OrganizationLoginReqDto.builder().email("org@test.com").password("pw").build();
+        when(userRepository.findByEmail("org@test.com")).thenReturn(java.util.Optional.empty());
+
+        assertThatThrownBy(() -> userService.organizationLogin(dto, response))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Organization Not Found");
+    }
+
+    @Test
+    @DisplayName("기관 로그인은 기관 계정이 아니면 예외가 발생한다")
+    void organizationLogin_throwsWhenNotOrganization() {
+        OrganizationLoginReqDto dto = OrganizationLoginReqDto.builder().email("org@test.com").password("pw").build();
+        User user = User.builder().id("user-1").password("encoded").type(UserType.PERSONAL).build();
+        when(userRepository.findByEmail("org@test.com")).thenReturn(java.util.Optional.of(user));
+
+        assertThatThrownBy(() -> userService.organizationLogin(dto, response))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Not Organization");
+    }
+
+    @Test
+    @DisplayName("기관 로그인은 비밀번호가 다르면 예외가 발생한다")
+    void organizationLogin_throwsWhenWrongPassword() {
+        OrganizationLoginReqDto dto = OrganizationLoginReqDto.builder().email("org@test.com").password("pw").build();
+        User user = User.builder().id("user-1").password("encoded").type(UserType.ORGANIZATION).build();
+        when(userRepository.findByEmail("org@test.com")).thenReturn(java.util.Optional.of(user));
+        when(bCryptPasswordEncoder.matches("pw", "encoded")).thenReturn(false);
+
+        assertThatThrownBy(() -> userService.organizationLogin(dto, response))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Wrong Password");
+    }
+
+    @Test
+    @DisplayName("기관 로그인은 탈퇴된 계정이면 예외가 발생한다")
+    void organizationLogin_throwsWhenDeletedUser() {
+        OrganizationLoginReqDto dto = OrganizationLoginReqDto.builder().email("org@test.com").password("pw").build();
+        User user = User.builder().id("user-1").password("encoded").type(UserType.ORGANIZATION).build();
+        user.softDelete(java.time.LocalDateTime.now());
+        when(userRepository.findByEmail("org@test.com")).thenReturn(java.util.Optional.of(user));
+
+        assertThatThrownBy(() -> userService.organizationLogin(dto, response))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Deleted User");
+    }
+
+    @Test
+    @DisplayName("현재 유저 역할 조회는 인증 정보가 없으면 null을 반환한다")
+    void getMyIdentifier_returnsNullRoleWhenAuthenticationMissing() {
+        when(userUtil.extractUserId(authentication)).thenReturn("user-1");
+
+        UserIdentifierResponseDto result = userService.getMyIdentifier(authentication);
+
+        assertThat(result.userRole()).isNull();
+    }
+
+    @Test
+    @DisplayName("현재 유저 역할 조회는 권한이 있으면 첫 권한을 반환한다")
+    void getMyIdentifier_returnsAuthorityWhenPresent() {
+        Authentication auth = org.mockito.Mockito.mock(Authentication.class);
+        when(userUtil.extractUserId(auth)).thenReturn("user-1");
+        when(auth.getAuthorities()).thenReturn((java.util.Collection) java.util.List.of((GrantedAuthority) () -> "ROLE_USER"));
+
+        UserIdentifierResponseDto result = userService.getMyIdentifier(auth);
+
+        assertThat(result.userRole()).isEqualTo("ROLE_USER");
     }
 
     @Test
@@ -141,6 +251,42 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.userJoin(dto, response))
                 .isInstanceOf(org.apache.coyote.BadRequestException.class)
                 .hasMessageContaining("Email Already Exist");
+    }
+
+    @Test
+    @DisplayName("일반 회원 가입은 정상 입력이면 토큰 발급까지 진행한다")
+    void userJoin_generatesTokens() throws Exception {
+        UserJoinReqDto dto = UserJoinReqDto.builder()
+                .email("user@test.com")
+                .password("pw")
+                .passwordCheck("pw")
+                .build();
+        when(userUtil.existsByEmail("user@test.com")).thenReturn(false);
+        when(bCryptPasswordEncoder.encode("pw")).thenReturn("encoded");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User saved = invocation.getArgument(0);
+            ReflectionTestUtils.setField(saved, "id", "user-1");
+            return saved;
+        });
+
+        userService.userJoin(dto, response);
+
+        verify(userAuthTokenService).generateJwtTokenAndPutInResponseHeader(response, "user-1", "USER", "PERSONAL");
+    }
+
+    @Test
+    @DisplayName("일반 회원 가입은 비밀번호가 다르면 예외가 발생한다")
+    void userJoin_throwsWhenPasswordMismatch() {
+        UserJoinReqDto dto = UserJoinReqDto.builder()
+                .email("user@test.com")
+                .password("pw1")
+                .passwordCheck("pw2")
+                .build();
+        when(userUtil.existsByEmail("user@test.com")).thenReturn(false);
+
+        assertThatThrownBy(() -> userService.userJoin(dto, response))
+                .isInstanceOf(org.apache.coyote.BadRequestException.class)
+                .hasMessageContaining("Password Not Matches");
     }
 
     @Test
@@ -163,14 +309,8 @@ class UserServiceTest {
     @Test
     @DisplayName("내 정보 조회는 사용자 DTO를 반환한다")
     void getMyInfo_returnsDto() {
-        User user = User.builder()
-                .id("user-1")
-                .email("user@test.com")
-                .name("홍길동")
-                .type(UserType.PERSONAL)
-                .build();
-        when(userUtil.extractUserId(authentication)).thenReturn("user-1");
-        when(userUtil.findUserById("user-1")).thenReturn(user);
+        UserGetSelfInfoAtMyPageResponseDto dto = new UserGetSelfInfoAtMyPageResponseDto("홍길동", "user@test.com", null, null, null, null);
+        when(userProfileService.getMyInfo(authentication)).thenReturn(dto);
 
         UserGetSelfInfoAtMyPageResponseDto result = userService.getMyInfo(authentication);
 
@@ -181,109 +321,47 @@ class UserServiceTest {
     @Test
     @DisplayName("새 프로필 이미지가 없고 삭제 요청도 아니면 기존 프로필 이미지를 유지한다")
     void updateMyInfo_keepsExistingProfileImage() throws Exception {
-        User user = User.builder()
-                .id("user-1")
-                .email("user@test.com")
-                .name("홍길동")
-                .profileImageUrl("https://bucket.s3.ap-northeast-2.amazonaws.com/images/current.png")
-                .build();
         UpdateMyInfoRequestDto dto = new UpdateMyInfoRequestDto();
-        ReflectionTestUtils.setField(dto, "name", "홍길동");
-        ReflectionTestUtils.setField(dto, "email", "user@test.com");
-        ReflectionTestUtils.setField(dto, "birthyear", "1998");
-        ReflectionTestUtils.setField(dto, "gender", "male");
-        ReflectionTestUtils.setField(dto, "phoneNumber", "010-1234-5678");
-        ReflectionTestUtils.setField(dto, "removeProfileImage", false);
-
-        when(userUtil.extractUserId(authentication)).thenReturn("user-1");
-        when(userUtil.findUserById("user-1")).thenReturn(user);
+        UserGetSelfInfoAtMyPageResponseDto dtoResult = new UserGetSelfInfoAtMyPageResponseDto("홍길동", "user@test.com", "1998", "male", "010-1234-5678", "https://bucket.s3.ap-northeast-2.amazonaws.com/images/current.png");
+        when(userProfileService.updateMyInfo(authentication, dto, null)).thenReturn(dtoResult);
 
         UserGetSelfInfoAtMyPageResponseDto result = userService.updateMyInfo(authentication, dto, null);
 
         assertThat(result.profileImageUrl()).isEqualTo("https://bucket.s3.ap-northeast-2.amazonaws.com/images/current.png");
-        verify(s3Util, never()).deleteImagesByS3Key(any());
     }
 
     @Test
     @DisplayName("새 프로필 이미지가 있으면 기존 관리 이미지 삭제 후 새 이미지로 교체한다")
     void updateMyInfo_replacesProfileImage() throws Exception {
-        User user = User.builder()
-                .id("user-1")
-                .email("user@test.com")
-                .name("홍길동")
-                .profileImageUrl("https://bucket.s3.ap-northeast-2.amazonaws.com/images/current.png")
-                .build();
         UpdateMyInfoRequestDto dto = new UpdateMyInfoRequestDto();
-        ReflectionTestUtils.setField(dto, "name", "홍길동");
-        ReflectionTestUtils.setField(dto, "email", "user@test.com");
-        ReflectionTestUtils.setField(dto, "birthyear", "1998");
-        ReflectionTestUtils.setField(dto, "gender", "male");
-        ReflectionTestUtils.setField(dto, "phoneNumber", "010-1234-5678");
-        ReflectionTestUtils.setField(dto, "removeProfileImage", false);
-
-        when(userUtil.extractUserId(authentication)).thenReturn("user-1");
-        when(userUtil.findUserById("user-1")).thenReturn(user);
-        when(profileImage.isEmpty()).thenReturn(false);
-        when(imageUtil.toStoredFilename()).thenReturn("new-profile.png");
-        when(imageCompressionUtil.compressImage(profileImage, "new-profile.png"))
-                .thenReturn(compressedImage("new-profile.png", "profile.png", "png", "profile".getBytes()));
-        when(s3Util.toS3UrlByStoredFilename("new-profile.png"))
-                .thenReturn("https://bucket.s3.ap-northeast-2.amazonaws.com/images/new-profile.png");
-        when(s3Util.isManagedS3Url("https://bucket.s3.ap-northeast-2.amazonaws.com/images/current.png")).thenReturn(true);
-        when(s3Util.extractS3KeyFromS3Url("https://bucket.s3.ap-northeast-2.amazonaws.com/images/current.png"))
-                .thenReturn("images/current.png");
+        UserGetSelfInfoAtMyPageResponseDto dtoResult = new UserGetSelfInfoAtMyPageResponseDto("홍길동", "user@test.com", "1998", "male", "010-1234-5678", "https://bucket.s3.ap-northeast-2.amazonaws.com/images/new-profile.png");
+        when(userProfileService.updateMyInfo(authentication, dto, profileImage)).thenReturn(dtoResult);
 
         UserGetSelfInfoAtMyPageResponseDto result = userService.updateMyInfo(authentication, dto, profileImage);
 
         assertThat(result.profileImageUrl()).isEqualTo("https://bucket.s3.ap-northeast-2.amazonaws.com/images/new-profile.png");
-        verify(s3Util).uploadImage(any());
-        verify(s3Util).deleteImagesByS3Key(java.util.List.of("images/current.png"));
     }
 
     @Test
     @DisplayName("프로필 이미지 삭제 요청이면 기존 관리 이미지를 삭제하고 null로 변경한다")
     void updateMyInfo_removesProfileImage() throws Exception {
-        User user = User.builder()
-                .id("user-1")
-                .email("user@test.com")
-                .name("홍길동")
-                .profileImageUrl("https://bucket.s3.ap-northeast-2.amazonaws.com/images/current.png")
-                .build();
         UpdateMyInfoRequestDto dto = new UpdateMyInfoRequestDto();
-        ReflectionTestUtils.setField(dto, "name", "홍길동");
-        ReflectionTestUtils.setField(dto, "email", "user@test.com");
-        ReflectionTestUtils.setField(dto, "birthyear", "1998");
-        ReflectionTestUtils.setField(dto, "gender", "male");
-        ReflectionTestUtils.setField(dto, "phoneNumber", "010-1234-5678");
         setRemoveProfileImage(dto, true);
-
-        when(userUtil.extractUserId(authentication)).thenReturn("user-1");
-        when(userUtil.findUserById("user-1")).thenReturn(user);
-        when(s3Util.isManagedS3Url("https://bucket.s3.ap-northeast-2.amazonaws.com/images/current.png")).thenReturn(true);
-        when(s3Util.extractS3KeyFromS3Url("https://bucket.s3.ap-northeast-2.amazonaws.com/images/current.png"))
-                .thenReturn("images/current.png");
+        UserGetSelfInfoAtMyPageResponseDto dtoResult = new UserGetSelfInfoAtMyPageResponseDto("홍길동", "user@test.com", "1998", "male", "010-1234-5678", null);
+        when(userProfileService.updateMyInfo(authentication, dto, null)).thenReturn(dtoResult);
 
         UserGetSelfInfoAtMyPageResponseDto result = userService.updateMyInfo(authentication, dto, null);
 
         assertThat(result.profileImageUrl()).isNull();
-        verify(s3Util).deleteImagesByS3Key(java.util.List.of("images/current.png"));
     }
 
     @Test
     @DisplayName("프로필 이미지 삭제와 새 파일 업로드를 동시에 요청하면 예외가 발생한다")
-    void updateMyInfo_throwsWhenRemoveAndUploadRequestedTogether() {
-        User user = User.builder()
-                .id("user-1")
-                .email("user@test.com")
-                .name("홍길동")
-                .build();
+    void updateMyInfo_throwsWhenRemoveAndUploadRequestedTogether() throws Exception {
         UpdateMyInfoRequestDto dto = new UpdateMyInfoRequestDto();
-        ReflectionTestUtils.setField(dto, "email", "user@test.com");
         setRemoveProfileImage(dto, true);
-
-        when(userUtil.extractUserId(authentication)).thenReturn("user-1");
-        when(userUtil.findUserById("user-1")).thenReturn(user);
-        when(profileImage.isEmpty()).thenReturn(false);
+        when(userProfileService.updateMyInfo(authentication, dto, profileImage))
+                .thenThrow(new org.apache.coyote.BadRequestException("Profile image remove and upload cannot be requested together"));
 
         assertThatThrownBy(() -> userService.updateMyInfo(authentication, dto, profileImage))
                 .isInstanceOf(org.apache.coyote.BadRequestException.class)

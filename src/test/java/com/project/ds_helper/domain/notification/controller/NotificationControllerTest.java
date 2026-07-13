@@ -5,7 +5,8 @@ import com.project.ds_helper.common.dto.response.ResponseVo;
 import com.project.ds_helper.domain.notification.dto.response.GetNotificationsResponseDto;
 import com.project.ds_helper.domain.notification.dto.response.UnreadNotificationCountResponseDto;
 import com.project.ds_helper.domain.notification.enums.NotificationType;
-import com.project.ds_helper.domain.notification.service.NotificationService;
+import com.project.ds_helper.domain.notification.service.NotificationCommandService;
+import com.project.ds_helper.domain.notification.service.NotificationQueryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +30,10 @@ import static org.mockito.Mockito.when;
 class NotificationControllerTest {
 
     @Mock
-    private NotificationService notificationService;
+    private NotificationQueryService notificationQueryService;
+
+    @Mock
+    private NotificationCommandService notificationCommandService;
 
     @Mock
     private Authentication authentication;
@@ -57,7 +61,7 @@ class NotificationControllerTest {
                 false
         );
 
-        when(notificationService.getMyNotifications(any(), isNull(), isNull(), anyInt()))
+        when(notificationQueryService.getMyNotifications(any(), isNull(), isNull(), anyInt()))
                 .thenReturn(responseDto);
 
         ResponseEntity<ResponseVo<CursorResponseDto<GetNotificationsResponseDto>>> response =
@@ -73,7 +77,7 @@ class NotificationControllerTest {
     @Test
     @DisplayName("알림 읽음 처리는 성공 응답을 반환한다")
     void markAsRead_returnsSuccessResponse() {
-        doNothing().when(notificationService).markAsRead(authentication, "notification-1");
+        doNothing().when(notificationCommandService).markAsRead(authentication, "notification-1");
 
         ResponseEntity<ResponseVo<Void>> response =
                 notificationController.markAsRead(authentication, "notification-1");
@@ -86,7 +90,7 @@ class NotificationControllerTest {
     @Test
     @DisplayName("전체 알림 읽음 처리는 성공 응답을 반환한다")
     void markAllAsRead_returnsSuccessResponse() {
-        doNothing().when(notificationService).markAllAsRead(authentication);
+        doNothing().when(notificationCommandService).markAllAsRead(authentication);
 
         ResponseEntity<ResponseVo<Void>> response =
                 notificationController.markAllAsRead(authentication);
@@ -99,7 +103,7 @@ class NotificationControllerTest {
     @Test
     @DisplayName("미읽음 알림 개수 조회는 ResponseVo로 감싼 응답을 반환한다")
     void getUnreadNotificationCount_returnsWrappedResponse() {
-        when(notificationService.getUnreadNotificationCount(authentication))
+        when(notificationQueryService.getUnreadNotificationCount(authentication))
                 .thenReturn(UnreadNotificationCountResponseDto.toDto(5L));
 
         ResponseEntity<ResponseVo<UnreadNotificationCountResponseDto>> response =

@@ -142,4 +142,137 @@ class AdminReservationServiceTest {
 
         assertThat(result).isEqualTo(5L);
     }
+
+    @Test
+    @DisplayName("개인 예약만 조회하는 경우 기관 예약은 조회하지 않는다")
+    void getReservations_personalOnly() {
+        when(adminPersonalReservationRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        Object result = adminReservationService.getReservations(
+                null,
+                null,
+                "PERSONAL",
+                null,
+                null,
+                null,
+                null,
+                0,
+                10,
+                "asc",
+                "createdAt"
+        );
+
+        assertThat(result).isInstanceOf(Map.class);
+        verify(adminPersonalReservationRepository).findAll(any(Specification.class), any(Pageable.class));
+        org.mockito.Mockito.verifyNoInteractions(adminOrganizationReservationRepository);
+    }
+
+    @Test
+    @DisplayName("기관 예약만 조회하는 경우 개인 예약은 조회하지 않는다")
+    void getReservations_organizationOnly() {
+        when(adminOrganizationReservationRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        Object result = adminReservationService.getReservations(
+                null,
+                null,
+                "ORGANIZATION",
+                null,
+                null,
+                null,
+                null,
+                0,
+                10,
+                "asc",
+                "createdAt"
+        );
+
+        assertThat(result).isInstanceOf(Map.class);
+        verify(adminOrganizationReservationRepository).findAll(any(Specification.class), any(Pageable.class));
+        org.mockito.Mockito.verifyNoInteractions(adminPersonalReservationRepository);
+    }
+
+    @Test
+    @DisplayName("조회 조건이 없으면 개인/기관 모두 조회한다")
+    void getReservations_withoutFilters_queriesBoth() {
+        when(adminPersonalReservationRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        when(adminOrganizationReservationRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        Object result = adminReservationService.getReservations(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                0,
+                10,
+                "desc",
+                "createdAt"
+        );
+
+        assertThat(result).isInstanceOf(Map.class);
+        verify(adminPersonalReservationRepository).findAll(any(Specification.class), any(Pageable.class));
+        verify(adminOrganizationReservationRepository).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("개인 조회는 검색어 없이도 동작한다")
+    void getReservations_personalWithoutName() {
+        when(adminPersonalReservationRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        adminReservationService.getReservations(
+                null,
+                ReservationStatus.REQUESTED,
+                "PERSONAL",
+                null,
+                null,
+                null,
+                null,
+                0,
+                10,
+                "asc",
+                "createdAt"
+        );
+
+        verify(adminPersonalReservationRepository).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("기관 예약 조회는 필터가 있어도 동작한다")
+    void getReservations_organizationWithFilters() {
+        when(adminOrganizationReservationRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        adminReservationService.getReservations(
+                "org",
+                ReservationStatus.REQUESTED,
+                "ORGANIZATION",
+                LocalDate.of(2026, 5, 1),
+                LocalDate.of(2026, 5, 2),
+                LocalDate.of(2026, 5, 3),
+                LocalDate.of(2026, 5, 4),
+                0,
+                10,
+                "desc",
+                "createdAt"
+        );
+
+        ArgumentCaptor<Specification<OrganizationReservation>> captor = ArgumentCaptor.forClass(Specification.class);
+        verify(adminOrganizationReservationRepository).findAll(captor.capture(), any(Pageable.class));
+
+        jakarta.persistence.criteria.Root<OrganizationReservation> root =
+                org.mockito.Mockito.mock(jakarta.persistence.criteria.Root.class, org.mockito.Answers.RETURNS_MOCKS);
+        jakarta.persistence.criteria.CriteriaQuery<?> query =
+                org.mockito.Mockito.mock(jakarta.persistence.criteria.CriteriaQuery.class, org.mockito.Answers.RETURNS_MOCKS);
+        jakarta.persistence.criteria.CriteriaBuilder cb =
+                org.mockito.Mockito.mock(jakarta.persistence.criteria.CriteriaBuilder.class, org.mockito.Answers.RETURNS_MOCKS);
+
+        assertThat(captor.getValue().toPredicate(root, query, cb)).isNotNull();
+    }
 }

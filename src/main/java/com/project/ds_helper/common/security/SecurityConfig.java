@@ -102,6 +102,7 @@ public class SecurityConfig {
                 .requestMatchers("/health-check").permitAll()
                 .requestMatchers("/test/**").permitAll()
                 .requestMatchers("/admin/**").hasAuthority("ADMIN")
+                .requestMatchers("/api/v1/admin/volunteer/**").hasAuthority("ADMIN")
                 // 쓰레기통 기준 데이터와 이미지는 운영 데이터이므로 관리자만 업로드할 수 있다.
                 .requestMatchers(HttpMethod.POST, "/trash-bins/upload", "/trash-bins/images").hasAuthority("ADMIN")
                 .requestMatchers(

@@ -203,6 +203,40 @@ class NotificationServiceTest {
     }
 
     @Test
+    @DisplayName("커서 조회는 서비스 위임 경로가 없어도 동작한다")
+    void getMyNotifications_usesFallbackServicePath() {
+        NotificationService service = new NotificationService(notificationRepository, userUtil, null, null);
+        Notification first = notification("notification-1", user("user-1", "홍길동"),
+                NotificationType.BOARD_COMMENT, "board-1", "comment-1", "첫 알림", false);
+        ReflectionTestUtils.setField(first, "createdAt", LocalDateTime.of(2026, 4, 3, 10, 0, 0));
+
+        when(userUtil.extractUserId(authentication)).thenReturn("user-1");
+        when(notificationRepository.findNotificationsWithCursor(anyString(), isNull(), isNull(), any()))
+                .thenReturn(new ArrayList<>(List.of(first)));
+
+        CursorResponseDto<GetNotificationsResponseDto> result =
+                service.getMyNotifications(authentication, null, null, 1);
+
+        assertThat(result.content()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("읽음 처리는 위임 서비스가 없어도 동작한다")
+    void markAsRead_usesFallbackServicePath() {
+        NotificationService service = new NotificationService(notificationRepository, userUtil, null, null);
+        Notification notification = notification("notification-1", user("user-1", "홍길동"),
+                NotificationType.BOARD_COMMENT, "board-1", "comment-1", "알림", false);
+
+        when(userUtil.extractUserId(authentication)).thenReturn("user-1");
+        when(notificationRepository.findByIdAndUser_Id("notification-1", "user-1"))
+                .thenReturn(Optional.of(notification));
+
+        service.markAsRead(authentication, "notification-1");
+
+        assertThat(notification.isRead()).isTrue();
+    }
+
+    @Test
     @DisplayName("cursorId만 전달되면 예외가 발생한다")
     void getMyNotifications_throwsWhenCursorTimeMissing() {
         assertThatThrownBy(() -> notificationService.getMyNotifications(authentication, null, "notification-1", 10))

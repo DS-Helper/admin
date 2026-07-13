@@ -9,9 +9,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +32,8 @@ public class S3Util {
     private String region;
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucket;
+    @Value("${spring.cloud.aws.s3.presigned-url-expiration-minutes:15}")
+    private long presignedUrlExpirationMinutes;
 
     private final String ABSOLUTE_PATH_FOR_S3_IMAGE_KEY = "images/";
     private final String ABSOLUTE_PATH_FOR_S3_CERTIFICATION_KEY = "certifications/";
@@ -35,6 +41,7 @@ public class S3Util {
     private String ABSOLUTE_PATH_FOR_AWS_S3;
 
     private final S3Client s3Client;
+    private final S3Presigner s3Presigner;
 
     @PostConstruct
     public void init() {
@@ -227,23 +234,21 @@ public class S3Util {
     }
 
     public String toS3UrlByS3Key(String s3Key) {
-        if (s3Key.isEmpty()) {
-            throw new IllegalArgumentException("no s3Key to generate tos3url.");
-        }
-        log.info("s3Key : {}", s3Key);
-        String convertedS3Url = ABSOLUTE_PATH_FOR_AWS_S3 + s3Key;
-        log.info("convertedS3Url : {}", convertedS3Url);
-        return convertedS3Url;
+        if (s3Key == null || s3Key.isBlank()) throw new IllegalArgumentException("no s3Key to generate presigned url.");
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder().bucket(bucket).key(s3Key).build();
+        return s3Presigner.presignGetObject(GetObjectPresignRequest.builder()
+                        .signatureDuration(Duration.ofMinutes(presignedUrlExpirationMinutes))
+                        .getObjectRequest(getObjectRequest)
+                        .build())
+                .url()
+                .toString();
     }
 
     public String toS3UrlByStoredFilename(String storedFilename) {
-        if (storedFilename.isEmpty()) {
+        if (storedFilename == null || storedFilename.isBlank()) {
             throw new IllegalArgumentException("no storedFilename to generate tos3url.");
         }
-        log.info("storedFilename : {}", storedFilename);
-        String convertedS3Url = ABSOLUTE_PATH_FOR_AWS_S3 + buildS3Key(storedFilename);
-        log.info("convertedS3Url : {}", convertedS3Url);
-        return convertedS3Url;
+        return toS3UrlByS3Key(buildS3Key(storedFilename));
     }
 
     public String buildS3Key(String storedFilename) {
@@ -262,9 +267,8 @@ public class S3Util {
      * (Client로부터 S3Url을 받아 StoredFilename(S3Key)을 추출
      */
     public String extractFilenameFromS3Url(String imageUrl) {
-        String extractedS3Key = imageUrl.split(ABSOLUTE_PATH_FOR_AWS_S3)[1];
-        log.info("extractedS3Key : {}", extractedS3Key);
-        String extractedStoredFilename = extractedS3Key.split(ABSOLUTE_PATH_FOR_S3_IMAGE_KEY)[1];
+        String extractedS3Key = extractS3KeyFromS3Url(imageUrl);
+        String extractedStoredFilename = extractedS3Key.substring(ABSOLUTE_PATH_FOR_S3_IMAGE_KEY.length());
         log.info("extractedStoredFilename : {}", extractedStoredFilename);
         return extractedStoredFilename;
     }
@@ -278,6 +282,8 @@ public class S3Util {
             throw new IllegalArgumentException("invalid managed s3 url");
         }
 
-        return imageUrl.split(ABSOLUTE_PATH_FOR_AWS_S3)[1];
+        String path = URI.create(imageUrl).getPath();
+        if (path == null || path.length() <= 1) throw new IllegalArgumentException("invalid managed s3 url");
+        return path.startsWith("/") ? path.substring(1) : path;
     }
 }

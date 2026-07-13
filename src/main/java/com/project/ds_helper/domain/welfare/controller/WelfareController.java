@@ -5,7 +5,9 @@ import com.project.ds_helper.domain.user.entity.User;
 import com.project.ds_helper.domain.welfare.dto.request.WelfareRecommendRequest;
 import com.project.ds_helper.domain.welfare.dto.response.WelfareDetailResponse;
 import com.project.ds_helper.domain.welfare.dto.response.WelfareListResponse;
-import com.project.ds_helper.domain.welfare.service.WelfareService;
+import com.project.ds_helper.domain.welfare.dto.response.WelfareProfileResponse;
+import com.project.ds_helper.domain.welfare.service.WelfareCommandService;
+import com.project.ds_helper.domain.welfare.service.WelfareQueryService;
 import com.project.ds_helper.common.enums.SwaggerTagName;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,7 +30,8 @@ import java.util.List;
 @Tag(name = SwaggerTagName.WELFARE, description = "복지 서비스 추천 및 조회 API")
 public class WelfareController {
 
-    private final WelfareService welfareService;
+    private final WelfareCommandService welfareCommandService;
+    private final WelfareQueryService welfareQueryService;
     private final UserUtil userUtil;
 
     /**
@@ -51,7 +54,7 @@ public class WelfareController {
         User user = userUtil.findUserById(userId);
         
         // 3. 추천 로직 실행 및 결과 반환
-        List<WelfareListResponse> response = welfareService.recommendWelfare(user, request);
+        List<WelfareListResponse> response = welfareCommandService.recommendWelfare(user, request);
         return ResponseEntity.ok(response);
     }
 
@@ -64,7 +67,15 @@ public class WelfareController {
     @Operation(summary = "복지 혜택 상세 조회", description = "특정 복지 서비스의 상세 내용을 조회합니다.")
     @GetMapping("/detail/{serviceId}")
     public ResponseEntity<WelfareDetailResponse> getWelfareDetail(@PathVariable String serviceId) {
-        WelfareDetailResponse response = welfareService.getWelfareDetail(serviceId);
+        WelfareDetailResponse response = welfareQueryService.getWelfareDetail(serviceId);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "내 복지 프로필 조회", description = "저장된 복지 프로필을 코드값과 코드명으로 함께 조회합니다.")
+    @GetMapping("/profile")
+    public ResponseEntity<WelfareProfileResponse> getProfile(Authentication authentication) {
+        String userId = userUtil.extractUserId(authentication);
+        User user = userUtil.findUserById(userId);
+        return ResponseEntity.ok(welfareQueryService.getUserWelfareProfileResponse(user));
     }
 }

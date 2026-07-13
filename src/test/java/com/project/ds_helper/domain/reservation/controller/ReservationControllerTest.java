@@ -1,6 +1,6 @@
 package com.project.ds_helper.domain.reservation.controller;
 
-import com.project.ds_helper.domain.reservation.service.ReservationService;
+import com.project.ds_helper.domain.reservation.service.ReservationQueryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
 class ReservationControllerTest {
 
     @Mock
-    private ReservationService reservationService;
+    private ReservationQueryService reservationQueryService;
 
     @InjectMocks
     private ReservationController reservationController;
@@ -28,7 +28,7 @@ class ReservationControllerTest {
     @DisplayName("예약 선점 시간 조회는 서비스 결과를 그대로 반환한다")
     void getPreReservedReservationsByDate_returnsServiceResult() {
         LocalDate date = LocalDate.of(2026, 3, 27);
-        when(reservationService.getPreReservedReservationsByDate(null, date))
+        when(reservationQueryService.getPreReservedReservationsByDate(null, date))
                 .thenAnswer(invocation -> List.of("09:00", "09:30"));
 
         ResponseEntity<?> response = reservationController.getPreReservedReservationsByDate(null, date);

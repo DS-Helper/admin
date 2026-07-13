@@ -4,7 +4,8 @@ import com.project.ds_helper.common.util.FileUtil;
 import com.project.ds_helper.domain.inquiry.dto.request.CreateInquiryReqDto;
 import com.project.ds_helper.domain.inquiry.dto.response.GetAllInquiriesOfUserResDto;
 import com.project.ds_helper.domain.inquiry.dto.response.GetInquiryResDto;
-import com.project.ds_helper.domain.inquiry.service.InquiryService;
+import com.project.ds_helper.domain.inquiry.service.InquiryCommandService;
+import com.project.ds_helper.domain.inquiry.service.InquiryQueryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +26,10 @@ import static org.mockito.Mockito.when;
 class InquiryControllerTest {
 
     @Mock
-    private InquiryService inquiryService;
+    private InquiryQueryService inquiryQueryService;
+
+    @Mock
+    private InquiryCommandService inquiryCommandService;
 
     @Mock
     private FileUtil fileUtil;
@@ -37,7 +41,7 @@ class InquiryControllerTest {
     @DisplayName("문의 목록 조회는 서비스 결과를 그대로 반환한다")
     void getAllInquiriesOfUser_returnsServiceResult() {
         GetAllInquiriesOfUserResDto responseDto = new GetAllInquiriesOfUserResDto(List.of(), null);
-        when(inquiryService.getAllInquiriesOfUser(null, 0, 10, "desc", "createdAt")).thenReturn(responseDto);
+        when(inquiryQueryService.getAllInquiriesOfUser(null, 0, 10, "desc", "createdAt")).thenReturn(responseDto);
 
         ResponseEntity<GetAllInquiriesOfUserResDto> response =
                 inquiryController.getAllInquiriesOfUser(null, 0, 10, "desc", "createdAt");
@@ -50,7 +54,7 @@ class InquiryControllerTest {
     @DisplayName("단건 문의 조회는 서비스 결과를 그대로 반환한다")
     void getInquiry_returnsServiceResult() {
         GetInquiryResDto responseDto = GetInquiryResDto.builder().inquiryId("inquiry-1").content("내용").build();
-        when(inquiryService.getInquiry(null, "inquiry-1")).thenReturn(responseDto);
+        when(inquiryQueryService.getInquiry("inquiry-1")).thenReturn(responseDto);
 
         ResponseEntity<GetInquiryResDto> response = inquiryController.getInquiry(null, "inquiry-1");
 
@@ -68,7 +72,7 @@ class InquiryControllerTest {
         ResponseEntity<?> response = inquiryController.createInquiry(null, dto, null);
 
         verify(fileUtil).checkIfListIsNull(null);
-        verify(inquiryService).createInquiry(null, dto, normalized);
+        verify(inquiryCommandService).createInquiry(null, dto, normalized);
         assertThat(response.getStatusCode().value()).isEqualTo(201);
     }
 }

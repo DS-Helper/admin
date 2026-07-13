@@ -22,6 +22,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -76,5 +77,44 @@ class AdminOrganizationReservationServiceTest {
         assertThatThrownBy(() -> adminOrganizationReservationService.changeReservationStatus(authentication, dto))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("Only Admin");
+    }
+
+    @Test
+    @DisplayName("취소 상태로 변경하면 예약 일정도 함께 비운다")
+    void changeReservationStatus_clearsScheduleWhenCanceled() throws Exception {
+        User admin = User.builder().id("admin-1").role(UserRole.ADMIN).build();
+        OrganizationReservation reservation = OrganizationReservation.builder()
+                .id("reservation-1")
+                .reservationStatus(ReservationStatus.REQUESTED)
+                .build();
+        ChangeOrganizationReservationStatusReqDto dto =
+                new ChangeOrganizationReservationStatusReqDto("reservation-1", ReservationStatus.CANCELED.getKorean());
+
+        when(userUtil.extractUserId(authentication)).thenReturn("admin-1");
+        when(userUtil.findUserById("admin-1")).thenReturn(admin);
+        when(adminOrganizationReservationRepository.findById("reservation-1")).thenReturn(Optional.of(reservation));
+
+        adminOrganizationReservationService.changeReservationStatus(authentication, dto);
+
+        assertThat(reservation.getReservationStatus()).isEqualTo(ReservationStatus.CANCELED);
+        assertThat(reservation.getReservationSchedule()).isNull();
+        verify(adminOrganizationReservationRepository).save(reservation);
+    }
+
+    @Test
+    @DisplayName("예약이 없으면 예외가 발생한다")
+    void changeReservationStatus_throwsWhenReservationNotFound() throws Exception {
+        User admin = User.builder().id("admin-1").role(UserRole.ADMIN).build();
+        ChangeOrganizationReservationStatusReqDto dto =
+                new ChangeOrganizationReservationStatusReqDto("reservation-1", ReservationStatus.COMPLETED.getKorean());
+
+        when(userUtil.extractUserId(authentication)).thenReturn("admin-1");
+        when(userUtil.findUserById("admin-1")).thenReturn(admin);
+        when(adminOrganizationReservationRepository.findById("reservation-1")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> adminOrganizationReservationService.changeReservationStatus(authentication, dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("OrganizationReservation Not Found");
+        verify(adminOrganizationReservationRepository, never()).save(org.mockito.ArgumentMatchers.any());
     }
 }

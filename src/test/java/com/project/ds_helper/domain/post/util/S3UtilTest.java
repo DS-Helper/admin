@@ -25,8 +25,11 @@ import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Error;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,17 +42,27 @@ class S3UtilTest {
 
     @Mock
     private S3Client s3Client;
+    @Mock
+    private S3Presigner s3Presigner;
 
     private S3Util s3Util;
 
     @BeforeEach
     void setUp() {
-        s3Util = new S3Util(s3Client);
+        s3Util = new S3Util(s3Client, s3Presigner);
         ReflectionTestUtils.setField(s3Util, "bucket", "bucket");
         ReflectionTestUtils.setField(s3Util, "region", "ap-northeast-2");
         ReflectionTestUtils.setField(s3Util, "accessKey", "access");
         ReflectionTestUtils.setField(s3Util, "secretKey", "secret");
+        ReflectionTestUtils.setField(s3Util, "presignedUrlExpirationMinutes", 15L);
         s3Util.init();
+        PresignedGetObjectRequest request = org.mockito.Mockito.mock(PresignedGetObjectRequest.class);
+        when(s3Presigner.presignGetObject(any())).thenReturn(request);
+        try {
+            when(request.url()).thenReturn(new URL("https://bucket.s3.ap-northeast-2.amazonaws.com/images/stored.webp?X-Amz-Signature=test"));
+        } catch (Exception exception) {
+            throw new IllegalStateException(exception);
+        }
     }
 
     @Test
@@ -62,7 +75,8 @@ class S3UtilTest {
         s3Util.uploadImage(uploadDto("stored.webp"));
 
         assertThat(s3Util.toS3UrlByStoredFilename("stored.webp"))
-                .isEqualTo("https://bucket.s3.ap-northeast-2.amazonaws.com/images/stored.webp");
+                .contains("images/stored.webp")
+                .contains("X-Amz-Signature");
     }
 
     @Test
@@ -277,11 +291,11 @@ class S3UtilTest {
     @Test
     @DisplayName("S3 URL과 key 변환을 수행한다")
     void convertsS3UrlAndKey() {
-        String url = "https://bucket.s3.ap-northeast-2.amazonaws.com/images/stored.webp";
+        String url = "https://bucket.s3.ap-northeast-2.amazonaws.com/images/stored.webp?X-Amz-Signature=test";
 
         assertThat(s3Util.buildS3Key("stored.webp")).isEqualTo("images/stored.webp");
-        assertThat(s3Util.toS3UrlByS3Key("images/stored.webp")).isEqualTo(url);
-        assertThat(s3Util.toS3UrlByStoredFilename("stored.webp")).isEqualTo(url);
+        assertThat(s3Util.toS3UrlByS3Key("images/stored.webp")).contains("images/stored.webp");
+        assertThat(s3Util.toS3UrlByStoredFilename("stored.webp")).contains("images/stored.webp");
         assertThat(s3Util.extractStoredFilenameFromS3Key("images/stored.webp")).isEqualTo("stored.webp");
         assertThat(s3Util.extractFilenameFromS3Url(url)).isEqualTo("stored.webp");
         assertThat(s3Util.isManagedS3Url(url)).isTrue();

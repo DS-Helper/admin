@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * 복지 혜택 목록 응답 DTO (추천 결과용)
  */
@@ -28,6 +30,9 @@ public class WelfareListResponse {
     @Schema(description = "지원대상", example = "만 8세 미만의 아동")
     private String targetAudienceArray; // 지원대상 (분류 명칭 등으로 변환 가능)
 
+    @Schema(description = "지원대상 코드 목록")
+    private List<WelfareCodeRefResponse> targetAudienceCodes;
+
     @Schema(description = "제공방식", example = "현금")
     private String serviceProvisionName; // 제공방식
 
@@ -43,6 +48,7 @@ public class WelfareListResponse {
                 .serviceName(entity.getServiceName())
                 .serviceSummary(entity.getServiceSummary())
                 .targetAudienceArray(entity.getTargetAudienceArray())
+                .targetAudienceCodes(null)
                 .serviceProvisionName(entity.getServiceProvisionName())
                 .representativeContact(entity.getRepresentativeContact())
                 .build();

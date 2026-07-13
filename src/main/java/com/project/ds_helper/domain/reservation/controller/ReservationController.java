@@ -1,7 +1,7 @@
 package com.project.ds_helper.domain.reservation.controller;
 
 import com.project.ds_helper.common.enums.SwaggerTagName;
-import com.project.ds_helper.domain.reservation.service.ReservationService;
+import com.project.ds_helper.domain.reservation.service.ReservationQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import java.time.LocalDate;
 @Tag(name = SwaggerTagName.RESERVATION)
 public class ReservationController {
 
-    private final ReservationService reservationService;
+    private final ReservationQueryService reservationQueryService;
 
     @Operation(summary = "날짜별 기예약 내역 조회 (JWT 인증 필요)")
     @GetMapping("/pre-reserved")
@@ -31,6 +31,6 @@ public class ReservationController {
             @RequestParam(name = "date") LocalDate date
     ) {
         log.debug("ReservationController.getPreReservedReservationsByDate called. date={}", date);
-        return ResponseEntity.ok(reservationService.getPreReservedReservationsByDate(authentication, date));
+        return ResponseEntity.ok(reservationQueryService.getPreReservedReservationsByDate(authentication, date));
     }
 }

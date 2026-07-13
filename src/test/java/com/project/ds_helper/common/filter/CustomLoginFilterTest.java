@@ -32,6 +32,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(MockitoExtension.class)
 class CustomLoginFilterTest {
@@ -111,5 +112,45 @@ class CustomLoginFilterTest {
         JwtResponse jwtResponse = objectMapper.convertValue(responseVo.getData(), JwtResponse.class);
         assertThat(jwtResponse.accessToken()).isEqualTo("access-token");
         assertThat(jwtResponse.refreshToken()).isEqualTo("refresh-token");
+    }
+
+    @Test
+    @DisplayName("기관 로그인은 POST가 아니면 실패한다")
+    void attemptAuthentication_throwsWhenNotPost() {
+        CustomLoginFilter filter = new CustomLoginFilter(
+                authenticationManager,
+                jwtUtil,
+                cookieUtil,
+                encoder,
+                redisTemplate,
+                userRepository,
+                userLoginHistoryService,
+                objectMapper
+        );
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/auth/login/organization");
+
+        assertThatThrownBy(() -> filter.attemptAuthentication(request, new MockHttpServletResponse()))
+                .isInstanceOf(org.springframework.security.authentication.AuthenticationServiceException.class);
+    }
+
+    @Test
+    @DisplayName("로그인 실패 시 unauthorized 응답을 쓴다")
+    void unsuccessfulAuthentication_writesUnauthorized() throws Exception {
+        CustomLoginFilter filter = new CustomLoginFilter(
+                authenticationManager,
+                jwtUtil,
+                cookieUtil,
+                encoder,
+                redisTemplate,
+                userRepository,
+                userLoginHistoryService,
+                objectMapper
+        );
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/auth/login/organization");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.unsuccessfulAuthentication(request, response, null);
+
+        assertThat(response.getStatus()).isEqualTo(401);
     }
 }

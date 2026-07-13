@@ -10,6 +10,7 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.regions.providers.AwsRegionProvider;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.net.URI;
 
@@ -50,6 +51,14 @@ public class S3Config  {
                 .credentialsProvider(customAwsCredentialsProvider())
 //                .endpointOverride(URI.create("https://s3.ap-northeast-2.amazonaws.com"))
                 .region(Region.AP_NORTHEAST_2)
+                .build();
+    }
+
+    @Bean
+    public S3Presigner s3Presigner() {
+        return S3Presigner.builder()
+                .credentialsProvider(customAwsCredentialsProvider())
+                .region(Region.of(region))
                 .build();
     }
 

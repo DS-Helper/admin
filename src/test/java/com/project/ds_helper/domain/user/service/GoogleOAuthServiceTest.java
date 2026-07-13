@@ -6,6 +6,7 @@ import com.project.ds_helper.common.util.JwtUtil;
 import com.project.ds_helper.common.util.UserUtil;
 import com.project.ds_helper.domain.user.dto.request.MobileGoogleLoginRequestDto;
 import com.project.ds_helper.domain.user.dto.request.OauthWithdrawRequestDto;
+import com.project.ds_helper.domain.user.dto.response.GoogleTokenResponse;
 import com.project.ds_helper.domain.user.dto.response.GoogleUserInfoResponse;
 import com.project.ds_helper.domain.user.dto.response.WithdrawUserResponseDto;
 import com.project.ds_helper.domain.user.entity.GoogleOauth;
@@ -24,6 +25,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
@@ -53,6 +56,7 @@ class GoogleOAuthServiceTest {
     @Mock private CookieUtil cookieUtil;
     @Mock private StringRedisTemplate stringRedisTemplate;
     @Mock private ValueOperations<String, String> valueOperations;
+    @Mock private org.springframework.web.client.RestTemplate restTemplate;
     @Mock private HttpServletResponse response;
 
     @InjectMocks
@@ -196,5 +200,34 @@ class GoogleOAuthServiceTest {
         assertThatThrownBy(() -> spyService.googleOauthLogin(dto, response))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Email Already Exist");
+    }
+
+    @Test
+    @DisplayName("구글 refresh 토큰이 없으면 access token 재발급을 거절한다")
+    void refreshAccessToken_throwsWhenRefreshTokenMissing() {
+        GoogleOauth googleOauth = GoogleOauth.builder().refreshToken(" ").build();
+
+        assertThatThrownBy(() -> service.refreshAccessToken(googleOauth))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Google OAuth Refresh Token Not Found");
+    }
+
+    @Test
+    @DisplayName("구글 refresh 토큰 재발급은 새 access token과 refresh token을 갱신한다")
+    void refreshAccessToken_updatesRefreshTokenAndReturnsAccessToken() {
+        GoogleOauth googleOauth = GoogleOauth.builder().refreshToken("provider-refresh").build();
+        GoogleTokenResponse tokenResponse = new GoogleTokenResponse();
+        ReflectionTestUtils.setField(tokenResponse, "accessToken", "new-access");
+        ReflectionTestUtils.setField(tokenResponse, "refreshToken", "new-refresh");
+        when(restTemplate.postForEntity(
+                org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.eq(GoogleTokenResponse.class)
+        )).thenReturn(new ResponseEntity<>(tokenResponse, HttpStatus.OK));
+
+        String result = service.refreshAccessToken(googleOauth);
+
+        assertThat(result).isEqualTo("new-access");
+        assertThat(googleOauth.getRefreshToken()).isEqualTo("new-refresh");
     }
 }

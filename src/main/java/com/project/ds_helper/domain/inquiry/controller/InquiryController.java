@@ -4,7 +4,8 @@ import com.project.ds_helper.common.util.FileUtil;
 import com.project.ds_helper.domain.inquiry.dto.request.CreateInquiryReqDto;
 import com.project.ds_helper.domain.inquiry.dto.response.GetAllInquiriesOfUserResDto;
 import com.project.ds_helper.domain.inquiry.dto.response.GetInquiryResDto;
-import com.project.ds_helper.domain.inquiry.service.InquiryService;
+import com.project.ds_helper.domain.inquiry.service.InquiryCommandService;
+import com.project.ds_helper.domain.inquiry.service.InquiryQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -34,7 +35,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InquiryController {
 
-    private final InquiryService inquiryService;
+    private final InquiryQueryService inquiryQueryService;
+    private final InquiryCommandService inquiryCommandService;
     private final FileUtil fileUtil;
 
     @Tag(name = "문의")
@@ -48,7 +50,7 @@ public class InquiryController {
             @RequestParam(defaultValue = "createdAt") String sortBy
     ) {
         log.debug("InquiryController.getAllInquiriesOfUser called. page={}, size={}, sort={}, sortBy={}", page, size, sort, sortBy);
-        return ResponseEntity.ok(inquiryService.getAllInquiriesOfUser(authentication, page, size, sort, sortBy));
+        return ResponseEntity.ok(inquiryQueryService.getAllInquiriesOfUser(authentication, page, size, sort, sortBy));
     }
 
     @Tag(name = "문의")
@@ -59,7 +61,7 @@ public class InquiryController {
             @PathVariable("inquiryId") String inquiryId
     ) {
         log.debug("InquiryController.getInquiry called. inquiryId={}", inquiryId);
-        return ResponseEntity.ok(inquiryService.getInquiry(authentication, inquiryId));
+        return ResponseEntity.ok(inquiryQueryService.getInquiry(inquiryId));
     }
 
     @Tag(name = "문의")
@@ -73,7 +75,7 @@ public class InquiryController {
             @RequestPart(value = "images", required = false) List<MultipartFile> images
     ) throws IOException {
         log.debug("InquiryController.createInquiry called. imageCount={}", images == null ? 0 : images.size());
-        inquiryService.createInquiry(authentication, dto, fileUtil.checkIfListIsNull(images));
+        inquiryCommandService.createInquiry(authentication, dto, fileUtil.checkIfListIsNull(images));
         return new ResponseEntity<>(null, HttpStatus.CREATED);
     }
 }

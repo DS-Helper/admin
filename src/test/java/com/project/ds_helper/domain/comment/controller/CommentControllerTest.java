@@ -10,7 +10,8 @@ import com.project.ds_helper.domain.comment.dto.response.CreateCommentResponseDt
 import com.project.ds_helper.domain.comment.dto.response.GetChildCommentsResponseDto;
 import com.project.ds_helper.domain.comment.dto.response.GetParentCommentsByBoardIdResponseDto;
 import com.project.ds_helper.domain.comment.dto.response.UpdateCommentResponseDto;
-import com.project.ds_helper.domain.comment.service.CommentService;
+import com.project.ds_helper.domain.comment.service.CommentCommandService;
+import com.project.ds_helper.domain.comment.service.CommentQueryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,7 +39,10 @@ class CommentControllerTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Mock
-    private CommentService commentService;
+    private CommentQueryService commentQueryService;
+
+    @Mock
+    private CommentCommandService commentCommandService;
 
     @Mock
     private Authentication authentication;
@@ -65,7 +69,7 @@ class CommentControllerTest {
                 false
         );
 
-        when(commentService.getParentComments(anyString(), isNull(), isNull(), anyInt()))
+        when(commentQueryService.getParentComments(anyString(), isNull(), isNull(), anyInt()))
                 .thenReturn(responseDto);
 
         ResponseEntity<ResponseVo<CursorResponseDto<GetParentCommentsByBoardIdResponseDto>>> response =
@@ -97,7 +101,7 @@ class CommentControllerTest {
                 false
         );
 
-        when(commentService.getChildComments(anyString(), isNull(), isNull(), anyInt()))
+        when(commentQueryService.getChildComments(anyString(), isNull(), isNull(), anyInt()))
                 .thenReturn(responseDto);
 
         ResponseEntity<ResponseVo<CursorResponseDto<GetChildCommentsResponseDto>>> response =
@@ -129,7 +133,7 @@ class CommentControllerTest {
                 .writerName("writer")
                 .build();
 
-        when(commentService.createComment(any(), any(CreateCommentRequestDto.class))).thenReturn(responseDto);
+        when(commentCommandService.createComment(any(), any(CreateCommentRequestDto.class))).thenReturn(responseDto);
 
         ResponseEntity<ResponseVo<CreateCommentResponseDto>> response =
                 commentController.createComment(authentication, requestDto);
@@ -157,7 +161,7 @@ class CommentControllerTest {
                 .content("수정 내용")
                 .build();
 
-        when(commentService.updateComment(any(), any(UpdateCommentRequestDto.class))).thenReturn(responseDto);
+        when(commentCommandService.updateComment(any(), any(UpdateCommentRequestDto.class))).thenReturn(responseDto);
 
         ResponseEntity<ResponseVo<UpdateCommentResponseDto>> response =
                 commentController.updateComment(authentication, requestDto);
@@ -178,14 +182,14 @@ class CommentControllerTest {
                 """,
                 DeleteCommentRequestDto.class
         );
-        doNothing().when(commentService).deleteComment(any(), any(DeleteCommentRequestDto.class));
+        doNothing().when(commentCommandService).deleteComment(any(), any(DeleteCommentRequestDto.class));
 
         ResponseEntity<ResponseVo<Void>> response = commentController.deleteComment(authentication, requestDto);
 
         assertThat(response.getStatusCode().value()).isEqualTo(204);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().isSuccess()).isTrue();
-        verify(commentService).deleteComment(authentication, requestDto);
+        verify(commentCommandService).deleteComment(authentication, requestDto);
     }
 
     private <T> T readRequest(String json, Class<T> type) throws Exception {

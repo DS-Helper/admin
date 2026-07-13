@@ -97,6 +97,23 @@ class NotificationFacadeTest {
         verify(notificationDeliveryRepository, never()).saveAll(any());
     }
 
+    @Test
+    @DisplayName("수신자가 없으면 알림 생성만 하고 발송은 건너뛴다")
+    void createCommentNotifications_skipsDeliveryWhenNoPushTokens() {
+        User boardWriter = user("board-user", "게시글작성자");
+        User commentWriter = user("comment-user", "댓글작성자");
+        Board board = board("board-1", boardWriter);
+        Comment comment = comment("comment-1", board, commentWriter, null, "댓글");
+
+        when(notificationRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(pushTokenService.getActivePushTokensByUserIds(any())).thenReturn(List.of());
+
+        notificationFacade.createCommentNotifications(comment);
+
+        verify(notificationRepository).saveAll(any());
+        verify(notificationDeliveryRepository, never()).saveAll(any());
+    }
+
     @SuppressWarnings("unchecked")
     private List<Notification> castNotifications(List captured) {
         return (List<Notification>) captured;

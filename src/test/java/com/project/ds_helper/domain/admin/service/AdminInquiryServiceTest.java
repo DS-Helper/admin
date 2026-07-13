@@ -109,4 +109,26 @@ class AdminInquiryServiceTest {
         jakarta.persistence.criteria.Predicate built = captor.getValue().toPredicate(root, query, cb);
         assertThat(built).isNotNull();
     }
+
+    @Test
+    @DisplayName("미답변 문의 조회는 UNANSWERED 상태만 사용한다")
+    void getAllUnRepliedInquiriesOfUser_usesUnansweredStatus() {
+        when(adminInquiryRepository.findAllByStatus(eq(InquiryStatus.UNANSWERED), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        adminInquiryService.getAllUnRepliedInquiriesOfUser(0, 10, "asc", "createdAt");
+
+        verify(adminInquiryRepository).findAllByStatus(eq(InquiryStatus.UNANSWERED), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("문의 전체 조회는 조건이 없어도 동작한다")
+    void getInquiries_withoutFilters() {
+        when(adminInquiryRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        GetAllInquiriesOfUserResDto result = adminInquiryService.getInquiries(null, null, null, null, null, 0, 10, "asc", "createdAt");
+
+        assertThat(result.inquiries()).isEmpty();
+    }
 }

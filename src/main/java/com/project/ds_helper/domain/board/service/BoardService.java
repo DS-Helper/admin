@@ -27,10 +27,6 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +57,7 @@ public class BoardService {
     private final BoardLikeRepository boardLikeRepository;
     private final BoardScrapRepository boardScrapRepository;
     private final CommentRepository commentRepository;
+    private final BoardQueryService boardQueryService;
 
     public CreateBoardResponseDto createBoard(Authentication authentication, @Valid CreateBoardReqDto dto, List<MultipartFile> images) throws IOException {
         if (images == null) {
@@ -115,61 +112,18 @@ public class BoardService {
         }
     }
 
-    @Transactional(readOnly = true)
-    public GetBoardsByCategoryResponseDto getBoardsByCategory(
-            Authentication authentication,
-            String category,
-            String keyword,
-            int page,
-            int size,
-            String sort,
-            String sortBy
-    ) {
-        log.debug("BoardService.getBoardsByCategory started. category={}, keyword={}, page={}, size={}, sort={}, sortBy={}",
-                category, keyword, page, size, sort, sortBy);
-
-        Pageable pageable = PageRequest.of(page, size, resolveSort(sort, sortBy));
-        Page<Board> boards = findBoardsByCategoryAndKeyword(category, keyword, pageable);
-        log.debug("BoardService.getBoardsByCategory boards fetched. boardCount={}, totalElements={}",
-                boards.getContent().size(), boards.getTotalElements());
-
+    public GetBoardsByCategoryResponseDto getBoardsByCategory(Authentication authentication, String category, String keyword, int page, int size, String sort, String sortBy) {
+        var pageable = org.springframework.data.domain.PageRequest.of(
+                page,
+                size,
+                org.springframework.data.domain.Sort.by(sort.equalsIgnoreCase("desc") ? org.springframework.data.domain.Sort.Direction.DESC : org.springframework.data.domain.Sort.Direction.ASC, sortBy)
+        );
+        var boards = findBoardsByCategoryAndKeyword(category, keyword, pageable);
         return buildBoardListResponse(authentication, boards);
     }
 
-    private GetBoardsByCategoryResponseDto buildBoardListResponse(Authentication authentication, Page<Board> boards) {
-
-        List<String> boardIds = boards.getContent().stream().map(Board::getId).toList();
-        Set<String> likedBoardIds = !hasAuthenticatedUser(authentication) || boardIds.isEmpty()
-                ? Set.of()
-                : new HashSet<>(boardLikeRepository.findLikedBoardIdsByUserIdAndBoardIds(
-                        userUtil.extractUserId(authentication),
-                        boardIds
-                ));
-        List<BoardImage> boardImages = boardIds.isEmpty()
-                ? List.of()
-                : boardImageRepository.findBoardThumbnailsByBoardIds(boardIds);
-
-        HashMap<String, String> thumbnails = buildThumbnailMap(boardImages);
-        List<GetBoardsByCategoryResponseDto.Board> boardsDto = boards.getContent().stream()
-                .map(board -> GetBoardsByCategoryResponseDto.Board.toBoard(
-                        board,
-                        toVisibleCommentCount(board.getId()),
-                        likedBoardIds.contains(board.getId()),
-                        thumbnails.get(board.getId())
-                ))
-                .toList();
-        log.debug("BoardService.buildBoardListResponse completed. responseBoardCount={}, thumbnailCount={}",
-                boardsDto.size(), thumbnails.size());
-
-        return new GetBoardsByCategoryResponseDto(boardsDto, PageResponseDto.toDto(boards));
-    }
-
     public GetBoardByIdResponseDto getBoardById(Authentication authentication, String boardId) {
-        log.debug("BoardService.getBoardById started. boardId={}", boardId);
-
         Board board = findActiveBoardById(boardId);
-        log.debug("BoardService.getBoardById board loaded. boardId={}, isAuthenticatedUser={}", boardId, hasAuthenticatedUser(authentication));
-
         boolean isLiked = false;
         boolean isScrapped = false;
         if (hasAuthenticatedUser(authentication)) {
@@ -177,34 +131,19 @@ public class BoardService {
             isLiked = boardLikeRepository.existsByUser_IdAndBoard_Id(userId, boardId);
             isScrapped = boardScrapRepository.existsByUser_IdAndBoard_Id(userId, boardId);
         }
-        List<String> boardImageUrls = toImageUrls(boardImageRepository.findByBoard_Id(boardId));
-        log.debug("BoardService.getBoardById board state resolved. boardId={}, isLiked={}, isScrapped={}, imageCount={}",
-                boardId, isLiked, isScrapped, boardImageUrls.size());
-
+        List<String> boardImageUrls = boardImageRepository.findByBoard_Id(boardId).stream()
+                .map(BoardImage::getS3Key)
+                .map(s3Util::toS3UrlByS3Key)
+                .toList();
         boardRepository.increaseViewCount(boardId);
         board.increaseViewCount();
-        log.debug("BoardService.getBoardById completed. boardId={}, viewCount={}", boardId, board.getViewCount());
-
-        return GetBoardByIdResponseDto.toDto(
-                board,
-                toVisibleCommentCount(boardId),
-                isLiked,
-                isScrapped,
-                boardImageUrls
-        );
+        return GetBoardByIdResponseDto.toDto(board, toVisibleCommentCount(boardId), isLiked, isScrapped, boardImageUrls);
     }
 
-    @Transactional(readOnly = true)
-    public CursorResponseDto<GetMyBoardsResponseDto> getMyBoards(
-            Authentication authentication,
-            LocalDateTime cursorTime,
-            String cursorId,
-            int size
-    ) {
+    public CursorResponseDto<GetMyBoardsResponseDto> getMyBoards(Authentication authentication, LocalDateTime cursorTime, String cursorId, int size) {
         validateCursor(cursorTime, cursorId);
         String userId = userUtil.extractUserId(authentication);
-        Pageable pageable = PageRequest.of(0, size + 1);
-
+        var pageable = org.springframework.data.domain.PageRequest.of(0, size + 1);
         List<Board> boards = boardRepository.findMyBoardsWithCursor(userId, cursorTime, cursorId, pageable);
         boolean hasNext = boards.size() > size;
         if (hasNext) {
@@ -212,21 +151,10 @@ public class BoardService {
         }
 
         List<String> boardIds = boards.stream().map(Board::getId).toList();
-        Set<String> likedBoardIds = boardIds.isEmpty()
-                ? Set.of()
-                : new HashSet<>(boardLikeRepository.findLikedBoardIdsByUserIdAndBoardIds(userId, boardIds));
-        List<BoardImage> boardImages = boardIds.isEmpty()
-                ? List.of()
-                : boardImageRepository.findBoardThumbnailsByBoardIds(boardIds);
-        HashMap<String, String> thumbnails = buildThumbnailMap(boardImages);
-
+        Set<String> likedBoardIds = boardIds.isEmpty() ? Set.of() : new HashSet<>(boardLikeRepository.findLikedBoardIdsByUserIdAndBoardIds(userId, boardIds));
+        HashMap<String, String> thumbnails = buildThumbnailMapByBoardIds(boardIds);
         List<GetMyBoardsResponseDto> content = boards.stream()
-                .map(board -> GetMyBoardsResponseDto.from(
-                        board,
-                        toVisibleCommentCount(board.getId()),
-                        likedBoardIds.contains(board.getId()),
-                        thumbnails.get(board.getId())
-                ))
+                .map(board -> GetMyBoardsResponseDto.from(board, toVisibleCommentCount(board.getId()), likedBoardIds.contains(board.getId()), thumbnails.get(board.getId())))
                 .toList();
 
         LocalDateTime nextCursorTime = null;
@@ -314,8 +242,8 @@ public class BoardService {
                 keepImageUrls == null ? 0 : keepImageUrls.size(),
                 newImages.size());
         List<BoardImage> existingImages = boardImageRepository.findByBoard_Id(boardId);
-        Set<String> keepUrls = resolveKeepUrls(keepImageUrls);
-        List<BoardImage> deleteTargets = findDeleteTargets(existingImages, keepUrls);
+        Set<String> keepS3Keys = resolveKeepS3Keys(keepImageUrls);
+        List<BoardImage> deleteTargets = findDeleteTargets(existingImages, keepS3Keys);
 
         int remainCount = existingImages.size() - deleteTargets.size();
         validateImageCount(remainCount + newImages.size());
@@ -339,19 +267,12 @@ public class BoardService {
                 board.getId(), uploadBatch.boardImages().size(), uploadedS3Keys.size());
     }
 
-    private Set<String> resolveKeepUrls(List<String> keepImageUrls) {
-        Set<String> keepUrls = keepImageUrls == null ? Set.of() : Set.copyOf(keepImageUrls);
-        log.debug("BoardService.resolveKeepUrls completed. keepUrlCount={}", keepUrls.size());
-        return keepUrls;
-    }
-
-    private Board findActiveBoardById(String boardId) {
-        Board board = findBoardById(boardId);
-        if (board.isDeleted()) {
-            log.debug("BoardService.findActiveBoardById found deleted board. boardId={}", boardId);
-            throw new IllegalStateException("Deleted Board");
-        }
-        return board;
+    private Set<String> resolveKeepS3Keys(List<String> keepImageUrls) {
+        Set<String> keepS3Keys = keepImageUrls == null ? Set.of() : keepImageUrls.stream()
+                .map(s3Util::extractS3KeyFromS3Url)
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+        log.debug("BoardService.resolveKeepS3Keys completed. keepKeyCount={}", keepS3Keys.size());
+        return keepS3Keys;
     }
 
     private void validateBoardOwner(Board board, String requesterId, User requester, String action) {
@@ -380,49 +301,6 @@ public class BoardService {
         }
     }
 
-    private String resolveBoardCategory(String category) {
-        String resolvedCategory = BoardCategory.findByKorean(category).name();
-        log.debug("BoardService.resolveBoardCategory resolved. inputCategory={}, resolvedCategory={}", category, resolvedCategory);
-        return resolvedCategory;
-    }
-
-    private boolean hasAuthenticatedUser(Authentication authentication) {
-        return authentication != null
-                && authentication.isAuthenticated()
-                && authentication.getPrincipal() != null
-                && !"anonymousUser".equals(authentication.getPrincipal());
-    }
-
-    private void validateCursor(LocalDateTime cursorTime, String cursorId) {
-        if ((cursorTime == null) != (cursorId == null)) {
-            throw new IllegalArgumentException("cursorTime and cursorId must be provided together");
-        }
-    }
-
-    private Page<Board> findBoardsByCategoryAndKeyword(String category, String keyword, Pageable pageable) {
-        boolean hasKeyword = keyword != null && !keyword.isBlank();
-
-        if (isAllCategory(category)) {
-            return hasKeyword
-                    ? boardRepository.findByTitleContainingAndIsDeletedFalse(keyword, pageable)
-                    : boardRepository.findByIsDeletedFalse(pageable);
-        }
-
-        String resolvedCategory = resolveBoardCategory(category);
-        return hasKeyword
-                ? boardRepository.findByCategoryAndTitleContainingAndIsDeletedFalse(resolvedCategory, keyword, pageable)
-                : boardRepository.findByCategoryAndIsDeletedFalse(resolvedCategory, pageable);
-    }
-
-    private boolean isAllCategory(String category) {
-        return "전체".equals(category);
-    }
-
-    private Sort resolveSort(String sort, String sortBy) {
-        Sort.Direction direction = sort.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
-        return Sort.by(direction, sortBy);
-    }
-
     private void validateImageCount(int imageCount) {
         log.debug("BoardService.validateImageCount called. imageCount={}, maxImageCount={}", imageCount, MAX_BOARD_IMAGE_COUNT);
         if (imageCount > MAX_BOARD_IMAGE_COUNT) {
@@ -430,29 +308,21 @@ public class BoardService {
         }
     }
 
-    private HashMap<String, String> buildThumbnailMap(List<BoardImage> boardImages) {
-        HashMap<String, String> thumbnails = new HashMap<>();
-        for (BoardImage boardImage : boardImages) {
-            thumbnails.putIfAbsent(boardImage.getBoard().getId(), s3Util.toS3UrlByS3Key(boardImage.getS3Key()));
+    private Board findActiveBoardById(String boardId) {
+        Board board = findBoardById(boardId);
+        if (board.isDeleted()) {
+            throw new IllegalStateException("Deleted Board");
         }
-        return thumbnails;
+        return board;
     }
 
-    private List<String> toImageUrls(List<BoardImage> boardImages) {
-        if (boardImages.isEmpty()) {
-            return List.of();
-        }
-
-        List<String> imageUrls = new ArrayList<>(boardImages.size());
-        for (BoardImage boardImage : boardImages) {
-            imageUrls.add(s3Util.toS3UrlByS3Key(boardImage.getS3Key()));
-        }
-        return imageUrls;
+    private String resolveBoardCategory(String category) {
+        return BoardCategory.findByKorean(category).name();
     }
 
-    private List<BoardImage> findDeleteTargets(List<BoardImage> existingImages, Set<String> keepUrls) {
+    private List<BoardImage> findDeleteTargets(List<BoardImage> existingImages, Set<String> keepS3Keys) {
         return existingImages.stream()
-                .filter(image -> !keepUrls.contains(s3Util.toS3UrlByS3Key(image.getS3Key())))
+                .filter(image -> !keepS3Keys.contains(image.getS3Key()))
                 .toList();
     }
 
@@ -535,6 +405,51 @@ public class BoardService {
 
     private int toVisibleCommentCount(String boardId) {
         return Math.toIntExact(commentRepository.countByBoard_IdAndIsDeletedFalse(boardId));
+    }
+
+    private boolean hasAuthenticatedUser(Authentication authentication) {
+        return authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() != null && !"anonymousUser".equals(authentication.getPrincipal());
+    }
+
+    private boolean isAllCategory(String category) {
+        return "전체".equals(category);
+    }
+
+    private void validateCursor(LocalDateTime cursorTime, String cursorId) {
+        if ((cursorTime == null) != (cursorId == null)) {
+            throw new IllegalArgumentException("cursorTime and cursorId must be provided together");
+        }
+    }
+
+    private org.springframework.data.domain.Page<Board> findBoardsByCategoryAndKeyword(String category, String keyword, org.springframework.data.domain.Pageable pageable) {
+        boolean hasKeyword = keyword != null && !keyword.isBlank();
+        if (isAllCategory(category)) {
+            return hasKeyword ? boardRepository.findByTitleContainingAndIsDeletedFalse(keyword, pageable) : boardRepository.findByIsDeletedFalse(pageable);
+        }
+        String resolvedCategory = BoardCategory.findByKorean(category).name();
+        return hasKeyword ? boardRepository.findByCategoryAndTitleContainingAndIsDeletedFalse(resolvedCategory, keyword, pageable) : boardRepository.findByCategoryAndIsDeletedFalse(resolvedCategory, pageable);
+    }
+
+    private GetBoardsByCategoryResponseDto buildBoardListResponse(Authentication authentication, org.springframework.data.domain.Page<Board> boards) {
+        List<String> boardIds = boards.getContent().stream().map(Board::getId).toList();
+        Set<String> likedBoardIds = !hasAuthenticatedUser(authentication) || boardIds.isEmpty()
+                ? Set.of()
+                : new HashSet<>(boardLikeRepository.findLikedBoardIdsByUserIdAndBoardIds(userUtil.extractUserId(authentication), boardIds));
+        HashMap<String, String> thumbnails = buildThumbnailMapByBoardIds(boardIds);
+        List<GetBoardsByCategoryResponseDto.Board> boardsDto = boards.getContent().stream()
+                .map(board -> GetBoardsByCategoryResponseDto.Board.toBoard(board, toVisibleCommentCount(board.getId()), likedBoardIds.contains(board.getId()), thumbnails.get(board.getId())))
+                .toList();
+        return new GetBoardsByCategoryResponseDto(boardsDto, PageResponseDto.toDto(boards));
+    }
+
+    private HashMap<String, String> buildThumbnailMapByBoardIds(List<String> boardIds) {
+        HashMap<String, String> thumbnails = new HashMap<>();
+        if (boardIds.isEmpty()) {
+            return thumbnails;
+        }
+        boardImageRepository.findBoardThumbnailsByBoardIds(boardIds)
+                .forEach(image -> thumbnails.put(image.getBoard().getId(), s3Util.toS3UrlByS3Key(image.getS3Key())));
+        return thumbnails;
     }
 
     private record ImageUploadBatch(

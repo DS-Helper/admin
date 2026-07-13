@@ -7,6 +7,7 @@ import com.project.ds_helper.common.util.JwtUtil;
 import com.project.ds_helper.common.util.UserUtil;
 import com.project.ds_helper.domain.user.dto.request.MobileKakaoLoginRequestDto;
 import com.project.ds_helper.domain.user.dto.request.OauthWithdrawRequestDto;
+import com.project.ds_helper.domain.user.dto.response.KakaoTokenResponse;
 import com.project.ds_helper.domain.user.dto.response.KakaoUserResponse;
 import com.project.ds_helper.domain.user.dto.response.WithdrawUserResponseDto;
 import com.project.ds_helper.domain.user.entity.KakaoOauth;
@@ -25,8 +26,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -59,6 +63,10 @@ class KakaoOauthServiceTest {
     @Mock private StringRedisTemplate stringRedisTemplate;
     @Mock private ValueOperations<String, String> valueOperations;
     @Mock private HttpServletResponse response;
+    @Mock private WebClient.RequestBodyUriSpec kakaoOauthRequestBodyUriSpec;
+    @Mock private WebClient.RequestBodySpec kakaoOauthRequestBodySpec;
+    @Mock private WebClient.RequestHeadersSpec kakaoOauthRequestHeadersSpec;
+    @Mock private WebClient.ResponseSpec kakaoOauthResponseSpec;
 
     @InjectMocks
     private KakaoOauthService service;
@@ -195,6 +203,36 @@ class KakaoOauthServiceTest {
         assertThatThrownBy(() -> spyService.kakaoLogin(dto, response))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Email Already Exist");
+    }
+
+    @Test
+    @DisplayName("카카오 refresh 토큰이 없으면 access token 재발급을 거절한다")
+    void refreshAccessToken_throwsWhenRefreshTokenMissing() {
+        KakaoOauth kakaoOauth = KakaoOauth.builder().refreshToken(" ").build();
+
+        assertThatThrownBy(() -> service.refreshAccessToken(kakaoOauth))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Kakao OAuth Refresh Token Not Found");
+    }
+
+    @Test
+    @DisplayName("카카오 refresh 토큰 재발급은 새 access token과 refresh token을 갱신한다")
+    void refreshAccessToken_updatesRefreshTokenAndReturnsAccessToken() {
+        KakaoOauth kakaoOauth = KakaoOauth.builder().refreshToken("provider-refresh").build();
+        KakaoTokenResponse tokenResponse = new KakaoTokenResponse();
+        org.springframework.test.util.ReflectionTestUtils.setField(tokenResponse, "accessToken", "new-access");
+        org.springframework.test.util.ReflectionTestUtils.setField(tokenResponse, "refreshToken", "new-refresh");
+        when(kakaoOauthWebClient.post()).thenReturn(kakaoOauthRequestBodyUriSpec);
+        when(kakaoOauthRequestBodyUriSpec.uri(org.mockito.ArgumentMatchers.any(java.util.function.Function.class)))
+                .thenReturn(kakaoOauthRequestBodySpec);
+        when(kakaoOauthRequestBodySpec.body(org.mockito.ArgumentMatchers.any())).thenReturn(kakaoOauthRequestHeadersSpec);
+        when(kakaoOauthRequestHeadersSpec.retrieve()).thenReturn(kakaoOauthResponseSpec);
+        when(kakaoOauthResponseSpec.bodyToMono(KakaoTokenResponse.class)).thenReturn(Mono.just(tokenResponse));
+
+        String result = service.refreshAccessToken(kakaoOauth);
+
+        assertThat(result).isEqualTo("new-access");
+        assertThat(kakaoOauth.getRefreshToken()).isEqualTo("new-refresh");
     }
 
     private KakaoUserResponse createKakaoUserResponse(
