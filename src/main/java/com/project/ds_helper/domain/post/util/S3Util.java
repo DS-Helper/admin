@@ -283,7 +283,7 @@ public class S3Util {
         }
 
         String path = URI.create(imageUrl).getPath();
-        if (path == null || path.length() <= 1) throw new IllegalArgumentException("invalid managed s3 url");
-        return path.startsWith("/") ? path.substring(1) : path;
+        if (path.length() <= 1) throw new IllegalArgumentException("invalid managed s3 url");
+        return path.substring(1);
     }
 }

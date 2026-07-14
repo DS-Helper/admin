@@ -561,6 +561,7 @@ class BoardServiceTest {
         when(boardImageRepository.findByBoard_Id("board-1")).thenReturn(List.of(keepImage, deleteImage));
         when(s3Util.toS3UrlByS3Key("s3/keep.png")).thenReturn("https://cdn.example.com/s3/keep.png");
         when(s3Util.toS3UrlByS3Key("s3/delete.png")).thenReturn("https://cdn.example.com/s3/delete.png");
+        when(s3Util.extractS3KeyFromS3Url("https://cdn.example.com/s3/keep.png")).thenReturn("s3/keep.png");
         when(imageUtil.toStoredFilename()).thenReturn("stored-new");
         when(imageCompressionUtil.compressImage(newImage, "stored-new"))
                 .thenReturn(compressedImage("stored-new", "new.png", "png", "new".getBytes()));
@@ -592,6 +593,7 @@ class BoardServiceTest {
         when(boardRepository.findById("board-1")).thenReturn(Optional.of(board));
         when(boardImageRepository.findByBoard_Id("board-1")).thenReturn(List.of(keepImage));
         when(s3Util.toS3UrlByS3Key("s3/keep.png")).thenReturn("https://cdn.example.com/s3/keep.png");
+        when(s3Util.extractS3KeyFromS3Url("https://cdn.example.com/s3/keep.png")).thenReturn("s3/keep.png");
 
         boardService.updateBoard(authentication, dto, List.of());
 
@@ -697,6 +699,7 @@ class BoardServiceTest {
         when(boardRepository.findById("board-1")).thenReturn(Optional.of(board));
         when(boardImageRepository.findByBoard_Id("board-1")).thenReturn(List.of(image));
         when(s3Util.toS3UrlByS3Key("s3/keep.png")).thenReturn("https://cdn.example.com/s3/keep.png");
+        when(s3Util.extractS3KeyFromS3Url("https://cdn.example.com/s3/keep.png")).thenReturn("s3/keep.png");
 
         assertThatThrownBy(() -> boardService.updateBoard(authentication, dto, List.of(newImage1, newImage2)))
                 .isInstanceOf(IllegalArgumentException.class)

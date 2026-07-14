@@ -57,9 +57,11 @@ class S3UtilTest {
         ReflectionTestUtils.setField(s3Util, "presignedUrlExpirationMinutes", 15L);
         s3Util.init();
         PresignedGetObjectRequest request = org.mockito.Mockito.mock(PresignedGetObjectRequest.class);
-        when(s3Presigner.presignGetObject(any())).thenReturn(request);
+        org.mockito.Mockito.lenient().when(s3Presigner.presignGetObject(org.mockito.ArgumentMatchers.<software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest>any()))
+                .thenReturn(request);
         try {
-            when(request.url()).thenReturn(new URL("https://bucket.s3.ap-northeast-2.amazonaws.com/images/stored.webp?X-Amz-Signature=test"));
+            org.mockito.Mockito.lenient().when(request.url())
+                    .thenReturn(new URL("https://bucket.s3.ap-northeast-2.amazonaws.com/images/stored.webp?X-Amz-Signature=test"));
         } catch (Exception exception) {
             throw new IllegalStateException(exception);
         }
@@ -310,9 +312,15 @@ class S3UtilTest {
     void conversionsThrowWhenInvalid() {
         assertThatThrownBy(() -> s3Util.toS3UrlByS3Key(""))
                 .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> s3Util.toS3UrlByS3Key(null))
+                .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> s3Util.toS3UrlByStoredFilename(""))
                 .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> s3Util.toS3UrlByStoredFilename(null))
+                .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> s3Util.extractS3KeyFromS3Url("https://other/images/stored.webp"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> s3Util.extractS3KeyFromS3Url("https://bucket.s3.ap-northeast-2.amazonaws.com/"))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

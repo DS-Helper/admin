@@ -7,6 +7,8 @@ import com.project.ds_helper.domain.volunteer.admin.dto.request.CreateVolunteerE
 import com.project.ds_helper.domain.volunteer.admin.dto.request.RejectVolunteerApplicationRequest;
 import com.project.ds_helper.domain.volunteer.admin.dto.request.ChangeVolunteerStatusRequest;
 import com.project.ds_helper.domain.volunteer.admin.service.VolunteerAdminService;
+import com.project.ds_helper.domain.volunteer.file.dto.response.VolunteerEventImageUploadResponse;
+import com.project.ds_helper.domain.volunteer.file.service.VolunteerEventImageService;
 import com.project.ds_helper.domain.post.util.S3Util;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,7 +22,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "봉사단 관리자", description = "V6 공유 봉사 스키마 기반 관리자 API")
 public class VolunteerAdminController {
     private final VolunteerAdminService service;
+    private final VolunteerEventImageService eventImageService;
     private final S3Util s3Util;
 
     @Operation(summary = "봉사단 가입 신청 목록 조회")
@@ -68,6 +73,16 @@ public class VolunteerAdminController {
     @Operation(summary = "봉사 일정 등록", description = "이미지 파일 메타데이터 ID를 사용해 V6 VolunteerEvent를 생성합니다.")
     @PostMapping("/events")
     public ResponseEntity<ResponseVo<?>> createEvent(Authentication authentication, @Valid @RequestBody CreateVolunteerEventRequest request) { return ok(eventResponse(service.createEvent(adminId(authentication), request))); }
+
+    @Operation(summary = "봉사 일정 공개 이미지 업로드", description = "JPG/JPEG/PNG 파일을 최대 20MB까지 받아 WebP로 변환한 뒤 공개 VolunteerFile로 저장합니다.")
+    @PostMapping(value = "/event-images", consumes = "multipart/form-data")
+    public ResponseEntity<ResponseVo<VolunteerEventImageUploadResponse>> uploadEventImage(
+            Authentication authentication,
+            @RequestPart("image") MultipartFile image
+    ) throws java.io.IOException {
+        VolunteerEventImageUploadResponse response = eventImageService.upload(adminId(authentication), image);
+        return ResponseEntity.ok(new ResponseVo<>(true, SuccessCode.OK, SuccessCode.OK.getMessage(), response));
+    }
 
     @Operation(summary = "봉사 일정 목록 조회")
     @GetMapping("/events")
