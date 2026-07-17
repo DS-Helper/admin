@@ -131,3 +131,4 @@
 | `volunteer.entity` BE 공통 모델 호환 정렬 | 완료 | 공통 Entity 5종과 상태 Enum을 원본 BE와 동일하게 맞추고 V3를 이식, Admin 전용 봉사단원은 V4로 분리 | Gradle 데몬 종료 대기으로 컴파일 결과 재확인 필요 |
 | `volunteer.admin` V6 공유 스키마 전환 | 진행중 | V6 Entity/Repository, 관리자 신청·단원·일정·출석 API를 추가하고 legacy schedule 참조 제거 | `compileJava` 성공, API 테스트·Outbox 관리자 이벤트 확장 필요 |
 | `s3.util` Presigned URL 전환 | 진행중 | S3 GET URL 생성을 presigned URL로 전환하고 Board 이미지 보존 비교를 S3 key 기준으로 변경 | 소스/테스트 컴파일 재확인 대기 |
+| `volunteer.admin` API 계약 정합화 | 완료 | record DTO, UUID `id`, 검색·필터·페이지 응답, private 사진 presigned URL, 출석 결과 DTO·업무 오류 코드 추가 | `compileJava`, volunteer admin/file 테스트 통과 |

@@ -19,6 +19,9 @@ import java.util.Optional;
 
 public interface VolunteerParticipationRepository extends JpaRepository<VolunteerParticipation, String> {
 
+    @EntityGraph(attributePaths = {"event", "member", "member.application"})
+    List<VolunteerParticipation> findByMember_Id(String memberId);
+
     @EntityGraph(attributePaths = {"member", "member.user"})
     List<VolunteerParticipation> findByEvent_Id(String eventId);
 
