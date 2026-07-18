@@ -244,6 +244,10 @@ public class S3Util {
                 .toString();
     }
 
+    public Duration presignedUrlLifetime() {
+        return Duration.ofMinutes(presignedUrlExpirationMinutes);
+    }
+
     public String toS3UrlByStoredFilename(String storedFilename) {
         if (storedFilename == null || storedFilename.isBlank()) {
             throw new IllegalArgumentException("no storedFilename to generate tos3url.");

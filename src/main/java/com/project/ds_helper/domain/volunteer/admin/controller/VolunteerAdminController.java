@@ -6,6 +6,18 @@ import com.project.ds_helper.domain.volunteer.admin.dto.request.AttendanceReques
 import com.project.ds_helper.domain.volunteer.admin.dto.request.CreateVolunteerEventRequest;
 import com.project.ds_helper.domain.volunteer.admin.dto.request.RejectVolunteerApplicationRequest;
 import com.project.ds_helper.domain.volunteer.admin.dto.request.ChangeVolunteerStatusRequest;
+import com.project.ds_helper.domain.volunteer.admin.dto.request.VolunteerApplicationSearchRequest;
+import com.project.ds_helper.domain.volunteer.admin.dto.request.VolunteerEventSearchRequest;
+import com.project.ds_helper.domain.volunteer.admin.dto.request.VolunteerMemberSearchRequest;
+import com.project.ds_helper.domain.volunteer.admin.dto.response.AdminPageResponse;
+import com.project.ds_helper.domain.volunteer.admin.dto.response.AdminVolunteerApplicationResponse;
+import com.project.ds_helper.domain.volunteer.admin.dto.response.AdminVolunteerEventResponse;
+import com.project.ds_helper.domain.volunteer.admin.dto.response.AdminVolunteerMemberResponse;
+import com.project.ds_helper.domain.volunteer.admin.dto.response.AdminVolunteerMemberDetailResponse;
+import com.project.ds_helper.domain.volunteer.admin.dto.response.AdminVolunteerParticipationResponse;
+import com.project.ds_helper.domain.volunteer.admin.dto.response.AdminVolunteerEventParticipationsResponse;
+import com.project.ds_helper.domain.volunteer.admin.dto.response.VolunteerApplicationPhotoResponse;
+import com.project.ds_helper.domain.volunteer.admin.dto.response.VolunteerAttendanceResponse;
 import com.project.ds_helper.domain.volunteer.admin.service.VolunteerAdminService;
 import com.project.ds_helper.domain.volunteer.file.dto.response.VolunteerEventImageUploadResponse;
 import com.project.ds_helper.domain.volunteer.file.service.VolunteerEventImageService;
@@ -22,6 +34,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,38 +50,38 @@ public class VolunteerAdminController {
 
     @Operation(summary = "봉사단 가입 신청 목록 조회")
     @GetMapping("/applications")
-    public ResponseEntity<ResponseVo<?>> applications() { return ok(service.applications().stream().map(this::applicationResponse).toList()); }
+    public ResponseEntity<ResponseVo<?>> applications(@ModelAttribute VolunteerApplicationSearchRequest request) { return ok(AdminPageResponse.from(service.applications(request), AdminVolunteerApplicationResponse::from)); }
 
     @Operation(summary = "봉사단 가입 신청 상세 조회")
     @GetMapping("/applications/{id}")
-    public ResponseEntity<ResponseVo<?>> application(@PathVariable String id) { return ok(applicationResponse(service.applicationDetail(id))); }
+    public ResponseEntity<ResponseVo<?>> application(@PathVariable String id) { return ok(AdminVolunteerApplicationResponse.from(service.applicationDetail(id))); }
 
     @Operation(summary = "봉사단 가입 신청 승인")
     @PostMapping("/applications/{id}/approve")
-    public ResponseEntity<ResponseVo<?>> approve(Authentication authentication, @PathVariable String id) { return ok(applicationResponse(service.approve(adminId(authentication), id))); }
+    public ResponseEntity<ResponseVo<?>> approve(Authentication authentication, @PathVariable String id) { return ok(AdminVolunteerApplicationResponse.from(service.approve(adminId(authentication), id))); }
 
     @Operation(summary = "봉사단 가입 신청 반려")
     @PostMapping("/applications/{id}/reject")
-    public ResponseEntity<ResponseVo<?>> reject(Authentication authentication, @PathVariable String id, @Valid @RequestBody RejectVolunteerApplicationRequest request) { return ok(applicationResponse(service.reject(adminId(authentication), id, request))); }
+    public ResponseEntity<ResponseVo<?>> reject(Authentication authentication, @PathVariable String id, @Valid @RequestBody RejectVolunteerApplicationRequest request) { return ok(AdminVolunteerApplicationResponse.from(service.reject(adminId(authentication), id, request))); }
 
     @Operation(summary = "가입 신청 사진 식별자 조회", description = "S3 key는 반환하지 않습니다.")
     @GetMapping("/applications/{id}/photo")
-    public ResponseEntity<ResponseVo<?>> photo(@PathVariable String id) { var file = service.applicationDetail(id).getPhotoFile(); return ok(java.util.Map.of("volunteerFileId", file.getId(), "url", s3Util.toS3UrlByS3Key(file.getS3Key()))); }
+    public ResponseEntity<ResponseVo<?>> photo(@PathVariable String id) { var file = service.applicationDetail(id).getPhotoFile(); if (!file.isPrivateFile() || !file.isActive()) throw new com.project.ds_helper.common.exception.BusinessException(com.project.ds_helper.common.enums.ErrorCode.ACCESS_DENIED); return ok(new VolunteerApplicationPhotoResponse(file.getId(), s3Util.toS3UrlByS3Key(file.getS3Key()), service.currentTime().plus(s3Util.presignedUrlLifetime()))); }
 
     @Operation(summary = "봉사단원 목록 조회")
     @GetMapping("/members")
-    public ResponseEntity<ResponseVo<?>> members() { return ok(service.members().stream().map(this::memberResponse).toList()); }
+    public ResponseEntity<ResponseVo<?>> members(@ModelAttribute VolunteerMemberSearchRequest request) { return ok(AdminPageResponse.from(service.members(request), service::memberResponse)); }
 
     @Operation(summary = "봉사단원 상세 조회")
     @GetMapping("/members/{id}")
-    public ResponseEntity<ResponseVo<?>> member(@PathVariable String id) { return ok(memberResponse(service.memberDetail(id))); }
+    public ResponseEntity<ResponseVo<?>> member(@PathVariable String id) { return ok(service.memberDetailResponse(id)); }
 
     @PostMapping("/members/{id}/suspend")
-    public ResponseEntity<ResponseVo<?>> suspend(Authentication a, @PathVariable String id, @RequestBody(required = false) ChangeVolunteerStatusRequest r) { return ok(memberResponse(service.suspendMember(adminId(a), id, r == null ? null : r.reason()))); }
+    public ResponseEntity<ResponseVo<?>> suspend(Authentication a, @PathVariable String id, @RequestBody(required = false) ChangeVolunteerStatusRequest r) { service.suspendMember(adminId(a), id, r == null ? null : r.reason()); return ok(service.memberDetailResponse(id)); }
     @PostMapping("/members/{id}/activate")
-    public ResponseEntity<ResponseVo<?>> activate(Authentication a, @PathVariable String id, @RequestBody(required = false) ChangeVolunteerStatusRequest r) { return ok(memberResponse(service.activateMember(adminId(a), id, r == null ? null : r.reason()))); }
+    public ResponseEntity<ResponseVo<?>> activate(Authentication a, @PathVariable String id, @RequestBody(required = false) ChangeVolunteerStatusRequest r) { service.activateMember(adminId(a), id, r == null ? null : r.reason()); return ok(service.memberDetailResponse(id)); }
     @PostMapping("/members/{id}/withdraw")
-    public ResponseEntity<ResponseVo<?>> withdraw(Authentication a, @PathVariable String id, @RequestBody(required = false) ChangeVolunteerStatusRequest r) { return ok(memberResponse(service.withdrawMember(adminId(a), id, r == null ? null : r.reason()))); }
+    public ResponseEntity<ResponseVo<?>> withdraw(Authentication a, @PathVariable String id, @RequestBody(required = false) ChangeVolunteerStatusRequest r) { service.withdrawMember(adminId(a), id, r == null ? null : r.reason()); return ok(service.memberDetailResponse(id)); }
 
     @Operation(summary = "봉사 일정 등록", description = "이미지 파일 메타데이터 ID를 사용해 V6 VolunteerEvent를 생성합니다.")
     @PostMapping("/events")
@@ -86,7 +99,7 @@ public class VolunteerAdminController {
 
     @Operation(summary = "봉사 일정 목록 조회")
     @GetMapping("/events")
-    public ResponseEntity<ResponseVo<?>> events() { return ok(service.events().stream().map(this::eventResponse).toList()); }
+    public ResponseEntity<ResponseVo<?>> events(@ModelAttribute VolunteerEventSearchRequest request) { return ok(AdminPageResponse.from(service.events(request), this::eventResponse)); }
 
     @GetMapping("/events/{id}")
     public ResponseEntity<ResponseVo<?>> event(@PathVariable String id) { return ok(eventResponse(service.eventDetail(id))); }
@@ -101,15 +114,13 @@ public class VolunteerAdminController {
 
     @Operation(summary = "일정 참여자 목록 조회")
     @GetMapping("/events/{id}/participations")
-    public ResponseEntity<ResponseVo<?>> participations(@PathVariable String id) { return ok(service.participations(id).stream().map(p -> java.util.Map.of("volunteerParticipationId", p.getId(), "volunteerMemberId", p.getMember().getId(), "name", p.getMember().getUser().getName(), "status", p.getStatus(), "appliedAt", p.getAppliedAt())).toList()); }
+    public ResponseEntity<ResponseVo<?>> participations(@PathVariable String id) { var event = service.eventDetail(id); return ok(new AdminVolunteerEventParticipationsResponse(eventResponse(event), service.participations(id).stream().filter(p -> p.getStatus() != com.project.ds_helper.domain.volunteer.common.enums.VolunteerParticipationStatus.CANCELED).map(AdminVolunteerParticipationResponse::from).toList())); }
 
     @Operation(summary = "봉사 출석 일괄 처리")
     @PostMapping("/events/{id}/attendance")
-    public ResponseEntity<ResponseVo<Void>> attend(Authentication authentication, @PathVariable String id, @Valid @RequestBody AttendanceRequest request) { service.attend(adminId(authentication), id, request); return ResponseEntity.ok(new ResponseVo<>(true, SuccessCode.OK, SuccessCode.OK.getMessage(), null)); }
+    public ResponseEntity<ResponseVo<VolunteerAttendanceResponse>> attend(Authentication authentication, @PathVariable String id, @Valid @RequestBody AttendanceRequest request) { service.attend(adminId(authentication), id, request); return ResponseEntity.ok(new ResponseVo<>(true, SuccessCode.OK, SuccessCode.OK.getMessage(), new VolunteerAttendanceResponse(id, request.attendedParticipationIds().size(), request.absentParticipationIds().size(), service.currentTime()))); }
 
     private String adminId(Authentication authentication) { return String.valueOf(authentication.getPrincipal()); }
     private ResponseEntity<ResponseVo<?>> ok(Object data) { return ResponseEntity.ok(new ResponseVo<>(true, SuccessCode.OK, SuccessCode.OK.getMessage(), data)); }
-    private java.util.Map<String, Object> applicationResponse(com.project.ds_helper.domain.volunteer.application.entity.VolunteerApplication a) { java.util.Map<String, Object> r = new java.util.LinkedHashMap<>(); r.put("volunteerApplicationId", a.getId()); r.put("userId", a.getUser().getId()); r.put("name", a.getName()); r.put("phone", a.getPhone()); r.put("birthDate", a.getBirthDate()); r.put("gender", a.getGender()); r.put("neighborhood", a.getNeighborhood()); r.put("preferredActivities", a.getPreferredActivities()); r.put("motivation", a.getMotivation()); r.put("status", a.getStatus()); r.put("rejectionReason", a.getRejectionReason()); r.put("adminMemo", a.getAdminMemo()); r.put("reviewedAt", a.getReviewedAt()); return r; }
-    private java.util.Map<String, Object> memberResponse(com.project.ds_helper.domain.volunteer.member.entity.VolunteerMember m) { return java.util.Map.of("volunteerMemberId", m.getId(), "userId", m.getUser().getId(), "name", m.getUser().getName(), "status", m.getStatus(), "joinedAt", m.getJoinedAt()); }
-    private java.util.Map<String, Object> eventResponse(com.project.ds_helper.domain.volunteer.event.entity.VolunteerEvent e) { java.util.Map<String, Object> r = new java.util.LinkedHashMap<>(); r.put("volunteerEventId", e.getId()); r.put("title", e.getTitle()); r.put("type", e.getType()); r.put("imageFileId", e.getImageFile().getId()); r.put("imageUrl", s3Util.toS3UrlByS3Key(e.getImageFile().getS3Key())); r.put("startAt", e.getStartAt()); r.put("endAt", e.getEndAt()); r.put("recruitmentDeadlineAt", e.getRecruitmentDeadlineAt()); r.put("location", e.getLocation()); r.put("capacity", e.getCapacity()); r.put("description", e.getDescription()); r.put("supplies", e.getSupplies()); r.put("precautions", e.getPrecautions()); r.put("status", e.getStatus()); r.put("visibility", e.getVisibility()); return r; }
+    private AdminVolunteerEventResponse eventResponse(com.project.ds_helper.domain.volunteer.event.entity.VolunteerEvent event) { return AdminVolunteerEventResponse.from(event, s3Util.toS3UrlByS3Key(event.getImageFile().getS3Key()), service.participantCount(event.getId())); }
 }

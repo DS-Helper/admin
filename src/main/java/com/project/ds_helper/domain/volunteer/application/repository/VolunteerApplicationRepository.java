@@ -4,10 +4,11 @@ import com.project.ds_helper.domain.volunteer.application.entity.VolunteerApplic
 import com.project.ds_helper.domain.volunteer.common.enums.VolunteerApplicationStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.Optional;
 
-public interface VolunteerApplicationRepository extends JpaRepository<VolunteerApplication, String> {
+public interface VolunteerApplicationRepository extends JpaRepository<VolunteerApplication, String>, JpaSpecificationExecutor<VolunteerApplication> {
 
     @EntityGraph(attributePaths = {"photoFile", "preferredActivities", "user"})
     Optional<VolunteerApplication> findFirstByUser_IdOrderByCreatedAtDesc(String userId);
